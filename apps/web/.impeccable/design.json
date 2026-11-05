@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-05T12:54:52.977Z",
+  "generatedAt": "2026-11-05T13:49:07.000Z",
   "title": "Design System: Foris",
   "extensions": {
     "colorMeta": {
@@ -48,6 +48,18 @@
         "displayName": "Etiqueta",
         "purpose": "Plus Jakarta Sans: controles y navegación habituales."
       },
+      "caption": {
+        "displayName": "Ayuda y metadatos",
+        "purpose": "Plus Jakarta Sans: horas, fechas, estado de conexión y ayudas del compositor."
+      },
+      "heading": {
+        "displayName": "Encabezado de sala",
+        "purpose": "Axiforma: título General en escritorio."
+      },
+      "heading-compact": {
+        "displayName": "Encabezado compacto",
+        "purpose": "Axiforma: título de la sala en móvil y títulos de los diálogos."
+      },
       "serif": {
         "displayName": "Acento serif",
         "purpose": "Fraunces: frases editoriales y bienvenida puntual."
@@ -83,6 +95,10 @@
       {
         "name": "lg",
         "value": "1024px"
+      },
+      {
+        "name": "community-aside",
+        "value": "1360px"
       }
     ]
   },
@@ -91,17 +107,17 @@
       "name": "Botón principal",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "Acción principal, con relleno sólido y foco de teclado.",
+      "description": "Acción principal, con relleno sólido, forma de píldora y foco de teclado. Todos los tamaños de Button comparten esta forma predeterminada.",
       "html": "<button class=\"ds-primary\">Enviar</button>",
-      "css": ".ds-primary{background:var(--primary);color:var(--primary-foreground);font:500 .875rem \"Plus Jakarta Sans\",sans-serif;border:0;border-radius:.625rem;padding:.375rem .625rem;min-height:2rem;cursor:pointer;transition:background-color 150ms ease}.ds-primary:hover{background:var(--primary-hover)}.ds-primary:focus-visible{outline:2px solid var(--ring);outline-offset:3px}.ds-primary:disabled{opacity:.5;cursor:not-allowed}"
+      "css": ".ds-primary{background:var(--primary);color:var(--primary-foreground);font:500 .875rem \"Plus Jakarta Sans\",sans-serif;border:0;border-radius:999px;padding:.375rem .625rem;min-height:2rem;cursor:pointer;transition:background-color 150ms ease}.ds-primary:hover{background:var(--primary-hover)}.ds-primary:focus-visible{outline:2px solid var(--ring);outline-offset:3px}.ds-primary:active{transform:translateY(1px)}.ds-primary:disabled{opacity:.5;cursor:not-allowed}"
     },
     {
       "name": "Botón secundario",
       "kind": "button",
       "refersTo": "button-secondary",
-      "description": "Acción secundaria con relleno tonal, sin contorno.",
+      "description": "Acción secundaria con relleno tonal, forma de píldora y sin contorno.",
       "html": "<button class=\"ds-secondary\">Cancelar</button>",
-      "css": ".ds-secondary{background:var(--secondary);color:var(--secondary-foreground);font:500 .875rem \"Plus Jakarta Sans\",sans-serif;border:0;border-radius:.625rem;padding:.375rem .625rem;min-height:2rem;cursor:pointer}.ds-secondary:hover{background:var(--secondary-hover)}.ds-secondary:focus-visible{outline:2px solid var(--ring);outline-offset:3px}"
+      "css": ".ds-secondary{background:var(--secondary);color:var(--secondary-foreground);font:500 .875rem \"Plus Jakarta Sans\",sans-serif;border:0;border-radius:999px;padding:.375rem .625rem;min-height:2rem;cursor:pointer;transition:background-color 150ms ease}.ds-secondary:hover{background:var(--secondary-hover)}.ds-secondary:focus-visible{outline:2px solid var(--ring);outline-offset:3px}.ds-secondary:active{transform:translateY(1px)}.ds-secondary:disabled{opacity:.5;cursor:not-allowed}"
     },
     {
       "name": "Campo",
@@ -114,9 +130,9 @@
     {
       "name": "Navegación",
       "kind": "nav",
-      "description": "Navegación textual, con una superficie tonal para el estado activo.",
-      "html": "<nav class=\"ds-nav\" aria-label=\"Salas\"><a href=\"#general\" aria-current=\"page\">General</a></nav>",
-      "css": ".ds-nav{display:flex;gap:.5rem;font:500 .875rem \"Plus Jakarta Sans\",sans-serif}.ds-nav a{padding:.5rem .75rem;border-radius:.5rem;color:var(--foreground);text-decoration:none}.ds-nav a[aria-current=page]{background:var(--accent);color:var(--accent-foreground)}.ds-nav a:hover{background:var(--muted)}.ds-nav a:focus-visible{outline:2px solid var(--ring);outline-offset:3px}"
+      "description": "Acceso a General con superficie tonal activa y extremos redondos.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Conversaciones\"><a href=\"#conversation\" aria-current=\"page\"><svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M7.9 20A9 9 0 1 0 4 16.1L2 22Z\"/></svg><span>General</span></a></nav>",
+      "css": ".ds-nav{display:flex;font:600 .875rem \"Plus Jakarta Sans\",sans-serif}.ds-nav a{display:flex;min-height:3rem;align-items:center;gap:.75rem;padding:.75rem 1rem;border-radius:999px;color:var(--foreground);text-decoration:none;transition:background-color 150ms ease}.ds-nav svg{width:18px;height:18px;flex-shrink:0}.ds-nav a[aria-current=page]{background:var(--accent);color:var(--accent-foreground)}.ds-nav a:hover{background:var(--secondary-hover)}.ds-nav a:focus-visible{outline:2px solid var(--ring);outline-offset:3px}"
     },
     {
       "name": "Contenedor excepcional",
@@ -125,18 +141,27 @@
       "description": "Superficie plana para un grupo que necesite contención; evitar repetirla como estructura de página.",
       "html": "<section class=\"ds-surface\"><h3>General</h3><p>Sala abierta para conversar.</p></section>",
       "css": ".ds-surface{padding:1rem;background:var(--card);color:var(--card-foreground);border:0;border-radius:.875rem;box-shadow:none;font:400 1rem/1.5 \"Plus Jakarta Sans\",sans-serif}.ds-surface h3{margin:0 0 .5rem;font-family:Axiforma,\"Plus Jakarta Sans\",sans-serif;font-size:1rem;font-weight:600}.ds-surface p{margin:0;color:var(--muted-foreground)}"
+    },
+    {
+      "name": "Compositor de General",
+      "kind": "custom",
+      "refersTo": "message-composer",
+      "description": "Control compuesto de texto público, con área interior y acción de envío en píldora; conserva radios propios frente a tarjetas y campos generales.",
+      "html": "<div class=\"ds-composer\"><label class=\"ds-composer-label\" for=\"ds-message\">Mensaje para General</label><textarea id=\"ds-message\" class=\"ds-composer-input\" rows=\"2\" maxlength=\"2000\" placeholder=\"Comparte algo con General…\"></textarea><div class=\"ds-composer-actions\"><span>Solo texto, muchas ideas</span><button type=\"button\">Enviar</button></div></div>",
+      "css": ".ds-composer{padding:14px 16px 12px;border:0;border-radius:24px;background:var(--secondary);color:var(--foreground);font:400 1rem/1.6 \"Plus Jakarta Sans\",sans-serif}.ds-composer-label{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}.ds-composer-input{display:block;width:100%;min-height:64px;max-height:150px;resize:none;padding:2px 2px 8px;border:0;border-radius:4px;background:transparent;color:var(--foreground);font:inherit;caret-color:var(--primary)}.ds-composer-input::placeholder{color:var(--muted-foreground)}.ds-composer-input:focus-visible{outline:2px solid var(--ring);outline-offset:5px}.ds-composer-input[aria-invalid=true]{background:var(--destructive-surface)}.ds-composer-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px}.ds-composer-actions>span{color:var(--muted-foreground);font-size:.75rem}.ds-composer-actions button{min-width:106px;min-height:44px;padding:6px 20px;border:0;border-radius:999px;background:var(--primary);color:var(--primary-foreground);font:500 .875rem \"Plus Jakarta Sans\",sans-serif;cursor:pointer;transition:background-color 150ms ease}.ds-composer-actions button:hover{background:var(--primary-hover)}.ds-composer-actions button:focus-visible{outline:2px solid var(--ring);outline-offset:3px}.ds-composer-actions button:disabled{opacity:.5;cursor:not-allowed}@media(max-width:639px){.ds-composer{padding:12px 14px;border-radius:20px}.ds-composer-input{min-height:54px;max-height:110px}}"
     }
   ],
   "narrative": {
     "northStar": "Humano, sencillo y conversacional",
-    "overview": "Base visual de Foris para comunidades abiertas. La lectura manda; las formas suaves y los personajes aportan cercanía en momentos concretos. El contenido se organiza por tipografía, espacio y superficies sólidas. Esta configuración prepara la identidad y las primitivas; todavía no define ni implementa la vista del chat.",
+    "overview": "Base visual de Foris para comunidades abiertas. La lectura manda; las formas suaves y los personajes aportan cercanía en momentos concretos. El contenido se organiza por tipografía, espacio y superficies sólidas. La pantalla inicial abre directamente la conversación General y mantiene la escritura como invitado al alcance.\n\nEl nombre, las cuatro familias tipográficas y el lenguaje de personajes forman la identidad actual. La composición de General se recoge en .impeccable/surfaces/apps-web-src-app-tsx.md; las restricciones de estilo del usuario se conservan en el PRODUCT.md de la raíz.",
     "keyCharacteristics": [
-      "Colores sólidos",
-      "Jerarquía por espacio y tipografía",
-      "Pocas tarjetas",
-      "Sin bordes decorativos",
-      "Foco de teclado visible",
-      "Personajes de formas suaves con emociones diferentes"
+      "Colores sólidos.",
+      "Jerarquía por espacio y tipografía.",
+      "Pocas tarjetas.",
+      "Sin bordes decorativos.",
+      "Botones con extremos completamente redondos.",
+      "Foco de teclado visible.",
+      "Personajes de formas suaves con emociones diferentes."
     ],
     "rules": [
       {
@@ -151,7 +176,7 @@
       },
       {
         "name": "Personajes de Foris",
-        "body": "Nueve SVG originales de formas suaves y colores sólidos, sin contornos ni animación automática. Usar uno por momento. Por defecto son decorativos; añadir alt contextual cuando aporten significado.",
+        "body": "Nueve SVG originales en src/assets/characters, con fondo transparente, colores sólidos y una pareja de ojos expresivos. Comparten un lienzo de 160 × 160 y márgenes internos; cambian la silueta, la postura y la mirada. No llevan contornos, sombras, degradados ni animaciones automáticas.",
         "section": "components"
       }
     ],

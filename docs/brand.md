@@ -62,4 +62,8 @@ Usar un personaje por momento. No repetirlos como fondo, insignias o separadores
 
 Colores sólidos, formas suaves y ojos claros. Sin bordes decorativos, degradados ni sombras. La paleta expresiva de los personajes convive con los neutros de la interfaz; no cambia el significado de los colores de error, selección o acción. Los ojos forman parte de cada personaje: no son una trama de puntos decorativos.
 
-Las decisiones completas del sistema están en [DESIGN.md](../apps/web/DESIGN.md). La pantalla del chat continúa pendiente; esta entrega prepara la identidad y los recursos reutilizables.
+Los botones tienen extremos completamente redondos por defecto en todas las variantes y tamaños de `Button`, incluidos los de icono. Los campos conservan sus esquinas suaves y las superficies su radio propio; el compositor tiene una forma de control específica. El foco de teclado sigue visible.
+
+Las decisiones completas del sistema están en [DESIGN.md](../apps/web/DESIGN.md). La pantalla inicial abre directamente General para leer y escribir como invitado, con navegación discreta, un hilo lineal y el compositor al pie. Axiforma identifica Foris y la sala; Jakarta mantiene la lectura; Fraunces aporta el acento de bienvenida y de las pautas laterales. SF Pro continúa disponible como alternativa explícita.
+
+Mimo acompaña únicamente el historial vacío confirmado. Sus sugerencias preparan un borrador editable, sin publicar mensajes automáticamente. Los estados de carga, error y conexión se explican con texto; no se inventan mensajes ni presencia. Los nombres de invitado no están verificados y el contador informa de conexiones abiertas. La entrada de cuenta comunica que las cuentas y Google llegarán próximamente y permite seguir como invitado.

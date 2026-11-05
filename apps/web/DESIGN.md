@@ -32,6 +32,22 @@ typography:
     fontSize: "0.875rem"
     fontWeight: 500
     lineHeight: 1.4
+  caption:
+    fontFamily: "Plus Jakarta Sans, system-ui, sans-serif"
+    fontSize: "0.75rem"
+    fontWeight: 400
+    lineHeight: 1.5
+  heading:
+    fontFamily: "Axiforma, Plus Jakarta Sans, sans-serif"
+    fontSize: "1.5rem"
+    fontWeight: 600
+    lineHeight: 1.3
+    letterSpacing: "-0.03em"
+  heading-compact:
+    fontFamily: "Axiforma, Plus Jakarta Sans, sans-serif"
+    fontSize: "1.25rem"
+    fontWeight: 600
+    lineHeight: 1.4
   serif:
     fontFamily: "Fraunces, Georgia, serif"
     fontSize: "2rem"
@@ -45,6 +61,10 @@ typography:
 rounded:
   control: "10px"
   surface: "14px"
+  button: "999px"
+  composer: "24px"
+  composer-compact: "20px"
+  composer-inset: "4px"
 spacing:
   small: "8px"
   base: "16px"
@@ -54,19 +74,24 @@ components:
   button-primary:
     backgroundColor: "{colors.primary}"
     textColor: "{colors.popover}"
-    rounded: "{rounded.control}"
+    rounded: "{rounded.button}"
     padding: "6px 10px"
     height: "32px"
   button-secondary:
     backgroundColor: "{colors.secondary}"
     textColor: "{colors.ink}"
-    rounded: "{rounded.control}"
+    rounded: "{rounded.button}"
     padding: "6px 10px"
   input:
     backgroundColor: "{colors.secondary}"
     textColor: "{colors.ink}"
     rounded: "{rounded.control}"
     padding: "4px 10px"
+  message-composer:
+    backgroundColor: "{colors.secondary}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.composer}"
+    padding: "14px 16px 12px"
   surface:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.ink}"
@@ -80,9 +105,9 @@ components:
 
 **Creative North Star: "Humano, sencillo y conversacional"**
 
-Base visual de Foris para comunidades abiertas. La lectura manda; las formas suaves y los personajes aportan cercanía en momentos concretos. El contenido se organiza por tipografía, espacio y superficies sólidas. Esta configuración prepara la identidad y las primitivas; todavía no define ni implementa la vista del chat.
+Base visual de Foris para comunidades abiertas. La lectura manda; las formas suaves y los personajes aportan cercanía en momentos concretos. El contenido se organiza por tipografía, espacio y superficies sólidas. La pantalla inicial abre directamente la conversación General y mantiene la escritura como invitado al alcance.
 
-El nombre, las cuatro familias tipográficas y el lenguaje de personajes forman la identidad actual. La composición de la aplicación se decidirá al diseñar la vista del chat. Las restricciones de estilo del usuario se conservan en el PRODUCT.md de la raíz.
+El nombre, las cuatro familias tipográficas y el lenguaje de personajes forman la identidad actual. La composición de General se recoge en .impeccable/surfaces/apps-web-src-app-tsx.md; las restricciones de estilo del usuario se conservan en el PRODUCT.md de la raíz.
 
 **Key Characteristics:**
 
@@ -90,6 +115,7 @@ El nombre, las cuatro familias tipográficas y el lenguaje de personajes forman 
 - Jerarquía por espacio y tipografía.
 - Pocas tarjetas.
 - Sin bordes decorativos.
+- Botones con extremos completamente redondos.
 - Foco de teclado visible.
 - Personajes de formas suaves con emociones diferentes.
 
@@ -114,15 +140,15 @@ Las cuatro familias elegidas y facilitadas por el usuario se sirven desde src/as
 
 html y el texto general usan Jakarta. h1–h6 usan Axiforma por defecto; las utilidades de familia pueden sustituirla. Jakarta admite pesos variables de 200 a 800, y Fraunces de 100 a 900, en redonda y cursiva. Axiforma declara los pesos 100, 300, 400, 500, 600, 700, 800 y 900 en ambas variantes. SF Pro declara únicamente los pesos y estilos presentes: redonda 400/500/700 y cursiva 100/200/300/600/800/900. No depender de una variante ausente de SF Pro.
 
-El texto de lectura parte de 1rem con interlineado 1.5. Limitar el ancho de textos largos a 65–75 caracteres cuando se diseñe la pantalla. La serif es un acento, no una fuente para toda la conversación; SF Pro es una alternativa preparada, no una cuarta voz obligatoria en cada pantalla.
+La escala usada en General corresponde a 12, 14, 16, 20, 24, 30 y 32 píxeles mediante rem. El texto de lectura parte de 1rem; el cuerpo de los mensajes usa interlineado 1.65 y un máximo de 70 caracteres de ancho. Las etiquetas usan el rol label y las horas, fechas, estados y ayudas el rol caption. General usa heading, con heading-compact en móvil; el nombre Foris usa title. La bienvenida usa Fraunces con el rol serif, reducido al tamaño de title en móvil. La serif es un acento, no una fuente para toda la conversación; SF Pro es una alternativa preparada, no una cuarta voz obligatoria en cada pantalla.
 
-Evitar texto principal en mayúsculas, espaciados exagerados o tipografía monoespaciada decorativa. La conversación tendrá prioridad al construir la pantalla real.
+Evitar texto principal en mayúsculas, espaciados exagerados o tipografía monoespaciada decorativa. La conversación tiene prioridad.
 
 ## Layout
 
-Usar el ritmo de espaciado de Tailwind, con grupos próximos y separación clara entre tareas. La base no prescribe una cuadrícula de tarjetas ni una distribución definitiva para el chat.
+Usar el ritmo de espaciado de Tailwind, con grupos próximos y separación clara entre tareas. General organiza el espacio en navegación lateral, encabezado, hilo y compositor al pie; no en una cuadrícula de tarjetas. La navegación ocupa 248px en escritorio. El hilo y el compositor comparten un máximo de 840px, con texto alineado y espacio suficiente para leer.
 
-El punto de cambio a navegación móvil de los componentes es 768px. Los controles pequeños del catálogo no deben convertirse en acciones táctiles principales sin adaptar su área de interacción.
+La navegación lateral se oculta por debajo de 1024px y el nombre Foris pasa al encabezado. Desde 1360px aparece una columna de pautas de 264px; con menos espacio se accede a esa información mediante un diálogo. Por debajo de 640px disminuyen los márgenes y se compactan el encabezado y el compositor. El hilo tiene su propio desplazamiento y el compositor reserva el área segura inferior del dispositivo. El punto móvil de las primitivas genéricas del catálogo sigue siendo 768px; no determina estos cambios de General. Las acciones principales de la pantalla usan una altura de al menos 44px, aun cuando el catálogo ofrezca tamaños menores.
 
 ## Elevation & Depth
 
@@ -132,13 +158,23 @@ No usar degradados, vidrio, fondos con tramas o puntos decorativos. Las capas mo
 
 ## Shapes
 
-Los controles tienen esquinas suaves y las superficies excepcionales un radio algo mayor. Evitar convertir contenedores grandes en píldoras. Las tarjetas no llevan contornos ni sombras.
+Los botones usan el token button para extremos completamente redondos; los tamaños de icono forman círculos cuando ancho y alto coinciden. Es el valor predeterminado de todas las variantes y tamaños de Button: default, xs, sm, lg, icon, icon-xs, icon-sm e icon-lg. className permite una sustitución deliberada cuando un patrón lo requiera.
+
+Los campos conservan control y las superficies excepcionales conservan surface. El compositor es una forma de control específica: composer en escritorio, composer-compact en móvil y composer-inset para el área de texto interior. Estos radios no cambian las esquinas de tarjetas ni contenedores generales. Evitar convertir contenedores grandes en píldoras. Las tarjetas no llevan contornos ni sombras.
 
 ## Components
 
 El catálogo de shadcn está en src/components/ui. Se instaló el conjunto completo disponible del estilo radix-nova; incluir un componente en el repositorio no obliga a usarlo en la pantalla.
 
 Los estilos comunes se centralizan en src/index.css para que las primitivas conserven comportamiento y semántica. Los campos usan relleno sólido; los estados inválidos usan una superficie diferenciada. La variante outline de Button funciona como un secundario relleno, sin dibujar un contorno.
+
+**Botones.** Primario sólido para enviar y acciones principales; secundario tonal para recuperación y sugerencias; ghost para utilidades y el nombre de invitado. Todos parten de la forma de píldora. La política global elimina bordes y sombras de las primitivas sin eliminar el foco de teclado. Mantener los estados deshabilitado, enviando y reintento con texto comprensible.
+
+**Conversación General.** ChatHome compone navegación, estado de conexión, MessageFeed y MessageComposer. Los mensajes forman una lista lineal con autor, condición de invitado, hora y separadores de día. El estado propio se indica con «Tú, invitado», sin insinuar una identidad verificada. La bienvenida con Mimo aparece únicamente después de confirmar un historial vacío; sus sugerencias rellenan el borrador editable y no lo envían. Carga, error de historial, reconexión y falta de conexión tienen estados explícitos. El contador representa conexiones abiertas, no personas únicas; no se añaden conversaciones ni presencia ficticias.
+
+**Compositor.** Texto de hasta 2000 caracteres, nombre de invitado editable de hasta 32 y aviso de publicación pública. Enter conserva el salto de línea; Ctrl o ⌘ + Enter envía. El borrador se conserva tras un fallo y solo se limpia al confirmar el envío si aún coincide con el texto enviado. El hilo sigue el final cuando corresponde y ofrece «Volver al final» al leer mensajes anteriores; cargar historial conserva una referencia al mensaje visible para mantener la posición de lectura.
+
+**Cuenta.** El diálogo comunica que las cuentas y Google llegarán próximamente. La acción de Google está deshabilitada y «Seguir como invitado» permite cerrar el diálogo. No hay rutas nuevas de autenticación.
 
 **Interacción.** Conservar foco, selección y estados funcionales aunque el aspecto sea plano.
 

@@ -8,7 +8,7 @@ web
 
 ## Product Purpose
 
-Enviar y recibir mensajes de texto al instante en una unica sala General, sin cuentas ni inicio de sesion.
+Enviar y recibir mensajes de texto al instante en una única sala General, con entrada directa como invitado y sin exigir una cuenta.
 
 ## Users
 
@@ -22,7 +22,8 @@ Participantes de comunidades abiertas que quieren abrir la aplicacion y escribir
 - Historial persistente en PostgreSQL y entrega en tiempo real.
 - API monolitica modular NestJS con adaptador Express, ejecutable localmente con Node.
 - Un repositorio con npm workspaces: apps/api para NestJS, apps/web para React con Vite y packages/contracts para contratos publicos.
-- El frontend React incorpora Tailwind CSS y shadcn/ui como base compartida. En esta etapa se preparan el tema y los componentes; la vista del chat se implementara despues, segun la confirmacion del usuario.
+- El frontend React usa Tailwind CSS y shadcn/ui. La página de inicio abre directamente General con historial paginado, envío de texto, recepción en tiempo real, nombre de invitado editable y borrador local.
+- Los estados de carga, historial vacío, reconexión y error muestran información real. No se incorporan conversaciones ni cifras de presencia ficticias. La presencia cuenta conexiones abiertas, no personas únicas.
 - Servidor y cliente en TypeScript estricto. El backend se compila a apps/api/dist y el frontend a apps/web/dist.
 - El acceso anonimo se conserva. Cuentas e inicio de sesion con Google son una evolucion prevista; aun no estan implementados.
 - Docker para PostgreSQL y SonarQube; conservar el Dockerfile como alternativa.
@@ -33,6 +34,8 @@ Participantes de comunidades abiertas que quieren abrir la aplicacion y escribir
 ## Operating Context
 
 El usuario confirma construccion directa de la interfaz, sin una maqueta previa. Las pruebas automatizadas no deben depender de iniciar Docker.
+
+Por indicación del usuario, no compilar, ejecutar comprobaciones del compilador, iniciar servidores ni ejecutar pruebas durante este trabajo asistido. Se permite revisión estática con ESLint; la validación visual y en ejecución queda pendiente.
 
 ## Product Principles
 
@@ -51,4 +54,5 @@ El usuario confirma construccion directa de la interfaz, sin una maqueta previa.
 - Colores solidos. Sin degradados, vidrio, fondos con tramas ni puntos decorativos.
 - Pocas tarjetas: organizar el contenido mediante tipografia, espacio y superficies tonales.
 - Las tarjetas y contenedores no llevan bordes decorativos ni contornos de colores. Los controles conservan una indicacion de foco visible para navegar con teclado.
-- Esta tarea prepara la base visual y todos los componentes de shadcn; no incluye construir la primera vista del chat.
+- Los botones usan extremos completamente redondos como valor predeterminado, incluidos todos los tamaños de Button. Los contenedores y campos conservan su propia forma.
+- La pantalla inicial es una conversación usable como invitado, sin una portada ni un registro que impida escribir. La entrada de cuenta informa que el registro y Google están previstos; no simula una autenticación ya disponible.
