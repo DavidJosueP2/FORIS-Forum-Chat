@@ -4,6 +4,8 @@ El acceso invitado continúa disponible en el chat global (/chat). El foro se pu
 
 Comunidades también permite lectura pública. Crear una, unirse, guardar favoritas, modificar preferencias y consultar la bandeja de notificaciones requiere una cuenta; escribir dentro de una comunidad exige pertenecer a ella. Los destinos de regreso tras acceso nativo, OTP o Google admiten las rutas conocidas de comunidades y notificaciones, y el parámetro comunidad al publicar. No se aceptan destinos externos. Los detalles están en [communities.md](communities.md).
 
+La cabecera ofrece Tu perfil como menú para una sesión activa: Ver tu perfil, una fila Tema con tres iconos para oscuro, claro y sistema, y Cerrar sesión. El tema seleccionado se resalta y cada icono conserva un nombre accesible y una ayuda al pasar el puntero. El tema se guarda localmente; si no hay una elección previa, sigue al sistema. Cerrar sesión usa el endpoint existente, espera su confirmación y muestra un error recuperable si falla. Los invitados conservan Entrar y el mismo selector compacto de temas.
+
 La implementación está preparada. El envío real de OTP y el acceso a Google requieren las credenciales que vas a completar en el archivo privado .env. No se ejecutaron compilaciones, comprobaciones del compilador, pruebas, migraciones, servidores ni envíos de correo durante esta entrega.
 
 ## Preparar el archivo local

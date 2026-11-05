@@ -3,7 +3,6 @@ import { ArrowUpRight, MessageCircle, UserRound, Wifi, WifiOff } from 'lucide-re
 import { Link } from 'react-router-dom'
 
 import { Button } from '@/components/ui/button'
-import { ThemeToggle } from '@/components/theme-toggle'
 import { AccountEntry } from '@/features/account/components/account-entry'
 import { NotificationEntry } from '@/features/communities/components/notification-entry'
 import { useAuth } from '@/features/account/hooks/use-auth'
@@ -102,7 +101,6 @@ export function ChatHome() {
             <Button asChild variant="ghost" className="h-11 px-3"><Link to="/">Foros</Link></Button>
             <Button asChild variant="ghost" className="h-11 px-3 chat-communities-link"><Link to="/comunidades">Comunidades</Link></Button>
             <span className="mobile-room-info"><RoomInfoDialog compact /></span>
-            <ThemeToggle />
             <NotificationEntry />
             <AccountEntry />
           </div>

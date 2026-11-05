@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react'
 import { NavLink, Link } from 'react-router-dom'
-import { ThemeToggle } from '@/components/theme-toggle'
 import { AccountEntry } from '@/features/account/components/account-entry'
 import { NotificationEntry } from '@/features/communities/components/notification-entry'
 import '../forum.css'
@@ -16,7 +15,7 @@ export function ForumShell({ children, contentId = 'forum-content' }: { children
         <NavLink to="/comunidades">Comunidades</NavLink>
         <NavLink to="/chat">Chat global</NavLink>
       </nav>
-      <div className="forum-account"><NotificationEntry /><ThemeToggle /><AccountEntry /></div>
+      <div className="forum-account"><NotificationEntry /><AccountEntry /></div>
     </header>
     {children}
   </div>
