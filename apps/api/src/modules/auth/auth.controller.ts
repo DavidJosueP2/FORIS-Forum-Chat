@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Inject, Post, Query, Req, Res } from '@nestjs/common';
 import type { Response } from 'express';
 import { AuthService } from './auth.service.js';
-import { GoogleAuthService } from './google-auth.service.js';
+import { GoogleAuthService, GoogleCallbackError } from './google-auth.service.js';
 import { SessionService } from './session.service.js';
 import { OtpService } from './otp.service.js';
 import { HttpError } from '../../common/errors/http-error.js';
@@ -53,11 +53,12 @@ export class AuthController {
     try {
       const result = await this.google.callback(query, request);
       this.sessions.setCookie(response, result.grant);
-      response.redirect(303, result.intent === 'login' ? '/' : '/profile?notice=' + (result.intent === 'link' ? 'google_linked' : 'reauthenticated'));
+      response.redirect(303, result.intent === 'login' ? result.returnTo : '/profile?notice=' + (result.intent === 'link' ? 'google_linked' : 'reauthenticated'));
     } catch (error) {
       const codes = new Set(['GOOGLE_CANCELLED','GOOGLE_FLOW_EXPIRED','GOOGLE_ACCOUNT_EXISTS','GOOGLE_IN_USE','GOOGLE_IDENTITY_MISMATCH','SESSION_REQUIRED','GOOGLE_ALREADY_LINKED']);
       const code = error instanceof HttpError && codes.has(error.code) ? error.code : 'GOOGLE_FAILED';
-      response.redirect(303, '/login?error=' + code);
+      const params = new URLSearchParams({ error: code, next: error instanceof GoogleCallbackError ? error.returnTo : '/' });
+      response.redirect(303, '/login?' + params.toString());
     }
   }
 }

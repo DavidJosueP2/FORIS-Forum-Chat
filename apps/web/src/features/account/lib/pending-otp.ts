@@ -1,6 +1,6 @@
 import type { OtpChallenge } from '@messages/contracts'
 
-export interface PendingOtp { kind: 'verify' | 'reset'; email: string; challenge: OtpChallenge }
+export interface PendingOtp { kind: 'verify' | 'reset'; email: string; challenge: OtpChallenge; returnTo?: string }
 const key = 'foris.pending-otp'
 export function readPendingOtp(): PendingOtp | null {
   try {

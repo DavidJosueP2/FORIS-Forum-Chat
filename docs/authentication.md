@@ -1,6 +1,8 @@
 # Cuentas y autenticación de Foris
 
-El acceso invitado continúa disponible en General. La ruta /login concentra inicio de sesión, registro y recuperación; /profile permite editar datos, correo, contraseña y la vinculación con Google.
+El acceso invitado continúa disponible en el chat global (/chat). El foro se puede leer sin cuenta; crear publicaciones o respuestas requiere una sesión de cuenta verificada. La ruta /login concentra inicio de sesión, registro y recuperación; /profile permite editar datos, correo, contraseña y la vinculación con Google.
+
+Comunidades también permite lectura pública. Crear una, unirse, guardar favoritas, modificar preferencias y consultar la bandeja de notificaciones requiere una cuenta; escribir dentro de una comunidad exige pertenecer a ella. Los destinos de regreso tras acceso nativo, OTP o Google admiten las rutas conocidas de comunidades y notificaciones, y el parámetro comunidad al publicar. No se aceptan destinos externos. Los detalles están en [communities.md](communities.md).
 
 La implementación está preparada. El envío real de OTP y el acceso a Google requieren las credenciales que vas a completar en el archivo privado .env. No se ejecutaron compilaciones, comprobaciones del compilador, pruebas, migraciones, servidores ni envíos de correo durante esta entrega.
 

@@ -1,6 +1,6 @@
 # Arquitectura de Foris
 
-Un repositorio npm workspaces contiene una API NestJS como monolito modular, un frontend React con Vite y los contratos públicos de TypeScript. El frontend tiene Tailwind CSS 4, el catálogo completo de shadcn/ui y una base de tema compartida. La página inicial abre directamente General, con historial, envío y recepción de mensajes como invitado o miembro. El registro nativo, Google y el perfil amplían la aplicación sin exigir una cuenta para participar.
+Un repositorio npm workspaces contiene una API NestJS como monolito modular, un frontend React con Vite y los contratos públicos de TypeScript. El frontend tiene Tailwind CSS 4, el catálogo completo de shadcn/ui y una base de tema compartida. La página inicial abre Foros con publicaciones por tópicos y `/comunidades` añade espacios públicos creados por usuarios. La lectura es pública; escribir requiere una cuenta verificada con sesión vigente y, dentro de una comunidad, pertenecer a ella. Los avisos de nuevas publicaciones se guardan en una bandeja privada dentro de Foris. El chat global se conserva en `/chat`, con historial, envío y recepción de mensajes como invitado o miembro. Registro nativo, Google y perfil completan los flujos de cuenta.
 
 ## Organización
 
@@ -37,13 +37,26 @@ apps/api/
         messages.repository.ts
         messages.types.ts
         message-events.service.ts
+      forum/                Publicaciones y respuestas generales o de comunidad
+        forum.controller.ts
+        forum.repository.ts
+        forum-validation.ts
+        forum-write.middleware.ts
+      communities/          Comunidades, pertenencia, preferencias y avisos internos
+        community.controller.ts
+        community.repository.ts
+        community-validation.ts
+        notification.controller.ts
+        notification.repository.ts
   test/
     unit/
     integration/
     support/
-packages/contracts/src/     Declaraciones públicas de mensajes, paginación y cuentas
+packages/contracts/src/     Declaraciones públicas de mensajes, foro, comunidades, avisos y cuentas
 apps/web/src/              Frontend React y TypeScript
-  features/chat/           Página General, componentes, estado, API y sesión invitada
+  features/forum/          Índice, creación, lectura, respuestas y borradores por cuenta
+  features/communities/    Directorio, creación, pertenencia, preferencias y bandeja
+  features/chat/           Chat global General, estado, API y sesión invitada
   features/account/        Acceso, perfil, sesión de cuenta y formularios OTP
 apps/web/public/           Archivos estáticos del frontend
 scripts/                   Comandos del repositorio
@@ -55,9 +68,9 @@ Los comandos, ESLint y el lockfile se administran desde la raíz. El frontend an
 
 Tailwind CSS se integra mediante el plugin de Vite. El alias `@/` apunta a `apps/web/src` tanto en Vite como en TypeScript. `apps/web/components.json` configura shadcn con Radix, el estilo nova, variables CSS y Lucide.
 
-`src/components/ui` contiene los 63 archivos de componentes del catálogo instalado. Las utilidades y hooks de soporte permanecen en `src/lib` y `src/hooks`. Los componentes se importan directamente desde su módulo. `App.tsx` usa React Router para montar `ChatHome` en `/`, `LoginPage` en `/login` y `ProfilePage` en `/profile`; no hay una galería intermedia. Las rutas desconocidas vuelven a General.
+`src/components/ui` contiene los 63 archivos de componentes del catálogo instalado. Las utilidades y hooks de soporte permanecen en `src/lib` y `src/hooks`. Los componentes se importan directamente desde su módulo. `App.tsx` usa React Router para montar `ForumPage` en `/`, `CreatePostPage` en `/publicar`, `PostPage` en `/publicaciones/:postId`, `CommunitiesPage` en `/comunidades`, `CreateCommunityPage` en `/comunidades/crear`, `CommunityPage` en `/comunidades/:communityId`, `NotificationsPage` en `/notificaciones`, `ChatHome` en `/chat`, `LoginPage` en `/login` y `ProfilePage` en `/profile`. `/publicar?comunidad=ID` conserva el contexto de comunidad. Las rutas desconocidas vuelven al índice del foro.
 
-`src/index.css` define colores semánticos, temas claro y oscuro, superficies sólidas, foco y movimiento reducido. `AppProviders` compone los proveedores de tema y autenticación, los tooltips y Sonner. El tema respeta la preferencia del sistema, guarda la elección local y sincroniza otras pestañas. `AccountShell` comparte navegación y `ThemeToggle` con General; las páginas de cuenta conservan formularios abiertos, etiquetas visibles y el sistema visual existente.
+`src/index.css` define colores semánticos, temas claro y oscuro, superficies sólidas, foco y movimiento reducido. `AppProviders` compone los proveedores de tema y autenticación, los tooltips y Sonner. El tema respeta la preferencia del sistema, guarda la elección local y sincroniza otras pestañas. `ForumShell` sirve de cabecera para foro, comunidades y `AccountShell`, con Foros, Comunidades y Chat global en ese orden; `NotificationEntry` añade la bandeja y su contador para la cuenta activa. El chat conserva su navegación propia con enlaces a Foros y Comunidades. Todas las superficies comparten tema y entrada de cuenta. `features/forum/forum.css` y `features/communities/communities.css` aplican la misma identidad a listas y formularios abiertos sin añadir tokens visuales.
 
 `Button` usa extremos completamente redondos en todas sus variantes y tamaños, incluidos los de icono. `className` conserva la posibilidad de una sustitución deliberada. La política global elimina bordes y sombras de las primitivas y conserva el indicador de foco de teclado. Los campos y contenedores mantienen sus radios propios.
 
@@ -69,7 +82,25 @@ Los nueve SVG de identidad viven en `src/assets/characters`. `src/lib/foris-char
 
 Las variantes exportadas por shadcn y sus hooks públicos se permiten explícitamente en la regla de recarga de componentes de ESLint. Los demás componentes de aplicación mantienen la regla habitual. Los hooks de viewport y carrusel leen sus fuentes externas con `useSyncExternalStore`.
 
-## Conversación General
+## Publicaciones y respuestas
+
+`src/features/forum` separa páginas, componentes, hooks de carga y borradores. El índice permite buscar en título y cuerpo y filtrar por tópico o autor. General, Tecnología, Aprendizaje, Creatividad y Proyectos son tópicos predeterminados; las comunidades son espacios independientes creados por usuarios, sin añadir creación de tópicos. El detalle presenta cuerpo y respuestas como texto literal de React, sin interpretar HTML ni Markdown. Los límites son 160 caracteres para el título, 10000 para una publicación y 5000 para una respuesta.
+
+La lectura de `/api/topics`, `/api/posts`, el detalle y sus respuestas es pública. Las páginas de publicaciones y respuestas usan 20 elementos por defecto, con cursor `before` por identificador, orden `id DESC` y carga adicional explícita. La búsqueda usa `ILIKE` parametrizado y escapa los caracteres de patrón. El foro no usa SSE ni sondeo periódico; la recepción en tiempo real pertenece al chat global.
+
+`ForumModule` importa `AuthModule`. `ForumController` obtiene la identidad mediante `SessionService.required`; `ForumRepository` bloquea al usuario, exige correo verificado y comprueba de nuevo la vigencia de la sesión dentro de la transacción. El autor procede de esa sesión. El repositorio reúne SQL parametrizado y coordinación transaccional para crear publicaciones o respuestas, actualizar el contador y registrar la última actividad. Los reintentos se resuelven por cuenta y `requestId`; repetirlo con contenido diferente devuelve 409. Los límites persistidos permiten hasta diez publicaciones y sesenta respuestas por cuenta y hora; los reintentos ya guardados se recuperan antes de consumir ese límite.
+
+`ParticipationGate` explica el acceso requerido sin impedir leer y ofrece el chat global para conversar como invitado. `CommunityWritingGate` añade el requisito de pertenencia para escribir en una comunidad. Los enlaces de acceso y el flujo OAuth conservan un destino interno permitido para volver a publicar o responder, incluidas las rutas de comunidades, bandeja y el parámetro validado `comunidad`. Los borradores se guardan en `sessionStorage` de la pestaña bajo claves por cuenta y comunidad al publicar y por publicación al responder. Se conservan ante un fallo, y la interfaz avisa si el navegador no permite guardarlos. No contienen contraseñas ni tokens de sesión. Los errores de carga y de paginación permiten reintentar; los estados vacíos no inventan contenido.
+
+## Comunidades y avisos internos
+
+`CommunitiesModule` importa `AuthModule`, expone controladores separados para comunidades y notificaciones y exporta `CommunityRepository` para el foro. El directorio admite búsqueda y vistas públicas, propias o favoritas con paginación explícita; el detalle reúne descripción, pertenencia, preferencias y publicaciones. Crear, unirse, guardar favoritas y cambiar preferencias requiere cuenta verificada. Favorita y pertenencia son independientes: salir conserva la favorita. El creador entra como miembro, guarda su comunidad y no puede abandonarla en esta etapa.
+
+Las transacciones comprueban la sesión y bloquean al usuario con `FOR NO KEY UPDATE`; el bloqueo de la comunidad serializa publicaciones, pertenencia y preferencias. El foro comprueba la membresía al crear publicaciones o respuestas de comunidad. Crear una publicación guarda sus contadores y los avisos en la misma transacción, excluyendo al autor y a quienes no sean miembros o hayan silenciado los avisos. Las claves de idempotencia impiden duplicar la publicación o sus avisos al reintentar.
+
+Los avisos se entregan únicamente dentro de Foris. La bandeja y el contador se filtran por la cuenta de sesión. La lectura individual es idempotente y la lectura conjunta usa el ID más reciente cargado como corte para conservar pendientes los avisos posteriores. El contador se consulta al montar la cabecera, recuperar foco o visibilidad y confirmar lecturas; la bandeja permite actualizar de forma explícita. No hay correo, permisos del navegador, sondeo continuo ni SSE de notificaciones. Los contratos, límites y preferencias completos se mantienen en [communities.md](communities.md).
+
+## Chat global General
 
 `src/features/chat` separa los componentes de presentación, el hook `useChat`, el cliente HTTP y las utilidades de mensajes y sesión. `ChatHome` compone navegación lateral, encabezado con estado de conexión, `MessageFeed`, `MessageComposer` y las pautas de la comunidad. La navegación se oculta por debajo de 1024px; las pautas aparecen como columna desde 1360px y siguen disponibles mediante diálogo con menos espacio. El encabezado ofrece cambio de tema y entrada de cuenta.
 
@@ -111,9 +142,9 @@ Google usa PKCE, `state`, vinculación al navegador y `nonce`; la biblioteca ofi
 
 En `messages`, el controlador transforma solicitudes HTTP en llamadas al servicio. Los pipes validan y normalizan las entradas. El servicio coordina el guardado y la publicación de eventos; el repositorio ejecuta SQL parametrizado y resuelve reintentos concurrentes. El servicio de eventos administra conexiones SSE, presencia, latidos y límites de conexiones.
 
-La base de datos y la configuración son servicios compartidos de infraestructura. `health` consulta la base directamente y no depende del módulo de mensajes. `messages` importa `AuthModule` y consume su proveedor exportado `SessionService` para resolver al remitente; no accede a las tablas de cuentas por su cuenta. `auth` usa infraestructura compartida y contratos públicos.
+La base de datos y la configuración son servicios compartidos de infraestructura. `health` consulta la base directamente y no depende del módulo de mensajes. `messages` importa `AuthModule` y consume su proveedor exportado `SessionService` para resolver al remitente; no accede a las tablas de cuentas por su cuenta. `forum` importa `AuthModule` y `CommunitiesModule`: consume `SessionService` y `CommunityRepository` para exigir verificación, pertenencia y avisos transaccionales. `communities` usa sesiones y persistencia compartida para sus permisos y preferencias. `auth` usa infraestructura compartida y contratos públicos.
 
-`common` contiene mecanismos HTTP reutilizables. Las reglas de mensajes pertenecen a `modules/messages` y las de cuentas a `modules/auth`. Los tipos privados de cada módulo permanecen en él. `@messages/contracts` contiene exclusivamente declaraciones públicas de mensajes y cuentas sin dependencias de Nest o PostgreSQL; todos sus consumidores usan `import type`.
+`common` contiene mecanismos HTTP reutilizables. Las reglas de mensajes pertenecen a `modules/messages`, las de publicaciones a `modules/forum`, las de comunidades y avisos a `modules/communities` y las de cuentas a `modules/auth`. Los tipos privados de cada módulo permanecen en él. `@messages/contracts` contiene exclusivamente declaraciones públicas de mensajes, foro, comunidades, notificaciones y cuentas sin dependencias de Nest o PostgreSQL; todos sus consumidores usan `import type`.
 
 ## Contrato HTTP
 
@@ -123,12 +154,20 @@ La base de datos y la configuración son servicios compartidos de infraestructur
 | GET | `/api/messages` | Historial con `before`, `after` y `limit` |
 | POST | `/api/messages` | Guarda y publica texto; 201 al crear, 200 al reintentar |
 | GET | `/api/events` | SSE con eventos `message` y `presence` |
+| GET | `/api/topics` | Tópicos predeterminados |
+| GET | `/api/posts` | Publicaciones con `topic`, `author`, `community`, `search`, `before` y `limit` |
+| GET | `/api/posts/:id` | Publicación completa |
+| GET | `/api/posts/:id/replies` | Respuestas con `before` y `limit` |
+| POST | `/api/posts` | Crea con cuenta verificada y pertenencia si hay `communityId`; 201 al crear, 200 al reintentar |
+| POST | `/api/posts/:id/replies` | Responde con cuenta verificada y pertenencia si corresponde; 201 al crear, 200 al reintentar |
+| GET / POST / DELETE / PATCH | `/api/communities/*` | Directorio, creación, pertenencia y preferencias propias |
+| GET / POST | `/api/notifications/*` | Bandeja, contador privado y lectura individual o hasta un corte |
 | GET / POST | `/api/auth/*` | Disponibilidad, sesión, registro, acceso, OTP, recuperación y Google |
 | GET / PATCH / POST | `/api/account/*` | Datos personales, cambio verificado de correo, contraseña y Google |
 
 Se conserva el límite de 2000 caracteres, el nombre opcional de invitado normalizado a Invitado, los identificadores BIGINT como cadenas y el formato de error `{ error: { code, message } }`. Los mensajes pueden incluir `accountId`, asignado solo por el servidor. Un `requestId` reutilizado con otro contenido devuelve 409. Solo los envíos nuevos se publican a los clientes conectados. La tabla detallada de rutas de cuenta está en [authentication.md](authentication.md).
 
-El POST de mensajes aplica validación de origen, límite por IP y parser JSON de 16 KB antes del controlador; las rutas de cuentas tienen su middleware y el mismo tamaño de parser. Helmet protege tanto la API como los archivos públicos. La API sirve el frontend compilado desde `apps/web/dist`, nunca los archivos TypeScript fuente, y devuelve `index.html` sin caché para las entradas directas a `/login` y `/profile`.
+El POST de mensajes aplica validación de origen, límite por IP y parser JSON de 16 KB antes del controlador; las rutas de cuentas tienen su middleware y el mismo tamaño de parser. Comunidades y notificaciones reutilizan `AuthHttpMiddleware` y el parser de 16 KB. Las escrituras del foro exigen el origen configurado y JSON, limitan a sesenta solicitudes por IP cada diez minutos y usan un parser de 64 KB para admitir los cuerpos previstos. Helmet protege tanto la API como los archivos públicos. La API sirve el frontend compilado desde `apps/web/dist`, nunca los archivos TypeScript fuente, y devuelve `index.html` sin caché para las entradas directas a `/login`, `/profile`, `/chat`, `/publicar`, `/publicaciones/:id`, `/comunidades`, `/comunidades/crear`, `/comunidades/:id` y `/notificaciones`.
 
 En desarrollo, Vite escucha en `127.0.0.1:5173` y reenvía `/api` a Nest en el puerto configurado por `APP_PORT` o `PORT`. El proxy conserva `Host` y `Origin` para mantener la política de origen de la API.
 
@@ -137,6 +176,10 @@ En desarrollo, Vite escucha en `127.0.0.1:5173` y reenvía `/api` a Nest en el p
 Al inicializarse, la API adquiere una conexión y ejecuta las migraciones pendientes dentro de una transacción. Un bloqueo asesor de PostgreSQL serializa los cambios de esquema entre procesos. `app_schema_migrations` registra la versión aplicada. La primera migración crea o adopta la tabla `messages` existente conservando sus datos.
 
 La migración 002 añade `users`, `user_google_identities`, `auth_sessions`, `auth_otp_challenges`, `auth_google_flows`, `auth_mail_outbox` y `auth_login_attempts`, además de una asociación opcional `messages.user_id`. Los mensajes previos se conservan como invitados. La cola cifrada comparte PostgreSQL con las solicitudes OTP y sus plazos. La migración y su fixture se actualizaron mediante revisión estática; no se aplicaron ni ejecutaron durante esta entrega.
+
+La migración 003 añade `forum_topics`, `forum_posts` y `forum_replies`, sus índices de paginación y los cinco tópicos iniciales. Añade también `auth_google_flows.return_to` para conservar el destino tras OAuth. Es aditiva: conserva cuentas, sesiones y el historial de mensajes existente. No se aplicó durante este trabajo.
+
+La migración 004 añade `communities`, `community_memberships`, `community_preferences`, `community_notifications` y `forum_posts.community_id` opcional. Conserva las cuentas, publicaciones y mensajes existentes; las publicaciones generales mantienen la comunidad nula. Usa el mismo mecanismo versionado de arranque y no se aplicó durante este trabajo.
 
 Al cerrar, el servicio de eventos termina las conexiones SSE antes de que Nest cierre el servidor HTTP. El pool PostgreSQL termina al concluir el cierre de la aplicación. Los errores de solicitudes muestran mensajes públicos y los registros omiten consultas y credenciales.
 
@@ -167,4 +210,4 @@ Las pruebas del backend usan Node Test Runner; `@nestjs/testing` crea el módulo
 
 El `.env` local, las dependencias instaladas, compilaciones e informes están excluidos de Git. `.env.example` contiene únicamente la plantilla de configuración y se conserva en el repositorio.
 
-General y los flujos de cuenta se entregan con revisión estática, sin ejecutar compilaciones, comprobaciones del compilador, pruebas, migraciones, servidores de desarrollo, Docker ni renderizados de navegador por indicación del usuario. La validación visual y en ejecución, la entrega SMTP y el retorno OAuth permanecen pendientes de configuración y comprobación en el entorno del usuario.
+El foro, las comunidades, la bandeja, el chat global y los flujos de cuenta se entregan con revisión estática, sin ejecutar compilaciones, comprobaciones del compilador, pruebas, migraciones, servidores de desarrollo, Docker ni renderizados de navegador por indicación del usuario. La validación visual y en ejecución, la entrega SMTP y el retorno OAuth permanecen pendientes de configuración y comprobación en el entorno del usuario. Los detalles del foro y de sus permisos están en [forum.md](forum.md); los de comunidades y avisos, en [communities.md](communities.md).

@@ -11,6 +11,7 @@ import { OtpForm } from '../components/otp-form'
 import { useAuth } from '../hooks/use-auth'
 import { accountError, accountRequest, startGoogle } from '../api/account-api'
 import { readPendingOtp, savePendingOtp, type PendingOtp } from '../lib/pending-otp'
+import { returnTarget } from '../lib/return-target'
 
 const googleErrors: Record<string, string> = {
   GOOGLE_CANCELLED: 'No se completó el acceso con Google. Puedes volver a intentarlo.',
@@ -26,6 +27,7 @@ export function LoginPage() {
   const auth = useAuth()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
+  const next = returnTarget(params.get('next'))
   const mode = params.get('mode') === 'register' ? 'register' : params.get('mode') === 'recover' ? 'recover' : 'login'
   const [email, setEmail] = useState('')
   const [displayName, setDisplayName] = useState('')
@@ -50,7 +52,7 @@ export function LoginPage() {
     setNotice(null)
     setPassword('')
     setConfirmation('')
-    setParams(value === 'login' ? {} : { mode: value })
+    setParams(value === 'login' ? { next } : { mode: value, next })
   }
   async function submit() {
     if (guard.current) return
@@ -62,17 +64,17 @@ export function LoginPage() {
       if (mode === 'register') {
         if (password !== confirmation) throw new Error('Las contraseñas no coinciden.')
         const challenge = await accountRequest<OtpChallenge>('auth/register', 'POST', { email, password, displayName })
-        remember({ kind: 'verify', email, challenge })
+        remember({ kind: 'verify', email, challenge, returnTo: next })
       } else if (mode === 'recover') {
         const challenge = await accountRequest<OtpChallenge>('auth/password/forgot', 'POST', { email })
-        remember({ kind: 'reset', email, challenge })
+        remember({ kind: 'reset', email, challenge, returnTo: next })
       } else {
         const result = await accountRequest<{ session?: AuthSession; challenge?: OtpChallenge }>('auth/login', 'POST', { email, password })
         if (result.session) {
           auth.applySession(result.session)
           savePendingOtp(null)
-          navigate('/', { replace: true })
-        } else if (result.challenge) remember({ kind: 'verify', email, challenge: result.challenge })
+          navigate(next, { replace: true })
+        } else if (result.challenge) remember({ kind: 'verify', email, challenge: result.challenge, returnTo: next })
         else throw new Error('No pudimos abrir tu cuenta. Inténtalo de nuevo.')
       }
       setPassword('')
@@ -89,8 +91,8 @@ export function LoginPage() {
         <aside className="auth-story">
           <ForisCharacter mood="welcome" width={128} height={128} />
           <h2>Aquí hay lugar<br />para tu voz.</h2>
-          <p>Una cuenta para volver a tus conversaciones con tu propio perfil. También puedes seguir participando como invitado.</p>
-          <Button asChild variant="secondary" className="h-12 px-6"><Link to="/">Seguir como invitado</Link></Button>
+          <p>Una cuenta para publicar y responder con tu propio perfil. Como invitado puedes leer el foro y conversar en el chat global.</p>
+          <Button asChild variant="secondary" className="h-12 px-6"><Link to="/">Explorar foros</Link></Button>
         </aside>
         <section className="auth-main" aria-labelledby="access-title">
           <div className="auth-form-column">
@@ -133,7 +135,7 @@ export function LoginPage() {
                         const session = await accountRequest<AuthSession>('auth/verify-email', 'POST', { challengeId: pending.challenge.challengeId, code })
                         auth.applySession(session)
                         remember(null)
-                        navigate('/', { replace: true })
+                        navigate(returnTarget(pending.returnTo ?? next), { replace: true })
                       } else {
                         if (password !== confirmation) throw new Error('Las contraseñas no coinciden.')
                         await accountRequest('auth/password/reset', 'POST', { challengeId: pending.challenge.challengeId, code, newPassword: password })
@@ -141,7 +143,7 @@ export function LoginPage() {
                         remember(null)
                         setPassword('')
                         setConfirmation('')
-                        setParams({})
+                        setParams({ next: returnTarget(pending.returnTo ?? next) })
                         setNotice('Tu contraseña se actualizó. Ya puedes entrar con ella.')
                       }
                     } finally { setBusy(false); guard.current = false }
@@ -163,7 +165,7 @@ export function LoginPage() {
                       guard.current = true
                       setBusy(true)
                       setError(null)
-                      void startGoogle('login').catch(cause => { setError(accountError(cause)); setBusy(false); guard.current = false })
+                      void startGoogle('login', undefined, next).catch(cause => { setError(accountError(cause)); setBusy(false); guard.current = false })
                     }}>Continuar con Google</Button>
                   {!auth.options.google && auth.status === 'ready' && <p className="account-hint">Google no está disponible en este momento.</p>}
                   <p className="auth-alternative">O usa tu correo</p>
@@ -186,7 +188,7 @@ export function LoginPage() {
                 </Button>
               </>
             )}
-            <Link to="/" className="auth-guest-link">Volver a General como invitado</Link>
+            <Link to="/" className="auth-guest-link">Volver a los foros</Link>
           </div>
         </section>
       </main>

@@ -260,7 +260,9 @@ export function ProfilePage() {
         <PasswordSettings key={'password-' + user.id} user={user} creationRequest={passwordCreationRequest} onCreatePassword={createPassword} />
         <GoogleSettings key={'google-' + user.id} user={user} onCreatePassword={createPassword} />
         <footer className="profile-footer">
-          <Link to="/" className="auth-guest-link">Volver a la conversación</Link>
+          <Link to="/" className="auth-guest-link">Volver a los foros</Link>
+          <Link to="/comunidades?vista=mias" className="auth-guest-link">Mis comunidades</Link>
+          <Link to={'/?autor=' + user.id} className="auth-guest-link">Mis publicaciones</Link>
           <Button variant="secondary" className="h-11 px-6" disabled={busy} onClick={() => {
             if (busy) return
             setBusy(true); setError(null)
