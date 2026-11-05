@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import type { Express } from 'express';
+import type { Express, Request, Response, NextFunction } from 'express';
 import type { Server } from 'node:http';
 import helmet from 'helmet';
 import { AppModule } from './app.module.js';
@@ -16,11 +16,16 @@ export function configureApplication(app: NestExpressApplication): void {
   if (config.trustProxy) express.set('trust proxy', config.trustProxy);
   const storageOrigins = config.media.driver === 's3' ? [new URL(config.media.s3.endpoint).origin] : [];
   app.setGlobalPrefix('api');
+  app.use((_request: Request, response: Response, next: NextFunction) => {
+    response.set('Permissions-Policy', 'camera=(self), microphone=(self), display-capture=()');
+    next();
+  });
   app.use(helmet({
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"], scriptSrc: ["'self'"], styleSrc: ["'self'"], connectSrc: ["'self'", ...storageOrigins],
         imgSrc: ["'self'", 'blob:', ...storageOrigins],
+        mediaSrc: ["'self'", 'blob:'],
         objectSrc: ["'none'"], frameAncestors: ["'none'"], upgradeInsecureRequests: null,
       },
     },

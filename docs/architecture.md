@@ -1,6 +1,6 @@
 # Arquitectura de Foris
 
-Un repositorio npm workspaces contiene una API NestJS como monolito modular, un frontend React con Vite y los contratos públicos de TypeScript. El frontend tiene Tailwind CSS 4, el catálogo completo de shadcn/ui y una base de tema compartida. La página inicial abre Foros con publicaciones por tópicos y `/comunidades` añade espacios públicos creados por usuarios. La lectura es pública; escribir requiere una cuenta verificada con sesión vigente y, dentro de una comunidad, pertenecer a ella. Los avisos de nuevas publicaciones se guardan en una bandeja privada dentro de Foris. El chat global se conserva en `/chat`, con historial, envío y recepción de mensajes como invitado o miembro. Registro nativo, Google y perfil completan los flujos de cuenta.
+Un repositorio npm workspaces contiene una API NestJS como monolito modular, un frontend React con Vite y los contratos públicos de TypeScript. El frontend tiene Tailwind CSS 4, el catálogo completo de shadcn/ui y una base de tema compartida. La página inicial abre Foros con publicaciones por tópicos y `/comunidades` añade espacios públicos creados por usuarios. La lectura es pública; escribir requiere una cuenta verificada con sesión vigente y, dentro de una comunidad, pertenecer a ella. Los avisos de nuevas publicaciones se guardan en una bandeja privada dentro de Foris. El chat global se conserva en `/chat`, con historial, envío y recepción de mensajes como invitado o miembro. Una videollamada WebRTC opcional admite hasta cuatro cuentas verificadas desde ese chat. Registro nativo, Google y perfil completan los flujos de cuenta.
 
 ## Organización
 
@@ -51,16 +51,22 @@ apps/api/
         community-validation.ts
         notification.controller.ts
         notification.repository.ts
+      video-calls/          Plazas y señalización privada de la llamada global
+        video-call.controller.ts
+        video-call.service.ts
+        video-call.repository.ts
+        video-call-validation.ts
   test/
     unit/
     integration/
     support/
-packages/contracts/src/     Declaraciones públicas de mensajes, foro, imágenes, comunidades, avisos y cuentas
+packages/contracts/src/     Declaraciones públicas de mensajes, foro, imágenes, comunidades, avisos, cuentas y llamadas
 apps/web/src/              Frontend React y TypeScript
   features/forum/          Índice, creación, lectura, respuestas y borradores por cuenta
   features/media/          Selector, progreso y lectura de imágenes con enlaces temporales
   features/communities/    Directorio, creación, pertenencia, preferencias y bandeja
   features/chat/           Chat global General, estado, API y sesión invitada
+  features/video-calls/    Panel en línea, dispositivos y conexiones WebRTC
   features/account/        Acceso, perfil, sesión de cuenta y formularios OTP
 apps/web/public/           Archivos estáticos del frontend
 scripts/                   Comandos del repositorio
@@ -132,6 +138,16 @@ El estado de conexión distingue conectando, en directo, reconectando y sin cone
 
 La interfaz espera a resolver la sesión antes de enviar y permite seguir preparando el texto. El perfil invitado y el borrador se conservan al entrar o salir de una cuenta. La condición «Miembro» acredita acceso a una cuenta, no la identidad real del nombre mostrado.
 
+### Videollamada compartida
+
+`ChatHome` monta `GlobalVideoCall` encima del hilo. La franja muestra disponibilidad y abre un panel en línea, limitado a la mitad de la altura disponible y con desplazamiento propio para conservar el compositor. El panel reutiliza colores semánticos, tipografía y botones de píldora. Abrirlo no activa dispositivos: una segunda acción explícita solicita cámara y micrófono. Los invitados conservan los mensajes de texto y reciben un enlace de acceso para llamar; la API exige una cuenta verificada y sesión vigente.
+
+`VideoCallModule` importa `AuthModule`. El controlador resuelve la sesión, el servicio entrega configuración ICE y coordina la limpieza, y el repositorio serializa las plazas mediante el bloqueo de una fila de sala en PostgreSQL. Hasta cuatro cuentas pueden participar, con una participación por cuenta vinculada a la sesión. Las señales SDP son temporales y privadas entre participantes autorizados. El sondeo de sincronización renueva la presencia; las plazas y señales caducan y se limpian al operar o mediante el temporizador del servicio. Estas restricciones se comparten entre instancias; los límites por IP siguen siendo locales al proceso.
+
+`VideoCallClient` mantiene una malla de hasta tres conexiones `RTCPeerConnection` por participante, con iniciador determinista por pareja y recopilación ICE completa antes de enviar cada descripción. Audio y vídeo viajan entre navegadores o por TURN; Nest y PostgreSQL coordinan la llamada sin grabar sus medios. Producción requiere TURN con credenciales temporales y usa únicamente relay. Sin TURN, el entorno local intenta conexión directa y STUN y advierte sobre la IP compartida con participantes.
+
+Los controles permiten silenciar, apagar cámara, cancelar y salir. El cliente cierra conexiones y detiene pistas al salir, cerrar el panel, desmontar, cambiar de cuenta, perder comunicación o recibir `pagehide` u `offline`. La caducidad del servidor restringe participación y señalización; una conexión P2P ya establecida depende del cierre del cliente. Los contratos, plazos, límites, configuración y comprobaciones manuales pendientes se detallan en [video-calls.md](video-calls.md).
+
 ### Integración de modales y CSP
 
 La CSP de producción conserva `style-src 'self'`. La dependencia de bloqueo de desplazamiento usada por los modales de Radix inyecta una etiqueta de estilo sin nonce, que esa política rechaza. La revisión estática no establece un fallo de la tarea modal: la gestión de foco y el aislamiento de la rueda son mecanismos separados. El efecto de ese rechazo sobre el bloqueo de desplazamiento queda pendiente de comprobar en un navegador con la CSP de producción. No se ha debilitado la política ni se afirma validación en ejecución.
@@ -156,9 +172,9 @@ Google usa PKCE, `state`, vinculación al navegador y `nonce`; la biblioteca ofi
 
 En `messages`, el controlador transforma solicitudes HTTP en llamadas al servicio. Los pipes validan y normalizan las entradas. El servicio coordina el guardado y la publicación de eventos; el repositorio ejecuta SQL parametrizado y resuelve reintentos concurrentes. El servicio de eventos administra conexiones SSE, presencia, latidos y límites de conexiones.
 
-La base de datos y la configuración son servicios compartidos de infraestructura. `health` consulta la base directamente y no depende del módulo de mensajes. `messages` importa `AuthModule` y consume su proveedor exportado `SessionService` para resolver al remitente; no accede a las tablas de cuentas por su cuenta. `forum` importa `AuthModule`, `CommunitiesModule` y `MediaModule`: consume `SessionService`, `CommunityRepository` y `MediaRepository` para exigir verificación, pertenencia, asociación de imágenes y avisos transaccionales. `communities` usa sesiones y persistencia compartida para sus permisos y preferencias. `media` usa sesiones, persistencia compartida y su puerto de almacenamiento. `auth` usa infraestructura compartida y contratos públicos.
+La base de datos y la configuración son servicios compartidos de infraestructura. `health` consulta la base directamente y no depende del módulo de mensajes. `messages` importa `AuthModule` y consume su proveedor exportado `SessionService` para resolver al remitente; no accede a las tablas de cuentas por su cuenta. `forum` importa `AuthModule`, `CommunitiesModule` y `MediaModule`: consume `SessionService`, `CommunityRepository` y `MediaRepository` para exigir verificación, pertenencia, asociación de imágenes y avisos transaccionales. `communities` usa sesiones y persistencia compartida para sus permisos y preferencias. `media` usa sesiones, persistencia compartida y su puerto de almacenamiento. `video-calls` usa sesiones, transacciones y configuración de ICE; no depende del SSE ni del historial de mensajes. `auth` usa infraestructura compartida y contratos públicos.
 
-`common` contiene mecanismos HTTP reutilizables. Las reglas de mensajes pertenecen a `modules/messages`, las de publicaciones a `modules/forum`, las de imágenes a `modules/media`, las de comunidades y avisos a `modules/communities` y las de cuentas a `modules/auth`. Los tipos privados de cada módulo permanecen en él. `@messages/contracts` contiene exclusivamente declaraciones públicas de mensajes, foro, imágenes, comunidades, notificaciones y cuentas sin dependencias de Nest o PostgreSQL; todos sus consumidores usan `import type`.
+`common` contiene mecanismos HTTP reutilizables. Las reglas de mensajes pertenecen a `modules/messages`, las de publicaciones a `modules/forum`, las de imágenes a `modules/media`, las de comunidades y avisos a `modules/communities`, las de llamadas a `modules/video-calls` y las de cuentas a `modules/auth`. Los tipos privados de cada módulo permanecen en él. `@messages/contracts` contiene exclusivamente declaraciones públicas de mensajes, foro, imágenes, comunidades, notificaciones, cuentas y llamadas sin dependencias de Nest o PostgreSQL; todos sus consumidores usan `import type`.
 
 ## Contrato HTTP
 
@@ -168,6 +184,7 @@ La base de datos y la configuración son servicios compartidos de infraestructur
 | GET | `/api/messages` | Historial con `before`, `after` y `limit` |
 | POST | `/api/messages` | Guarda y publica texto; 201 al crear, 200 al reintentar |
 | GET | `/api/events` | SSE con eventos `message` y `presence` |
+| GET / POST | `/api/video-call`, `/api/video-call/*` | Disponibilidad, entrada, sincronización privada, señales y salida con cuenta verificada |
 | GET | `/api/topics` | Tópicos predeterminados |
 | GET | `/api/posts` | Publicaciones con `topic`, `author`, `community`, `search`, `before` y `limit` |
 | GET | `/api/posts/:id` | Publicación completa |
@@ -183,7 +200,7 @@ La base de datos y la configuración son servicios compartidos de infraestructur
 
 Se conserva el límite de 2000 caracteres, el nombre opcional de invitado normalizado a Invitado, los identificadores BIGINT como cadenas y el formato de error `{ error: { code, message } }`. Los mensajes pueden incluir `accountId`, asignado solo por el servidor. Un `requestId` reutilizado con otro contenido devuelve 409. Solo los envíos nuevos se publican a los clientes conectados. La tabla detallada de rutas de cuenta está en [authentication.md](authentication.md).
 
-El POST de mensajes aplica validación de origen, límite por IP y parser JSON de 16 KB antes del controlador; las rutas de cuentas tienen su middleware y el mismo tamaño de parser. Comunidades y notificaciones reutilizan `AuthHttpMiddleware` y el parser de 16 KB. Las escrituras del foro exigen el origen configurado y JSON, limitan a sesenta solicitudes por IP cada diez minutos y usan un parser de 64 KB para admitir los cuerpos previstos. Helmet protege tanto la API como los archivos públicos. La API sirve el frontend compilado desde `apps/web/dist`, nunca los archivos TypeScript fuente, y devuelve `index.html` sin caché para las entradas directas a `/login`, `/profile`, `/chat`, `/publicar`, `/publicaciones/:id`, `/comunidades`, `/comunidades/crear`, `/comunidades/:id` y `/notificaciones`.
+El POST de mensajes aplica validación de origen, límite por IP y parser JSON de 16 KB antes del controlador; las rutas de cuentas tienen su middleware y el mismo tamaño de parser. Comunidades y notificaciones reutilizan `AuthHttpMiddleware` y el parser de 16 KB. Las escrituras del foro exigen el origen configurado y JSON, limitan a sesenta solicitudes por IP cada diez minutos y usan un parser de 64 KB para admitir los cuerpos previstos. `VideoCallMiddleware` valida origen y JSON en sus escrituras, limita solicitudes y entradas por IP y usa un parser de 80 KiB sin compresión. Helmet protege tanto la API como los archivos públicos; `Permissions-Policy` restringe cámara y micrófono al propio origen y deshabilita captura de pantalla. La API sirve el frontend compilado desde `apps/web/dist`, nunca los archivos TypeScript fuente, y devuelve `index.html` sin caché para las entradas directas a `/login`, `/profile`, `/chat`, `/publicar`, `/publicaciones/:id`, `/comunidades`, `/comunidades/crear`, `/comunidades/:id` y `/notificaciones`.
 
 En desarrollo, Vite escucha en `127.0.0.1:5173` y reenvía `/api` a Nest en el puerto configurado por `APP_PORT` o `PORT`. El proxy conserva `Host` y `Origin` para mantener la política de origen de la API.
 
@@ -199,7 +216,9 @@ La migración 004 añade `communities`, `community_memberships`, `community_pref
 
 La migración 005 añade `media`, `media_quotas`, `media_events` y `media_metrics`, además de `forum_posts.media_request_ids` para comprobar la idempotencia de publicaciones con imágenes. PostgreSQL guarda metadatos, permisos, cuotas, estados y claves de objetos; los bytes permanecen en disco o en el bucket privado. Es aditiva y no se aplicó durante este trabajo.
 
-Al cerrar, el servicio de eventos termina las conexiones SSE y `MediaService` cancela su temporizador y espera la limpieza en curso antes de que Nest cierre el servidor HTTP. El pool PostgreSQL termina al concluir el cierre de la aplicación. Los errores de solicitudes muestran mensajes públicos y los registros omiten consultas y credenciales.
+La migración 006 añade `video_call_room`, `video_call_members` y `video_call_signals` para coordinar plazas y señales con expiración. Los participantes se vinculan a cuentas y sesiones; las señales se eliminan al retirar sus participantes. Es aditiva y no se aplicó durante este trabajo. No guarda grabaciones ni archivos de medios.
+
+Al cerrar, el servicio de eventos termina las conexiones SSE y `MediaService` y `VideoCallService` cancelan sus temporizadores y esperan la limpieza en curso antes de que Nest cierre el servidor HTTP. El pool PostgreSQL termina al concluir el cierre de la aplicación. Los errores de solicitudes muestran mensajes públicos y los registros omiten consultas y credenciales.
 
 La entrega SSE actual funciona en una instancia. Un despliegue con varias instancias necesitará distribución de eventos y límites compartidos; esa ampliación pertenece a otra etapa.
 
@@ -210,6 +229,8 @@ La API carga los archivos de entorno de la raíz según NODE_ENV; sin una selecc
 Los manifiestos de los workspaces y el lockfile único se mantienen desde la raíz. Node 24.15+ de la rama 24 LTS es la versión recomendada para las dependencias de desarrollo.
 
 `config/auth-config.ts` valida `APP_URL`, el secreto de autenticación, SMTP y las credenciales Google del backend. `AUTH_SECRET` habilita cuentas; SMTP completo habilita el envío de códigos y Google se configura de forma independiente. Sin correo, el registro y las solicitudes OTP no están disponibles, mientras un acceso con contraseña existente puede continuar. `npm run setup:auth` prepara el archivo privado preservando valores existentes y genera un secreto si falta, sin mostrarlo. Ya se ejecutó ese paso; el usuario completará SMTP y Google según [authentication.md](authentication.md). No se activaron ni comprobaron integraciones externas. Ninguna credencial se publica con variables `VITE_`.
+
+`config/video-call-config.ts` valida `CALLS_ENABLED`, las URLs STUN/TURN y el secreto compartido de TURN. La función se habilita por defecto fuera de producción; producción requiere activación explícita y TURN con credenciales temporales. El secreto permanece en el backend y en TURN, y el navegador recibe únicamente credenciales con vencimiento. Los requisitos y la configuración manual están en [video-calls.md](video-calls.md).
 
 ESLint es el analizador común para API y React, con reglas de hooks y recarga de componentes. TypeScript 6 se usa en ambos workspaces para mantener la compatibilidad con typescript-eslint.
 
@@ -230,4 +251,4 @@ Las pruebas del backend usan Node Test Runner; `@nestjs/testing` crea el módulo
 
 El .env privado, .env.local y .env.development.local, las dependencias instaladas, compilaciones e informes están excluidos de Git. .env.example contiene la plantilla de configuración y .env.development los valores públicos del perfil local; ambos se conservan en el repositorio.
 
-El foro, las imágenes, las comunidades, la bandeja, el chat global y los flujos de cuenta se entregan con revisión estática, sin ejecutar compilaciones, comprobaciones del compilador, pruebas, migraciones, servidores de desarrollo, Docker ni renderizados de navegador por indicación del usuario. La validación visual y en ejecución, la integración con el bucket, la entrega SMTP y el retorno OAuth permanecen pendientes de configuración y comprobación en el entorno del usuario. Los detalles del foro y de sus permisos están en [forum.md](forum.md); los de comunidades y avisos, en [communities.md](communities.md); los de almacenamiento, en [media.md](media.md).
+El foro, las imágenes, las comunidades, la bandeja, el chat global, la videollamada y los flujos de cuenta se entregan con revisión estática, sin ejecutar compilaciones, comprobaciones del compilador, pruebas, migraciones, servidores de desarrollo, Docker ni renderizados de navegador por indicación del usuario. No se usaron cámara ni micrófono durante este trabajo. La validación visual y en ejecución, la conexión WebRTC entre navegadores y redes, TURN, la integración con el bucket, la entrega SMTP y el retorno OAuth permanecen pendientes de configuración y comprobación en el entorno del usuario. Los detalles del foro y de sus permisos están en [forum.md](forum.md); los de comunidades y avisos, en [communities.md](communities.md); los de almacenamiento, en [media.md](media.md); los de llamada, en [video-calls.md](video-calls.md).

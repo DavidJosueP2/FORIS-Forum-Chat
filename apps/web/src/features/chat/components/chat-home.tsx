@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { AccountEntry } from '@/features/account/components/account-entry'
 import { NotificationEntry } from '@/features/communities/components/notification-entry'
+import { GlobalVideoCall } from '@/features/video-calls/components/global-video-call'
 import { useAuth } from '@/features/account/hooks/use-auth'
 import { useChat, type ConnectionState } from '../hooks/use-chat'
 import { readDraft, readGuestProfile, storeDraft, storeGuestProfile } from '../lib/guest-session'
@@ -108,6 +109,7 @@ export function ChatHome() {
 
         <div className="conversation-layout">
           <main id="conversation" tabIndex={-1} className="conversation-main" aria-label="Chat global">
+            <GlobalVideoCall key={session.user?.id ?? 'guest'} user={session.user} />
             {auth.status === 'error' && !session.user && (
               <div className="connection-notice" role="alert">
                 <p>No pudimos comprobar tu sesión. Tu borrador sigue aquí.</p>

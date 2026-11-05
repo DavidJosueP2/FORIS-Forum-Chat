@@ -24,7 +24,7 @@ test('adopta la tabla anterior sin perder mensajes y registra cada migración un
   const page = await repository.list({ limit: 50 });
   assert.deepEqual(page.messages, [{ ...input, id: String(legacy.rows[0].id), createdAt: new Date(legacy.rows[0].created_at).toISOString() }]);
   const versions = await pool.query('SELECT version FROM app_schema_migrations ORDER BY version');
-  assert.deepEqual(versions.rows, [{ version: 1 }, { version: 2 }, { version: 3 }, { version: 4 }, { version: 5 }]);
+  assert.deepEqual(versions.rows, [{ version: 1 }, { version: 2 }, { version: 3 }, { version: 4 }, { version: 5 }, { version: 6 }]);
   assert.equal((await pool.query('SELECT id FROM forum_topics')).rows.length, 5);
   assert.equal((await pool.query('SELECT id FROM forum_posts')).rows.length, 0);
 });
