@@ -15,6 +15,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     root.classList.toggle("dark", resolvedTheme === "dark")
     root.classList.toggle("light", resolvedTheme === "light")
     root.style.colorScheme = resolvedTheme
+    const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
+    if (themeColor) themeColor.content = getComputedStyle(root).getPropertyValue("--background").trim()
   }, [resolvedTheme])
 
   useEffect(() => {

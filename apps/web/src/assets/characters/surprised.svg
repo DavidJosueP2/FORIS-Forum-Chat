@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none" role="img" aria-labelledby="surprised-title surprised-desc">
+  <title id="surprised-title">Oh, sorpresa</title>
+  <desc id="surprised-desc">Una forma lavanda alta con dos grandes ojos redondos de sorpresa.</desc>
+  <path fill="#A488D5" d="M75 17C109 13 133 40 132 72L127 114C125 137 111 148 90 144L64 141C35 138 23 121 26 92L30 62C32 35 49 20 75 17Z"/>
+  <g fill="#FFFCF6">
+    <ellipse cx="61" cy="76" rx="11" ry="16"/>
+    <ellipse cx="98" cy="73" rx="12" ry="17"/>
+  </g>
+</svg>

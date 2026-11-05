@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none" role="img" aria-labelledby="curious-title curious-desc">
+  <title id="curious-title">Lupa, curiosidad</title>
+  <desc id="curious-desc">Una figura azul asimétrica mira con un ojo más abierto que el otro.</desc>
+  <path fill="#4F83EC" d="M51 20L112 31C135 35 143 53 137 76L124 121C119 139 101 147 80 141L35 127C15 121 14 101 21 82L29 43C32 29 39 20 51 20Z"/>
+  <g fill="#FFFCF6">
+    <rect x="53" y="69" width="14" height="23" rx="7" transform="rotate(8 60 80.5)"/>
+    <ellipse cx="94" cy="73" rx="11" ry="18" transform="rotate(8 94 73)"/>
+  </g>
+</svg>

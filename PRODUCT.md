@@ -1,4 +1,4 @@
-# Mensajes
+# Foris
 
 <!-- impeccable:product-schema 1 -->
 
@@ -44,6 +44,9 @@ El usuario confirma construccion directa de la interfaz, sin una maqueta previa.
 
 ## Brand Commitments
 
+- La aplicación se llama Foris.
+- Axiforma para títulos; Plus Jakarta Sans para lectura y controles habituales; Fraunces para acentos serif; SF Pro Display como alternativa explícita de interfaz. Las cuatro familias se sirven desde archivos locales.
+- Nueve personajes SVG originales, de formas suaves, ojos expresivos y colores sólidos. Acompañan bienvenida, estados vacíos y pequeñas ayudas sin reemplazar instrucciones, representar usuarios ni insinuar estados reales de conexión.
 - Apariencia humana, sencilla y pensada para conversar; evitar composiciones que parezcan una plantilla generada.
 - Colores solidos. Sin degradados, vidrio, fondos con tramas ni puntos decorativos.
 - Pocas tarjetas: organizar el contenido mediante tipografia, espacio y superficies tonales.

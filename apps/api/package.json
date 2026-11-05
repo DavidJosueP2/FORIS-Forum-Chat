@@ -1,7 +1,7 @@
 {
   "name": "@messages/api",
   "version": "1.0.0",
-  "description": "API de Mensajes: historial, envíos y eventos en tiempo real.",
+  "description": "API de Foris: historial, envíos y eventos en tiempo real.",
   "author": "",
   "private": true,
   "license": "UNLICENSED",

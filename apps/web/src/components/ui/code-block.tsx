@@ -108,7 +108,7 @@ function CodeBlockCopyButton({
         data-copied={copied || undefined}
         variant={variant}
         size={size}
-        aria-label={copied ? "Copied" : "Copy"}
+        aria-label={copied ? "Copiado" : "Copiar"}
         className={cn(className)}
         onClick={(event) => {
           onClick?.(event)
@@ -128,7 +128,7 @@ function CodeBlockCopyButton({
         )}
       </Button>
       <span aria-live="polite" className="sr-only">
-        {copied ? "Copied" : ""}
+        {copied ? "Copiado" : ""}
       </span>
     </>
   )

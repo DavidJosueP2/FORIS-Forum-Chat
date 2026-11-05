@@ -1,13 +1,15 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/geist";
+@import "./assets/fonts/fonts.css";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: "Geist Variable", sans-serif;
-  --font-heading: var(--font-sans);
+  --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-heading: "Axiforma", "Plus Jakarta Sans", sans-serif;
+  --font-serif: "Fraunces", Georgia, serif;
+  --font-ui: "SF Pro Display", "Plus Jakarta Sans", system-ui, sans-serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -53,6 +55,7 @@
 }
 
 @theme {
+  --default-transition-duration: 150ms;
   --shadow-2xs: none;
   --shadow-xs: none;
   --shadow-sm: none;
@@ -146,6 +149,7 @@
 
   html {
     @apply font-sans;
+    font-optical-sizing: auto;
     scrollbar-color: var(--muted-foreground) var(--muted);
     scrollbar-width: thin;
   }
@@ -153,7 +157,13 @@
   body {
     @apply m-0 bg-background text-foreground antialiased;
     min-width: 20rem;
+    font-size: 1rem;
     line-height: 1.5;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading;
+    text-wrap: balance;
   }
 
   button, input, select, textarea {
@@ -223,6 +233,12 @@
 [data-sonner-toast] {
   border: 0;
   box-shadow: none;
+}
+
+[data-sonner-toast] [data-close-button] {
+  border: 0;
+  background-color: var(--secondary);
+  color: var(--secondary-foreground);
 }
 
 @media (prefers-reduced-motion: reduce) {

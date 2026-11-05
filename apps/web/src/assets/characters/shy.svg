@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none" role="img" aria-labelledby="shy-title shy-desc">
+  <title id="shy-title">Pipa, timidez</title>
+  <desc id="shy-desc">Un corazón rosa irregular que se asoma con dos pequeños ojos tímidos.</desc>
+  <path fill="#E989AA" d="M80 48C53 18 18 38 23 75C27 105 55 130 80 144C107 132 136 106 139 77C143 42 108 22 80 48Z"/>
+  <g fill="#FFFCF6">
+    <rect x="60" y="83" width="11" height="19" rx="5.5" transform="rotate(8 65.5 92.5)"/>
+    <rect x="86" y="86" width="11" height="17" rx="5.5" transform="rotate(-8 91.5 94.5)"/>
+  </g>
+</svg>

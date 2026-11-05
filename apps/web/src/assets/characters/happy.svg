@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none" role="img" aria-labelledby="happy-title happy-desc">
+  <title id="happy-title">Brío, alegría</title>
+  <desc id="happy-desc">Una forma naranja redondeada con los ojos arqueados de alegría.</desc>
+  <path fill="#F47B45" d="M20 82C16 47 39 24 72 26C87 13 114 18 124 38C149 50 150 78 137 101C133 129 107 145 75 139C42 141 21 117 20 82Z"/>
+  <g fill="#FFFCF6">
+    <path d="M46 79C46 51 74 49 77 76C70 66 57 63 46 79Z"/>
+    <path d="M86 75C87 49 113 51 116 79C105 64 94 66 86 75Z"/>
+  </g>
+</svg>
