@@ -42,6 +42,9 @@ apps/api/
         forum.repository.ts
         forum-validation.ts
         forum-write.middleware.ts
+      media/                Imágenes, cuotas, verificación y limpieza recuperable
+        storage.port.ts     Contrato de almacenamiento de objetos
+        adapters/           Adaptadores local y S3 compatible con R2
       communities/          Comunidades, pertenencia, preferencias y avisos internos
         community.controller.ts
         community.repository.ts
@@ -52,9 +55,10 @@ apps/api/
     unit/
     integration/
     support/
-packages/contracts/src/     Declaraciones públicas de mensajes, foro, comunidades, avisos y cuentas
+packages/contracts/src/     Declaraciones públicas de mensajes, foro, imágenes, comunidades, avisos y cuentas
 apps/web/src/              Frontend React y TypeScript
   features/forum/          Índice, creación, lectura, respuestas y borradores por cuenta
+  features/media/          Selector, progreso y lectura de imágenes con enlaces temporales
   features/communities/    Directorio, creación, pertenencia, preferencias y bandeja
   features/chat/           Chat global General, estado, API y sesión invitada
   features/account/        Acceso, perfil, sesión de cuenta y formularios OTP
@@ -91,6 +95,16 @@ La lectura de `/api/topics`, `/api/posts`, el detalle y sus respuestas es públi
 `ForumModule` importa `AuthModule`. `ForumController` obtiene la identidad mediante `SessionService.required`; `ForumRepository` bloquea al usuario, exige correo verificado y comprueba de nuevo la vigencia de la sesión dentro de la transacción. El autor procede de esa sesión. El repositorio reúne SQL parametrizado y coordinación transaccional para crear publicaciones o respuestas, actualizar el contador y registrar la última actividad. Los reintentos se resuelven por cuenta y `requestId`; repetirlo con contenido diferente devuelve 409. Los límites persistidos permiten hasta diez publicaciones y sesenta respuestas por cuenta y hora; los reintentos ya guardados se recuperan antes de consumir ese límite.
 
 `ParticipationGate` explica el acceso requerido sin impedir leer y ofrece el chat global para conversar como invitado. `CommunityWritingGate` añade el requisito de pertenencia para escribir en una comunidad. Los enlaces de acceso y el flujo OAuth conservan un destino interno permitido para volver a publicar o responder, incluidas las rutas de comunidades, bandeja y el parámetro validado `comunidad`. Los borradores se guardan en `sessionStorage` de la pestaña bajo claves por cuenta y comunidad al publicar y por publicación al responder. Se conservan ante un fallo, y la interfaz avisa si el navegador no permite guardarlos. No contienen contraseñas ni tokens de sesión. Los errores de carga y de paginación permiten reintentar; los estados vacíos no inventan contenido.
+
+## Imágenes y almacenamiento
+
+`MediaModule` separa el ciclo de vida de las imágenes del proveedor. `MediaService` consume `ObjectStoragePort`, inyectado mediante `OBJECT_STORAGE`; `LocalStorageAdapter` guarda archivos fuera del directorio público y `S3StorageAdapter` utiliza la API S3 para R2 u otro proveedor compatible. La selección se valida en `config/media-config.ts`: el entorno local usa disco por defecto y producción requiere S3. Cada registro conserva un perfil derivado del destino de almacenamiento para impedir operar accidentalmente sobre otro destino tras cambiar la configuración; cambiar de proveedor no migra los archivos existentes.
+
+El flujo autoriza una subida para una cuenta verificada, reserva cuota global y personal en PostgreSQL y devuelve una URL temporal para un PUT. El cliente envía los bytes y solicita confirmación; el servidor comprueba tamaño, formato real y dimensiones y recodifica con `sharp` antes de marcar la imagen como `READY`. El objeto provisional y la imagen validada tienen claves internas distintas. Los permisos, cuotas, estados y confirmación se comparten entre disco y S3. Los valores iniciales admiten hasta tres imágenes JPEG, PNG o WebP de 5 MB por publicación; las respuestas y el chat siguen siendo texto.
+
+`ForumModule` importa `MediaModule` y asocia los IDs de imágenes propias y listas dentro de la misma transacción que crea la publicación, comprueba la membresía y registra avisos. El contrato devuelve metadatos e IDs, sin URLs firmadas persistidas. Solo el propietario puede consultar una imagen sin publicar; las imágenes listas asociadas a publicaciones admiten lectura pública mediante enlaces temporales. El borrado retira la imagen de la lectura y reintenta la eliminación física si falla el proveedor. La limpieza periódica recupera autorizaciones caducadas, archivos huérfanos, verificaciones abandonadas y borrados pendientes mediante bloqueos y arrendamientos en PostgreSQL; las cuotas se liberan conforme se confirma la limpieza.
+
+`features/media` incorpora `ImagePicker`, `PrivateImage` y `PostImages` a las páginas existentes. El borrador guarda IDs; las vistas previas locales y URLs de lectura viven en memoria. El selector muestra progreso real, verificación, errores y reintentos; el índice muestra la primera imagen y el detalle las presenta en secuencia, con retirada para el autor. `PrivateImage` renueva los enlaces temporales y permite volver a cargar una imagen. Se reutilizan colores semánticos, controles y foco de la base visual, sin añadir tokens de identidad. El detalle del contrato, la configuración y las operaciones manuales está en [media.md](media.md).
 
 ## Comunidades y avisos internos
 
@@ -142,9 +156,9 @@ Google usa PKCE, `state`, vinculación al navegador y `nonce`; la biblioteca ofi
 
 En `messages`, el controlador transforma solicitudes HTTP en llamadas al servicio. Los pipes validan y normalizan las entradas. El servicio coordina el guardado y la publicación de eventos; el repositorio ejecuta SQL parametrizado y resuelve reintentos concurrentes. El servicio de eventos administra conexiones SSE, presencia, latidos y límites de conexiones.
 
-La base de datos y la configuración son servicios compartidos de infraestructura. `health` consulta la base directamente y no depende del módulo de mensajes. `messages` importa `AuthModule` y consume su proveedor exportado `SessionService` para resolver al remitente; no accede a las tablas de cuentas por su cuenta. `forum` importa `AuthModule` y `CommunitiesModule`: consume `SessionService` y `CommunityRepository` para exigir verificación, pertenencia y avisos transaccionales. `communities` usa sesiones y persistencia compartida para sus permisos y preferencias. `auth` usa infraestructura compartida y contratos públicos.
+La base de datos y la configuración son servicios compartidos de infraestructura. `health` consulta la base directamente y no depende del módulo de mensajes. `messages` importa `AuthModule` y consume su proveedor exportado `SessionService` para resolver al remitente; no accede a las tablas de cuentas por su cuenta. `forum` importa `AuthModule`, `CommunitiesModule` y `MediaModule`: consume `SessionService`, `CommunityRepository` y `MediaRepository` para exigir verificación, pertenencia, asociación de imágenes y avisos transaccionales. `communities` usa sesiones y persistencia compartida para sus permisos y preferencias. `media` usa sesiones, persistencia compartida y su puerto de almacenamiento. `auth` usa infraestructura compartida y contratos públicos.
 
-`common` contiene mecanismos HTTP reutilizables. Las reglas de mensajes pertenecen a `modules/messages`, las de publicaciones a `modules/forum`, las de comunidades y avisos a `modules/communities` y las de cuentas a `modules/auth`. Los tipos privados de cada módulo permanecen en él. `@messages/contracts` contiene exclusivamente declaraciones públicas de mensajes, foro, comunidades, notificaciones y cuentas sin dependencias de Nest o PostgreSQL; todos sus consumidores usan `import type`.
+`common` contiene mecanismos HTTP reutilizables. Las reglas de mensajes pertenecen a `modules/messages`, las de publicaciones a `modules/forum`, las de imágenes a `modules/media`, las de comunidades y avisos a `modules/communities` y las de cuentas a `modules/auth`. Los tipos privados de cada módulo permanecen en él. `@messages/contracts` contiene exclusivamente declaraciones públicas de mensajes, foro, imágenes, comunidades, notificaciones y cuentas sin dependencias de Nest o PostgreSQL; todos sus consumidores usan `import type`.
 
 ## Contrato HTTP
 
@@ -160,6 +174,8 @@ La base de datos y la configuración son servicios compartidos de infraestructur
 | GET | `/api/posts/:id/replies` | Respuestas con `before` y `limit` |
 | POST | `/api/posts` | Crea con cuenta verificada y pertenencia si hay `communityId`; 201 al crear, 200 al reintentar |
 | POST | `/api/posts/:id/replies` | Responde con cuenta verificada y pertenencia si corresponde; 201 al crear, 200 al reintentar |
+| GET / POST / DELETE | `/api/media/*` | Opciones, cuota propia, autorización, confirmación, metadatos, enlaces temporales y borrado |
+| PUT / GET | `/api/media/:id/local-upload`, `/api/media/:id/local-content` | Transporte local con autorización temporal; el PUT también exige sesión |
 | GET / POST / DELETE / PATCH | `/api/communities/*` | Directorio, creación, pertenencia y preferencias propias |
 | GET / POST | `/api/notifications/*` | Bandeja, contador privado y lectura individual o hasta un corte |
 | GET / POST | `/api/auth/*` | Disponibilidad, sesión, registro, acceso, OTP, recuperación y Google |
@@ -181,7 +197,9 @@ La migración 003 añade `forum_topics`, `forum_posts` y `forum_replies`, sus í
 
 La migración 004 añade `communities`, `community_memberships`, `community_preferences`, `community_notifications` y `forum_posts.community_id` opcional. Conserva las cuentas, publicaciones y mensajes existentes; las publicaciones generales mantienen la comunidad nula. Usa el mismo mecanismo versionado de arranque y no se aplicó durante este trabajo.
 
-Al cerrar, el servicio de eventos termina las conexiones SSE antes de que Nest cierre el servidor HTTP. El pool PostgreSQL termina al concluir el cierre de la aplicación. Los errores de solicitudes muestran mensajes públicos y los registros omiten consultas y credenciales.
+La migración 005 añade `media`, `media_quotas`, `media_events` y `media_metrics`, además de `forum_posts.media_request_ids` para comprobar la idempotencia de publicaciones con imágenes. PostgreSQL guarda metadatos, permisos, cuotas, estados y claves de objetos; los bytes permanecen en disco o en el bucket privado. Es aditiva y no se aplicó durante este trabajo.
+
+Al cerrar, el servicio de eventos termina las conexiones SSE y `MediaService` cancela su temporizador y espera la limpieza en curso antes de que Nest cierre el servidor HTTP. El pool PostgreSQL termina al concluir el cierre de la aplicación. Los errores de solicitudes muestran mensajes públicos y los registros omiten consultas y credenciales.
 
 La entrega SSE actual funciona en una instancia. Un despliegue con varias instancias necesitará distribución de eventos y límites compartidos; esa ampliación pertenece a otra etapa.
 
@@ -212,4 +230,4 @@ Las pruebas del backend usan Node Test Runner; `@nestjs/testing` crea el módulo
 
 El .env privado, .env.local y .env.development.local, las dependencias instaladas, compilaciones e informes están excluidos de Git. .env.example contiene la plantilla de configuración y .env.development los valores públicos del perfil local; ambos se conservan en el repositorio.
 
-El foro, las comunidades, la bandeja, el chat global y los flujos de cuenta se entregan con revisión estática, sin ejecutar compilaciones, comprobaciones del compilador, pruebas, migraciones, servidores de desarrollo, Docker ni renderizados de navegador por indicación del usuario. La validación visual y en ejecución, la entrega SMTP y el retorno OAuth permanecen pendientes de configuración y comprobación en el entorno del usuario. Los detalles del foro y de sus permisos están en [forum.md](forum.md); los de comunidades y avisos, en [communities.md](communities.md).
+El foro, las imágenes, las comunidades, la bandeja, el chat global y los flujos de cuenta se entregan con revisión estática, sin ejecutar compilaciones, comprobaciones del compilador, pruebas, migraciones, servidores de desarrollo, Docker ni renderizados de navegador por indicación del usuario. La validación visual y en ejecución, la integración con el bucket, la entrega SMTP y el retorno OAuth permanecen pendientes de configuración y comprobación en el entorno del usuario. Los detalles del foro y de sus permisos están en [forum.md](forum.md); los de comunidades y avisos, en [communities.md](communities.md); los de almacenamiento, en [media.md](media.md).

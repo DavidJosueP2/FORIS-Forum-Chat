@@ -7,11 +7,12 @@ import type { AuthContext, SqlClient } from '../auth/auth.types.js';
 import { HttpError } from '../../common/errors/http-error.js';
 import type { ForumFilters } from './forum-validation.js';
 import { CommunityRepository } from '../communities/community.repository.js';
+import { MediaRepository } from '../media/media.repository.js';
 
 interface PostRow extends QueryResultRow {
   id: string; title: string; body: string; topic_id: string; topic_name: string; topic_description: string;
   author_id: string; display_name: string; reply_count: number; created_at: Date; last_activity_at: Date; request_id: string;
-  community_id: string | null; community_name: string | null;
+  community_id: string | null; community_name: string | null; media_request_ids: string[];
 }
 interface ReplyRow extends QueryResultRow {
   id: string; post_id: string; author_id: string; display_name: string; body: string; created_at: Date; request_id: string;
@@ -25,7 +26,7 @@ function summary(row: PostRow): ForumPostSummary {
     id: String(row.id), title: row.title, excerpt: row.body.replace(/\s+/gu, ' ').slice(0, 240),
     topic: { id: row.topic_id, name: row.topic_name, description: row.topic_description },
     author: { id: row.author_id, displayName: row.display_name }, replyCount: row.reply_count,
-    community: row.community_id ? { id: String(row.community_id), name: row.community_name! } : null,
+    community: row.community_id ? { id: String(row.community_id), name: row.community_name! } : null, images: [],
     createdAt: new Date(row.created_at).toISOString(), lastActivityAt: new Date(row.last_activity_at).toISOString(),
   };
 }
@@ -41,7 +42,8 @@ function page<T extends { id: string }>(items: T[], limit: number): ForumPage<T>
 @Injectable()
 export class ForumRepository {
   constructor(@Inject(DatabaseService) private readonly database: DatabaseService, @Inject(SessionService) private readonly sessions: SessionService,
-    @Inject(CommunityRepository) private readonly communities: CommunityRepository) {}
+    @Inject(CommunityRepository) private readonly communities: CommunityRepository,
+    @Inject(MediaRepository) private readonly media: MediaRepository) {}
 
   async topics(): Promise<ForumTopic[]> {
     return (await this.database.query<ForumTopic & QueryResultRow>('SELECT id,name,description FROM forum_topics ORDER BY position,id')).rows;
@@ -66,12 +68,15 @@ export class ForumRepository {
     }
     values.push(filters.limit + 1);
     const result = await this.database.query<PostRow>(POSTS + (where.length ? ' WHERE ' + where.join(' AND ') : '') + ' ORDER BY p.id DESC LIMIT $' + values.length, values);
-    return page(result.rows.map(summary), filters.limit);
+    const selected = page(result.rows.map(summary), filters.limit);
+    const images = await this.media.images(selected.items.map(item => item.id));
+    return { ...selected, items: selected.items.map(item => ({ ...item, images: images.get(item.id) ?? [] })) };
   }
   async getPost(id: string, client: SqlClient = this.database): Promise<ForumPost> {
     const row = (await client.query<PostRow>(POSTS + ' WHERE p.id=$1', [id])).rows[0];
     if (!row) throw new HttpError(404, 'POST_NOT_FOUND', 'Esta publicación no existe.');
-    return detail(row);
+    const images = await this.media.images([id], client);
+    return { ...detail(row), images: images.get(id) ?? [] };
   }
   async listReplies(postId: string, before: string | undefined, limit: number): Promise<ForumPage<ForumReply>> {
     const exists = await this.database.query('SELECT id FROM forum_posts WHERE id=$1', [postId]);
@@ -97,14 +102,16 @@ export class ForumRepository {
       await this.member(client, actor);
       const existing = (await client.query<PostRow>(POSTS + ' WHERE p.author_id=$1 AND p.request_id=$2', [actor.user.id, input.requestId])).rows[0];
       if (existing) {
-        if (existing.title !== input.title || existing.body !== input.body || existing.topic_id !== input.topicId || String(existing.community_id ?? '') !== (input.communityId ?? '')) throw new HttpError(409, 'REQUEST_CONFLICT', 'Esta solicitud ya corresponde a otra publicación.');
-        return { post: detail(existing), created: false };
+        if (existing.title !== input.title || existing.body !== input.body || existing.topic_id !== input.topicId || String(existing.community_id ?? '') !== (input.communityId ?? '')
+          || JSON.stringify(existing.media_request_ids) !== JSON.stringify(input.mediaIds ?? [])) throw new HttpError(409, 'REQUEST_CONFLICT', 'Esta solicitud ya corresponde a otra publicación.');
+        return { post: await this.getPost(String(existing.id), client), created: false };
       }
       const topic = await client.query('SELECT id FROM forum_topics WHERE id=$1', [input.topicId]);
       if (!topic.rows[0]) throw new HttpError(404, 'TOPIC_NOT_FOUND', 'Elige un tópico disponible.');
       if (input.communityId) await this.communities.authorizePublication(client, input.communityId, actor.user.id);
       await this.rate(client, actor.user.id, 'posts', 10);
-      const inserted = await client.query<{ id: string }>('INSERT INTO forum_posts(topic_id,author_id,title,body,request_id,community_id) VALUES($1,$2,$3,$4,$5,$6) RETURNING id', [input.topicId, actor.user.id, input.title, input.body, input.requestId, input.communityId ?? null]);
+      const inserted = await client.query<{ id: string }>('INSERT INTO forum_posts(topic_id,author_id,title,body,request_id,community_id,media_request_ids) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING id', [input.topicId, actor.user.id, input.title, input.body, input.requestId, input.communityId ?? null, input.mediaIds ?? []]);
+      await this.media.attach(client, input.mediaIds ?? [], actor.user.id, String(inserted.rows[0].id));
       if (input.communityId) await this.communities.published(client, input.communityId, String(inserted.rows[0].id), actor.user.id);
       return { post: await this.getPost(String(inserted.rows[0].id), client), created: true };
     });

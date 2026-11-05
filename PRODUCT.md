@@ -23,7 +23,8 @@ Participantes de comunidades abiertas. Cualquiera puede leer el foro y enviar me
 - Inicio / con búsqueda, filtros por tópico o autor y paginación; /publicar para crear; /publicaciones/:postId para leer y responder. El foro no usa entrega en tiempo real.
 - Los invitados solo leen el foro. La API exige una sesión vigente de una cuenta verificada para crear publicaciones o respuestas y asigna el autor desde esa sesión.
 - El chat global se conserva en /chat con envío como invitado o miembro, historial y eventos en tiempo real. La petición más reciente del usuario mantiene expresamente esta participación anónima.
-- Solo texto. Sin adjuntos, audio ni video.
+- Las publicaciones admiten hasta tres imágenes JPEG, PNG o WebP de 5 MiB cada una por defecto. El propietario puede retirarlas desde el detalle. Las respuestas y el chat siguen siendo texto; documentos, audio, vídeo y edición del texto de una publicación quedan fuera de esta etapa.
+- El almacenamiento usa un puerto con adaptadores local y S3 compatible con R2. Desarrollo guarda archivos en .data/uploads; producción exige almacenamiento externo privado. PostgreSQL conserva metadatos e identificadores, sin binarios ni URLs firmadas persistidas. Hay validación real de imágenes, cuotas con reservas y limpieza recuperable.
 - Nombre visible opcional para invitados. Una cuenta acredita acceso a un correo o identidad de Google, no el nombre real de una persona.
 - Publicaciones, respuestas, cuentas e historial del chat persisten en PostgreSQL. Los reintentos de envío usan identificadores para evitar duplicados.
 - API monolitica modular NestJS con adaptador Express, ejecutable localmente con Node.

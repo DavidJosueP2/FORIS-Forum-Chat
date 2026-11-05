@@ -13,17 +13,21 @@ import { useResource } from '../hooks/use-forum'
 import { useDraft } from '../hooks/use-draft'
 import { CommunityWritingGate } from '@/features/communities/components/community-writing-gate'
 import { validCommunityId } from '@/features/communities/lib/notifications'
+import { ImagePicker } from '@/features/media/components/image-picker'
 
 function PostForm({ userId, topicId, communityId }: { userId: string; topicId: string; communityId?: string }) {
   const topics = useResource<ForumTopic[]>('topics')
   const { draft, stored, change, clear, alive } = useDraft('foris.forum.post.' + userId + (communityId ? '.community.' + communityId : ''), topicId)
   const navigate = useNavigate()
   const [busy, setBusy] = useState(false)
+  const [imagesBusy, setImagesBusy] = useState(false)
+  const [imagesPending, setImagesPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const guard = useRef(false)
   const selectedTopic = topics.data?.find(topic => topic.id === draft.topicId)
   async function submit() {
-    if (guard.current) return
+    if (guard.current || imagesBusy) return
+    if (imagesPending) { setError('Termina la subida de las imágenes o quita las que no se completaron.'); return }
     if (!draft.title.trim() || !draft.body.trim() || !selectedTopic) {
       setError('Escribe un título, elige un tópico y cuéntanos tu idea.'); return
     }
@@ -41,7 +45,7 @@ function PostForm({ userId, topicId, communityId }: { userId: string; topicId: s
   if (topics.loading) return <ForumLoading label="Preparando los tópicos…" />
   if (topics.error) return <ForumError message={topics.error} retry={topics.retry} />
   return <form className="forum-form" aria-busy={busy} onSubmit={event => { event.preventDefault(); void submit() }}>
-    <fieldset disabled={busy}>
+    <fieldset disabled={busy || imagesBusy}>
       <div className="forum-field"><label htmlFor="post-topic">Tópico</label>
         <select id="post-topic" required value={selectedTopic?.id ?? ''} onChange={event => change({ topicId: event.target.value })}>
           <option value="" disabled>Elige dónde compartir tu idea</option>
@@ -51,7 +55,8 @@ function PostForm({ userId, topicId, communityId }: { userId: string; topicId: s
       </div>
       <div className="forum-field"><label htmlFor="post-title">Un título para abrir la conversación</label><Input id="post-title" name="title" required maxLength={160} value={draft.title} onChange={event => change({ title: event.target.value })} placeholder="¿Qué te gustaría compartir?" /><span className="forum-hint">{draft.title.length}/160</span></div>
       <div className="forum-field"><label htmlFor="post-body">Tu publicación</label><Textarea id="post-body" name="body" required rows={10} maxLength={10000} value={draft.body} onChange={event => change({ body: event.target.value })} placeholder="Da un poco de contexto. Una buena pregunta también es un buen comienzo." /><span className="forum-hint">{draft.body.length}/10000 caracteres. Solo texto, con los saltos de línea que necesites.</span></div>
-      <p className="forum-hint">Tu publicación será pública y aparecerá con el nombre de tu perfil. Evita compartir datos privados.</p>
+      <ImagePicker ids={draft.mediaIds} disabled={busy} onChange={mediaIds => change({ mediaIds })} onBusyChange={setImagesBusy} onPendingChange={setImagesPending} />
+      <p className="forum-hint">Tu publicación y sus imágenes serán públicas y aparecerán con el nombre de tu perfil. Evita compartir datos privados.</p>
       {!stored && <p className="forum-error" role="status">El navegador no permite guardar el borrador. Conserva una copia antes de salir de esta página.</p>}
       {error && <p className="forum-error" role="alert">{error} Tu borrador sigue aquí.</p>}
       <div className="forum-actions"><Button type="submit" className="h-12 px-7">{busy && <LoaderCircle className="animate-spin" aria-hidden="true" />}{busy ? 'Publicando…' : 'Publicar'}</Button><Button asChild variant="ghost" className="h-12 px-6"><Link to="/">Volver al foro</Link></Button></div>

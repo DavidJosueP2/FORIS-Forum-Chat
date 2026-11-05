@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { ForumShell } from '../components/forum-shell'
 import { ForumEmpty, ForumError, ForumLoading, ForumTime } from '../components/forum-states'
 import { useForumPage, useResource } from '../hooks/use-forum'
+import { PrivateImage } from '@/features/media/components/private-image'
 
 export function PostList({ path, filtered, createTo = '/publicar', emptyTitle }: { path: string; filtered: boolean; createTo?: string; emptyTitle?: string }) {
   const page = useForumPage<ForumPostSummary>(path)
@@ -22,6 +23,8 @@ export function PostList({ path, filtered, createTo = '/publicar', emptyTitle }:
         <div className="forum-meta"><Link to={'/?topico=' + post.topic.id} className="forum-topic-label">{post.topic.name}</Link>{post.community && <Link to={'/comunidades/' + post.community.id}>{post.community.name}</Link>}<span>{post.author.displayName}</span><ForumTime value={post.createdAt} /></div>
         <h2><Link to={'/publicaciones/' + post.id}>{post.title}<ArrowUpRight aria-hidden="true" /></Link></h2>
         <p className="forum-excerpt">{post.excerpt}</p>
+        {post.images[0] && <PrivateImage image={post.images[0]} thumbnail />}
+        {post.images.length > 1 && <p className="forum-hint">{post.images.length} imágenes en esta publicación</p>}
         <Link to={'/publicaciones/' + post.id + '#respuestas'} className="forum-response-link"><MessageSquare aria-hidden="true" />{post.replyCount} {post.replyCount === 1 ? 'respuesta' : 'respuestas'}</Link>
       </article></li>)}
     </ol>

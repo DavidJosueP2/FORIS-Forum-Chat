@@ -14,11 +14,13 @@ export function configureApplication(app: NestExpressApplication): void {
   express.disable('x-powered-by');
   express.set('query parser', 'simple');
   if (config.trustProxy) express.set('trust proxy', config.trustProxy);
+  const storageOrigins = config.media.driver === 's3' ? [new URL(config.media.s3.endpoint).origin] : [];
   app.setGlobalPrefix('api');
   app.use(helmet({
     contentSecurityPolicy: {
       directives: {
-        defaultSrc: ["'self'"], scriptSrc: ["'self'"], styleSrc: ["'self'"], connectSrc: ["'self'"],
+        defaultSrc: ["'self'"], scriptSrc: ["'self'"], styleSrc: ["'self'"], connectSrc: ["'self'", ...storageOrigins],
+        imgSrc: ["'self'", 'blob:', ...storageOrigins],
         objectSrc: ["'none'"], frameAncestors: ["'none'"], upgradeInsecureRequests: null,
       },
     },

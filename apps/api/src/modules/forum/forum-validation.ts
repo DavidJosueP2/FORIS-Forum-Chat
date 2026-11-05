@@ -1,5 +1,6 @@
 import type { CreateForumPost, CreateForumReply } from '@messages/contracts';
 import { HttpError } from '../../common/errors/http-error.js';
+import { imageIds } from '../media/media-validation.js';
 
 const UUID = /^[\da-f]{8}-(?:[\da-f]{4}-){3}[\da-f]{12}$/iu;
 function invalid(message: string): never { throw new HttpError(400, 'INVALID_INPUT', message); }
@@ -26,11 +27,11 @@ export function forumId(value: unknown): string {
   return value;
 }
 export function createPostInput(value: unknown): CreateForumPost {
-  const fields = record(value, ['title','body','topicId','requestId','communityId']);
+  const fields = record(value, ['title','body','topicId','requestId','communityId','mediaIds']);
   const topicId = text(fields.topicId, 'El tópico', 32);
   if (!/^[a-z][a-z0-9-]*$/u.test(topicId)) invalid('El tópico no es válido.');
   return { title: text(fields.title, 'El título', 160), body: text(fields.body, 'La publicación', 10000, true), topicId, requestId: uuid(fields.requestId),
-    communityId: fields.communityId === undefined ? undefined : forumId(fields.communityId) };
+    communityId: fields.communityId === undefined ? undefined : forumId(fields.communityId), mediaIds: imageIds(fields.mediaIds) };
 }
 export function createReplyInput(value: unknown): CreateForumReply {
   const fields = record(value, ['body','requestId']);

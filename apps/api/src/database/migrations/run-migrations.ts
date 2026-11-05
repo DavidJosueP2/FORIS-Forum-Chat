@@ -3,8 +3,9 @@ import { createMessages } from './001-create-messages.js';
 import { createAuth } from './002-create-auth.js';
 import { createForum } from './003-create-forum.js';
 import { createCommunities } from './004-create-communities.js';
+import { createMedia } from './005-create-media.js';
 
-const migrations: readonly Migration[] = [createMessages, createAuth, createForum, createCommunities];
+const migrations: readonly Migration[] = [createMessages, createAuth, createForum, createCommunities, createMedia];
 
 export async function runMigrations(pool: DatabasePool): Promise<void> {
   const client = await pool.connect();

@@ -5,6 +5,7 @@ dist-test/
 dist-ssr/
 *.tsbuildinfo
 .vite/
+.data/
 
 # Variables locales y credenciales
 .env

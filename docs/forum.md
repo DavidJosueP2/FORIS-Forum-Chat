@@ -1,6 +1,6 @@
 # Foros y chat global
 
-El inicio de Foris se llama Foros y muestra publicaciones organizadas en los tópicos General, Tecnología, Aprendizaje, Creatividad y Proyectos. Cada publicación tiene título, texto y respuestas. También puede pertenecer a una comunidad; sus miembros pueden publicar y responder dentro de ella. Las comunidades, favoritas y avisos se describen en [communities.md](communities.md).
+El inicio de Foris se llama Foros y muestra publicaciones organizadas en los tópicos General, Tecnología, Aprendizaje, Creatividad y Proyectos. Cada publicación tiene título, texto, imágenes opcionales y respuestas. También puede pertenecer a una comunidad; sus miembros pueden publicar y responder dentro de ella. Las comunidades, favoritas y avisos se describen en [communities.md](communities.md).
 
 | Acción | Invitado | Cuenta verificada con sesión vigente |
 | --- | --- | --- |
@@ -43,7 +43,7 @@ Los enlaces para participar conservan un destino next al pasar por el acceso. El
 
 GET /api/posts admite topic, author, community, search, before y limit. La búsqueda compara texto literal sin interpretar % o _ como comodines. GET de respuestas admite before y limit. Las páginas se ordenan por ID descendente, con límite predeterminado de 20 y máximo de 50. La respuesta usa items, hasMore y nextCursor. Los IDs BIGINT viajan como cadenas.
 
-Crear publicación recibe title (1–160 caracteres), body (1–10000), topicId, requestId UUID y communityId opcional. Crear respuesta recibe body (1–5000) y requestId UUID. El servidor normaliza CRLF y espacios exteriores, rechaza campos desconocidos y asigna al autor desde la sesión. Nunca acepta un autor ni una condición de miembro enviados por el cliente. En publicaciones de comunidad también exige pertenecer a ella.
+Crear publicación recibe title (1–160 caracteres), body (1–10000), topicId, requestId UUID, communityId opcional y mediaIds opcional (UUID únicos; hasta tres por defecto). Solo admite imágenes READY del autor, sin asociarlas a otra publicación. La asociación y los avisos se confirman en la misma transacción de la publicación. Crear respuesta recibe body (1–5000) y requestId UUID. El servidor normaliza CRLF y espacios exteriores, rechaza campos desconocidos y asigna al autor desde la sesión. Nunca acepta un autor ni una condición de miembro enviados por el cliente. En publicaciones de comunidad también exige pertenecer a ella.
 
 Las escrituras requieren JSON y el origen exacto de APP_URL. Se verifica la sesión de nuevo dentro de la transacción, bajo bloqueo del usuario; las respuestas también bloquean su publicación para actualizar el contador. Cada cuenta puede crear hasta 10 publicaciones y 60 respuestas por hora. El límite adicional por IP es de 60 solicitudes de escritura en diez minutos.
 
@@ -54,6 +54,8 @@ Los reintentos con el mismo autor y requestId devuelven el recurso guardado (200
 Los borradores del foro usan sessionStorage, separados por cuenta y, para respuestas, por publicación. Se conservan ante errores y se limpian al confirmar el envío. El chat conserva su almacenamiento independiente. Se informa si el navegador impide guardar el borrador. Salir de la pestaña o borrar los datos del navegador puede eliminarlo.
 
 El texto se renderiza como texto de React, sin HTML ni Markdown ejecutable. Las respuestas se muestran de más recientes a anteriores y se cargan bajo petición; no hay presencia, sondeo ni SSE en el foro.
+
+El formulario permite seleccionar, previsualizar, subir, reintentar y retirar imágenes. No permite publicar mientras quedan archivos sin confirmar. El borrador guarda IDs de medios, nunca los binarios ni URLs temporales. Al restaurarlo se comprueba su disponibilidad. El índice muestra la primera imagen y el detalle todas; cada lectura solicita un permiso temporal renovable. El propietario puede eliminar una imagen desde el detalle. La lista de IDs original de creación se conserva para reconocer un reintento aun después de retirar una imagen. No existe todavía edición de título/cuerpo ni incorporación de nuevas imágenes a una publicación ya creada. El flujo completo se documenta en [media.md](media.md).
 
 ## Base de datos y validación
 

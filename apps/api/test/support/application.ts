@@ -14,6 +14,7 @@ import type { MessageRepositoryPort } from '../../src/modules/messages/messages.
 import { MessageEventsService } from '../../src/modules/messages/message-events.service.js';
 import { HealthService } from '../../src/modules/health/health.service.js';
 import { testDatabase } from './database.js';
+import type { MediaConfig } from '../../src/config/media-config.js';
 
 export interface FixtureOptions {
   repository?: MessageRepositoryPort;
@@ -23,11 +24,14 @@ export interface FixtureOptions {
   pool?: DatabasePool;
   logger?: AppLogger;
   auth?: boolean;
+  media?: Partial<MediaConfig>;
 }
 
 export async function createTestApplication(options: FixtureOptions = {}) {
   const pool = options.pool ?? (await testDatabase()).pool;
-  const config = readConfig({ PGPASSWORD: 'test-only', AUTH_SECRET: options.auth ? 'foris-test-secret-with-at-least-32-characters' : undefined });
+  const config = readConfig({ NODE_ENV: 'test', PGPASSWORD: 'test-only', AUTH_SECRET: options.auth ? 'foris-test-secret-with-at-least-32-characters' : undefined,
+    STORAGE_LOCAL_ROOT: options.media?.localRoot });
+  config.media = { ...config.media, ...options.media };
   config.port = options.port ?? 3099;
   config.messagesPerMinute = options.sendLimit ?? 40;
   const builder = Test.createTestingModule({ imports: [AppModule] })

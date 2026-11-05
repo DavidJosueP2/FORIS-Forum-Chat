@@ -3,12 +3,13 @@ import type { MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { json } from 'express';
 import { AuthModule } from '../auth/auth.module.js';
 import { CommunitiesModule } from '../communities/communities.module.js';
+import { MediaModule } from '../media/media.module.js';
 import { ForumController } from './forum.controller.js';
 import { ForumRepository } from './forum.repository.js';
 import { ForumWriteMiddleware } from './forum-write.middleware.js';
 
 @Module({
-  imports: [AuthModule, CommunitiesModule],
+  imports: [AuthModule, CommunitiesModule, MediaModule],
   controllers: [ForumController],
   providers: [ForumRepository, ForumWriteMiddleware],
 })

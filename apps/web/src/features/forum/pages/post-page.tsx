@@ -11,6 +11,7 @@ import { ForumEmpty, ForumError, ForumLoading, ForumTime, ParticipationGate } fr
 import { useForumPage, useResource } from '../hooks/use-forum'
 import { useDraft } from '../hooks/use-draft'
 import { CommunityWritingGate } from '@/features/communities/components/community-writing-gate'
+import { PostImages } from '@/features/media/components/post-images'
 
 function ReplyForm({ postId, userId, onSaved }: { postId: string; userId: string; onSaved: (result: CreatedForumReply) => void }) {
   const { draft, stored, change, clear, alive } = useDraft('foris.forum.reply.' + userId + '.' + postId)
@@ -69,6 +70,7 @@ function Replies({ post, onCount }: { post: ForumPost; onCount: (count: number) 
   </section>
 }
 function PostContent({ id }: { id: string }) {
+  const auth = useAuth()
   const post = useResource<ForumPost>('posts/' + id)
   const { hash } = useLocation()
   const loaded = post.data !== null
@@ -86,6 +88,7 @@ function PostContent({ id }: { id: string }) {
     <article className="forum-publication">
       <header><div className="forum-meta"><Link to={'/?topico=' + item.topic.id} className="forum-topic-label">{item.topic.name}</Link>{item.community && <Link to={'/comunidades/' + item.community.id}>{item.community.name}</Link>}</div><h1>{item.title}</h1><div className="forum-meta"><span>Por {item.author.displayName}</span><ForumTime value={item.createdAt} /></div></header>
       <p className="forum-prose">{item.body}</p>
+      <PostImages images={item.images} canDelete={auth.session.user?.id === item.author.id} />
     </article>
     <Replies key={item.id} post={item} onCount={count => post.setData({ ...item, replyCount: count })} />
   </>
