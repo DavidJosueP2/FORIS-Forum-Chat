@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "lib": ["ES2023"],
+    "rootDir": ".",
+    "resolvePackageJsonExports": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "declaration": false,
+    "verbatimModuleSyntax": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "ES2023",
+    "sourceMap": true,
+    "inlineSources": true,
+    "outDir": "./dist",
+    "noEmitOnError": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "strictPropertyInitialization": true,
+    "types": ["node"],
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src/**/*.ts", "test/**/*.ts"],
+  "exclude": ["node_modules", "dist", "dist-test"]
+}

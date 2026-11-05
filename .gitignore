@@ -1,0 +1,33 @@
+# Dependencias y compilaciones de todos los workspaces
+node_modules/
+dist/
+dist-test/
+dist-ssr/
+*.tsbuildinfo
+.vite/
+
+# Variables locales y credenciales
+.env
+.env.*
+!.env.example
+*.local
+
+# Informes y archivos temporales
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+.scannerwork/
+.impeccable/
+artifacts/
+.eslintcache
+*.log
+*.pid
+*.zip
+*.tgz
+
+# Archivos del sistema y del editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
