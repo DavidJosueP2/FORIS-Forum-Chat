@@ -14,7 +14,7 @@ export function ThemeToggle() {
           {theme === 'system' ? <Monitor aria-hidden="true" /> : theme === 'dark' ? <Moon aria-hidden="true" /> : <Sun aria-hidden="true" />}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" sideOffset={8} collisionPadding={12} className="w-64 max-w-[calc(100vw-1.5rem)] p-2">
+      <DropdownMenuContent align="end" sideOffset={8} collisionPadding={12} className="w-64 max-w-[calc(100vw-1.5rem)] bg-secondary p-2 text-secondary-foreground dark:bg-popover dark:text-popover-foreground">
         <ThemeMenuOptions />
       </DropdownMenuContent>
     </DropdownMenu>

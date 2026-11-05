@@ -176,6 +176,8 @@ Los campos conservan control y las superficies excepcionales conservan surface. 
 
 **Tema compacto.** Una sola fila con la etiqueta Tema y una píldora de tres iconos: luna para oscuro, sol para claro y pantalla para sistema. El color de selección identifica la opción activa, sin tres filas de texto ni marcas adicionales. Cada opción conserva un objetivo de 44px, nombre accesible y ayuda nativa; las flechas izquierda y derecha permiten elegir dentro del grupo. Cambiar el tema mantiene abierto el menú. Se comparte entre cuenta e invitados y conserva los tokens existentes.
 
+En modo claro, los menús de cuenta y tema usan el gris suave de secondary, como el botón Tu perfil, con texto oscuro. La píldora del selector y las opciones enfocadas usan el blanco de popover para contrastar; la selección conserva el círculo oscuro y su icono claro. En modo oscuro se usan los tonos oscuros habituales del sistema. La separación se consigue con color sólido, sin bordes ni sombras.
+
 El catálogo de shadcn está en src/components/ui. Se instaló el conjunto completo disponible del estilo radix-nova; incluir un componente en el repositorio no obliga a usarlo en la pantalla.
 
 Los estilos comunes se centralizan en src/index.css para que las primitivas conserven comportamiento y semántica. Los campos usan relleno sólido; los estados inválidos usan una superficie diferenciada. La variante outline de Button funciona como un secundario relleno, sin dibujar un contorno.

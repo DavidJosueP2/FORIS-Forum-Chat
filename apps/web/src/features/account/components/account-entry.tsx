@@ -42,12 +42,12 @@ function MemberAccountMenu() {
         <UserRound aria-hidden="true" /><span>Tu perfil</span><ChevronDown className="hidden size-3 sm:block" aria-hidden="true" />
       </Button>
     </DropdownMenuTrigger>
-    <DropdownMenuContent align="end" sideOffset={8} collisionPadding={12} className="w-64 max-w-[calc(100vw-1.5rem)] p-2" aria-busy={busy}>
-      <DropdownMenuItem asChild disabled={busy} className="min-h-11 rounded-full px-3">
+    <DropdownMenuContent align="end" sideOffset={8} collisionPadding={12} className="w-64 max-w-[calc(100vw-1.5rem)] bg-secondary p-2 text-secondary-foreground dark:bg-popover dark:text-popover-foreground" aria-busy={busy}>
+      <DropdownMenuItem asChild disabled={busy} className="min-h-11 rounded-full px-3 focus:bg-popover focus:text-popover-foreground dark:focus:bg-accent dark:focus:text-accent-foreground">
         <Link to="/profile"><UserRound aria-hidden="true" />Ver tu perfil</Link>
       </DropdownMenuItem>
       <ThemeMenuOptions disabled={busy} />
-      <DropdownMenuItem disabled={busy} className="mt-2 min-h-11 rounded-full px-3" onSelect={event => { event.preventDefault(); void signOut() }}>
+      <DropdownMenuItem disabled={busy} className="mt-2 min-h-11 rounded-full px-3 focus:bg-popover focus:text-popover-foreground dark:focus:bg-accent dark:focus:text-accent-foreground" onSelect={event => { event.preventDefault(); void signOut() }}>
         {busy ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : <LogOut aria-hidden="true" />}
         {busy ? 'Cerrando sesión…' : 'Cerrar sesión'}
       </DropdownMenuItem>

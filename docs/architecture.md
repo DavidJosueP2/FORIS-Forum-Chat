@@ -187,7 +187,9 @@ La entrega SSE actual funciona en una instancia. Un despliegue con varias instan
 
 ## Configuración, herramientas y pruebas
 
-La API carga el `.env` de la raíz; las variables ya definidas por el entorno tienen prioridad. Los manifiestos de los workspaces y el lockfile único se mantienen desde la raíz. Node 24.15+ de la rama 24 LTS es la versión recomendada para las dependencias de desarrollo.
+La API carga los archivos de entorno de la raíz según NODE_ENV; sin una selección externa usa development. Las variables del proceso tienen prioridad, seguidas de .env.[entorno].local, .env.[entorno], .env.local y .env. El perfil .env.development versionado contiene únicamente valores públicos para los hosts locales; las credenciales y los puertos existentes continúan en el entorno privado. Vite comparte el directorio de configuración y el perfil development, y su proxy respeta PORT y APP_PORT. La configuración tipada expone environment. El detalle está en [development.md](development.md).
+
+Los manifiestos de los workspaces y el lockfile único se mantienen desde la raíz. Node 24.15+ de la rama 24 LTS es la versión recomendada para las dependencias de desarrollo.
 
 `config/auth-config.ts` valida `APP_URL`, el secreto de autenticación, SMTP y las credenciales Google del backend. `AUTH_SECRET` habilita cuentas; SMTP completo habilita el envío de códigos y Google se configura de forma independiente. Sin correo, el registro y las solicitudes OTP no están disponibles, mientras un acceso con contraseña existente puede continuar. `npm run setup:auth` prepara el archivo privado preservando valores existentes y genera un secreto si falta, sin mostrarlo. Ya se ejecutó ese paso; el usuario completará SMTP y Google según [authentication.md](authentication.md). No se activaron ni comprobaron integraciones externas. Ninguna credencial se publica con variables `VITE_`.
 
@@ -208,6 +210,6 @@ Las pruebas del backend usan Node Test Runner; `@nestjs/testing` crea el módulo
 | `npm run typecheck` | Comprueba los tipos de ambos workspaces y scripts |
 | `npm test` | Compila y ejecuta las pruebas del backend con cobertura |
 
-El `.env` local, las dependencias instaladas, compilaciones e informes están excluidos de Git. `.env.example` contiene únicamente la plantilla de configuración y se conserva en el repositorio.
+El .env privado, .env.local y .env.development.local, las dependencias instaladas, compilaciones e informes están excluidos de Git. .env.example contiene la plantilla de configuración y .env.development los valores públicos del perfil local; ambos se conservan en el repositorio.
 
 El foro, las comunidades, la bandeja, el chat global y los flujos de cuenta se entregan con revisión estática, sin ejecutar compilaciones, comprobaciones del compilador, pruebas, migraciones, servidores de desarrollo, Docker ni renderizados de navegador por indicación del usuario. La validación visual y en ejecución, la entrega SMTP y el retorno OAuth permanecen pendientes de configuración y comprobación en el entorno del usuario. Los detalles del foro y de sus permisos están en [forum.md](forum.md); los de comunidades y avisos, en [communities.md](communities.md).

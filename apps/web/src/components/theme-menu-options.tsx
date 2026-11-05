@@ -15,7 +15,7 @@ export function ThemeMenuOptions({ disabled = false }: { disabled?: boolean }) {
   return <div className="flex items-center justify-between gap-3 px-3 py-1">
     <span id={labelId} className="text-sm">Tema</span>
     <DropdownMenuRadioGroup value={theme} aria-labelledby={labelId}
-      className="flex shrink-0 items-center rounded-full bg-secondary p-1 text-secondary-foreground"
+      className="flex shrink-0 items-center rounded-full bg-popover p-1 text-popover-foreground dark:bg-secondary dark:text-secondary-foreground"
       onValueChange={value => {
         if (value === 'system' || value === 'light' || value === 'dark') setTheme(value)
       }}
