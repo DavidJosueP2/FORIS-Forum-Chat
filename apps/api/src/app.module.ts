@@ -5,9 +5,10 @@ import { DatabaseModule } from './database/database.module.js';
 import { ApiExceptionFilter } from './common/filters/api-exception.filter.js';
 import { MessagesModule } from './modules/messages/messages.module.js';
 import { HealthModule } from './modules/health/health.module.js';
+import { AuthModule } from './modules/auth/auth.module.js';
 
 @Module({
-  imports: [ConfigurationModule, DatabaseModule, HealthModule, MessagesModule],
+  imports: [ConfigurationModule, DatabaseModule, HealthModule, AuthModule, MessagesModule],
   providers: [{ provide: APP_FILTER, useClass: ApiExceptionFilter }],
 })
 export class AppModule {}

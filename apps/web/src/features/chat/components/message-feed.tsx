@@ -10,6 +10,7 @@ import { isSameDay, messageDay, messageTime } from '../lib/messages'
 interface MessageFeedProps {
   messages: Message[]
   senderId: string
+  accountId?: string
   historyStatus: 'loading' | 'ready' | 'error'
   historyError: string | null
   hasOlder: boolean
@@ -21,7 +22,7 @@ interface MessageFeedProps {
 }
 
 export function MessageFeed({
-  messages, senderId, historyStatus, historyError, hasOlder,
+  messages, senderId, accountId, historyStatus, historyError, hasOlder,
   loadingOlder, olderError, loadOlder, reconnect, onSuggestion,
 }: MessageFeedProps) {
   const viewportRef = useRef<HTMLDivElement>(null)
@@ -59,11 +60,12 @@ export function MessageFeed({
       anchor.current = null
     } else {
       const latest = messages.at(-1)
-      const newOwnMessage = latest?.id !== lastSeenId.current && latest?.senderId === senderId
+      const own = accountId ? latest?.accountId === accountId : !latest?.accountId && latest?.senderId === senderId
+      const newOwnMessage = latest?.id !== lastSeenId.current && own
       if (stickToBottom.current || newOwnMessage) viewport.scrollTop = viewport.scrollHeight
     }
     lastSeenId.current = messages.at(-1)?.id
-  }, [messages, senderId, historyStatus])
+  }, [messages, senderId, accountId, historyStatus])
 
   async function showOlder() {
     const viewport = viewportRef.current
@@ -152,7 +154,7 @@ export function MessageFeed({
             aria-busy={historyStatus === 'loading' || loadingOlder}
           >
             {messages.map((message, index) => {
-              const own = message.senderId === senderId
+              const own = accountId ? message.accountId === accountId : !message.accountId && message.senderId === senderId
               const previous = messages[index - 1]
               const startDay = !previous || !isSameDay(previous, message)
               return (
@@ -165,7 +167,7 @@ export function MessageFeed({
                     <div className="message-text">
                       <header className="message-meta">
                         <span className="message-author">{message.author}</span>
-                        <span className="message-kind">{own ? 'Tú, invitado' : 'Invitado'}</span>
+                        <span className="message-kind">{own ? 'Tú, ' : ''}{message.accountId ? 'Miembro' : 'Invitado'}</span>
                         <time dateTime={message.createdAt} title={new Date(message.createdAt).toLocaleString('es')}>
                           {messageTime(message)}
                         </time>

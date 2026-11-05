@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { OnApplicationShutdown, OnModuleInit } from '@nestjs/common';
-import type { QueryResult, QueryResultRow } from 'pg';
+import type { PoolClient, QueryResult, QueryResultRow } from 'pg';
 import { APP_LOGGER } from '../config/app-config.js';
 import type { AppLogger } from '../config/app-config.js';
 import { DATABASE_POOL } from './database.types.js';
@@ -27,6 +27,19 @@ export class DatabaseService implements SqlDatabase, OnModuleInit, OnApplication
 
   async ping(): Promise<void> {
     await this.pool.query('SELECT 1');
+  }
+
+  async transaction<T>(work: (client: PoolClient) => Promise<T>): Promise<T> {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const result = await work(client);
+      await client.query('COMMIT');
+      return result;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally { client.release(); }
   }
 
   onApplicationShutdown(): Promise<void> {

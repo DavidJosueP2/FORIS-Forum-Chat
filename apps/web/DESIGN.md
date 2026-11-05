@@ -107,7 +107,7 @@ components:
 
 Base visual de Foris para comunidades abiertas. La lectura manda; las formas suaves y los personajes aportan cercanía en momentos concretos. El contenido se organiza por tipografía, espacio y superficies sólidas. La pantalla inicial abre directamente la conversación General y mantiene la escritura como invitado al alcance.
 
-El nombre, las cuatro familias tipográficas y el lenguaje de personajes forman la identidad actual. La composición de General se recoge en .impeccable/surfaces/apps-web-src-app-tsx.md; las restricciones de estilo del usuario se conservan en el PRODUCT.md de la raíz.
+El nombre, las cuatro familias tipográficas y el lenguaje de personajes forman la identidad actual. La composición de General se recoge en .impeccable/surfaces/apps-web-src-app-tsx.md y la de acceso y perfil en .impeccable/surfaces/apps-web-src-features-account-pages-login-page-tsx.md; las restricciones de estilo del usuario se conservan en el PRODUCT.md de la raíz.
 
 **Key Characteristics:**
 
@@ -150,6 +150,8 @@ Usar el ritmo de espaciado de Tailwind, con grupos próximos y separación clara
 
 La navegación lateral se oculta por debajo de 1024px y el nombre Foris pasa al encabezado. Desde 1360px aparece una columna de pautas de 264px; con menos espacio se accede a esa información mediante un diálogo. Por debajo de 640px disminuyen los márgenes y se compactan el encabezado y el compositor. El hilo tiene su propio desplazamiento y el compositor reserva el área segura inferior del dispositivo. El punto móvil de las primitivas genéricas del catálogo sigue siendo 768px; no determina estos cambios de General. Las acciones principales de la pantalla usan una altura de al menos 44px, aun cuando el catálogo ofrezca tamaños menores.
 
+Las páginas de cuenta extienden este sistema con formularios abiertos. El acceso comparte un máximo de 1280px entre una columna editorial y un formulario de hasta 400px. Por debajo de 768px se oculta la columna editorial y el formulario puede ocupar hasta 440px. El perfil tiene un máximo de 1040px y organiza cada tarea con una descripción lateral y sus campos; en móvil apila ambos grupos. No convertir sus secciones en una cuadrícula de tarjetas. AccountShell comparte el nombre Foris, la vuelta a General, el enlace para saltar al contenido y ThemeToggle.
+
 ## Elevation & Depth
 
 **Superficies.** Separar grupos mediante tono y espacio; evitar contornos y sombras.
@@ -170,17 +172,21 @@ Los estilos comunes se centralizan en src/index.css para que las primitivas cons
 
 **Botones.** Primario sólido para enviar y acciones principales; secundario tonal para recuperación y sugerencias; ghost para utilidades y el nombre de invitado. Todos parten de la forma de píldora. La política global elimina bordes y sombras de las primitivas sin eliminar el foco de teclado. Mantener los estados deshabilitado, enviando y reintento con texto comprensible.
 
-**Conversación General.** ChatHome compone navegación, estado de conexión, MessageFeed y MessageComposer. Los mensajes forman una lista lineal con autor, condición de invitado, hora y separadores de día. El estado propio se indica con «Tú, invitado», sin insinuar una identidad verificada. La bienvenida con Mimo aparece únicamente después de confirmar un historial vacío; sus sugerencias rellenan el borrador editable y no lo envían. Carga, error de historial, reconexión y falta de conexión tienen estados explícitos. El contador representa conexiones abiertas, no personas únicas; no se añaden conversaciones ni presencia ficticias.
+**Conversación General.** ChatHome compone navegación, estado de conexión, MessageFeed y MessageComposer. Los mensajes forman una lista lineal con autor, condición de miembro o invitado, hora y separadores de día. La condición de miembro depende de accountId asignado por el servidor; acredita acceso a una cuenta, no el nombre real de una persona. El estado propio se indica con «Tú» y la condición correspondiente. La bienvenida con Mimo aparece únicamente después de confirmar un historial vacío; sus sugerencias rellenan el borrador editable y no lo envían. Carga, error de historial, reconexión y falta de conexión tienen estados explícitos. El contador representa conexiones abiertas, no personas únicas; no se añaden conversaciones ni presencia ficticias.
 
-**Compositor.** Texto de hasta 2000 caracteres, nombre de invitado editable de hasta 32 y aviso de publicación pública. Enter conserva el salto de línea; Ctrl o ⌘ + Enter envía. El borrador se conserva tras un fallo y solo se limpia al confirmar el envío si aún coincide con el texto enviado. El hilo sigue el final cuando corresponde y ofrece «Volver al final» al leer mensajes anteriores; cargar historial conserva una referencia al mensaje visible para mantener la posición de lectura.
+**Compositor.** Texto de hasta 2000 caracteres, nombre de invitado editable de hasta 32 y aviso de publicación pública. Para una cuenta muestra el nombre del perfil con acceso a /profile y la condición «Miembro». El envío espera a resolver la identidad sin impedir preparar el borrador. Enter conserva el salto de línea; Ctrl o ⌘ + Enter envía. El borrador se conserva tras un fallo y solo se limpia al confirmar el envío si aún coincide con el texto enviado. El hilo sigue el final cuando corresponde y ofrece «Volver al final» al leer mensajes anteriores; cargar historial conserva una referencia al mensaje visible para mantener la posición de lectura.
 
-**Cuenta.** El diálogo comunica que las cuentas y Google llegarán próximamente. La acción de Google está deshabilitada y «Seguir como invitado» permite cerrar el diálogo. No hay rutas nuevas de autenticación.
+**Cuenta.** AccountEntry dirige a /login o /profile según la sesión; sustituye el antiguo diálogo informativo. /login concentra inicio de sesión, registro, recuperación y confirmación OTP. El registro con contraseña confirma el correo antes de abrir una sesión; Google aprovecha el correo confirmado por el proveedor. La disponibilidad se obtiene de la API: una función sin configuración externa muestra una explicación y mantiene al alcance la vuelta a General como invitado. La guía técnica y de configuración está en [docs/authentication.md](../../docs/authentication.md).
+
+El perfil separa datos personales, correo, contraseña y Google mediante títulos, espacio y ayudas breves. Nombre visible, nombres, apellidos y presentación se guardan como datos personales; el correo tiene su propia confirmación de identidad y código enviado a la dirección nueva. La contraseña y la vinculación o desvinculación de Google expresan sus requisitos junto a la acción y conservan un método de acceso. No presentar un nombre visible como identidad real verificada.
+
+Los formularios conservan etiquetas visibles, campos sólidos, acciones de al menos 44px y errores junto a la tarea. El OTP usa un único campo de seis dígitos con autocompletado, plazo visible y reenvío explícito; la caducidad y los límites proceden de la API. Los estados ocupado, confirmación y fallo se explican con texto. Mimo acompaña la columna editorial del acceso en escritorio; no se añaden personajes por campo ni modales nuevos en estas páginas.
 
 **Interacción.** Conservar foco, selección y estados funcionales aunque el aspecto sea plano.
 
 El foco usa un trazo de 2px separado 3px del control. Es un indicador funcional de teclado, no una decoración. Conservar también los indicadores de checkbox, radio, carga y selección; la restricción de puntos se refiere a adornos.
 
-AppProviders configura tema claro, oscuro o del sistema, tooltips y notificaciones. useTheme permite cambiar la preferencia; las etiquetas comunes predeterminadas están en español. La base respeta movimiento reducido.
+AppProviders configura tema claro, oscuro o del sistema, sesión de cuenta, tooltips y notificaciones. ThemeToggle comparte el cambio de tema entre General y las páginas de cuenta; useTheme permite cambiar la preferencia. Las etiquetas comunes predeterminadas están en español. La base respeta movimiento reducido.
 
 **Personajes de Foris.** Nueve SVG originales en src/assets/characters, con fondo transparente, colores sólidos y una pareja de ojos expresivos. Comparten un lienzo de 160 × 160 y márgenes internos; cambian la silueta, la postura y la mirada. No llevan contornos, sombras, degradados ni animaciones automáticas.
 

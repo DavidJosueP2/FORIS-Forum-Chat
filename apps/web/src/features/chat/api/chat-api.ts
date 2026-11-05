@@ -1,4 +1,5 @@
 import type { Message, MessageInput, MessagePage } from '@messages/contracts'
+import { AUTH_EVENT } from '@/features/account/api/account-api'
 
 export class ChatApiError extends Error {
   readonly status: number
@@ -21,6 +22,7 @@ export function isMessage(value: unknown): value is Message {
     && typeof value.body === 'string'
     && typeof value.senderId === 'string'
     && typeof value.requestId === 'string'
+    && (value.accountId === undefined || value.accountId === null || typeof value.accountId === 'string')
     && typeof value.createdAt === 'string' && Number.isFinite(Date.parse(value.createdAt))
 }
 
@@ -34,6 +36,7 @@ async function request(path: string, options: RequestInit = {}): Promise<unknown
   })
   const data: unknown = await response.json().catch(() => null)
   if (!response.ok) {
+    if (response.status === 401) window.dispatchEvent(new Event(AUTH_EVENT))
     const error = isRecord(data) && isRecord(data.error) ? data.error : null
     const message = error && typeof error.message === 'string'
       ? error.message
@@ -58,10 +61,10 @@ export async function fetchMessages(
   return { messages: data.messages, hasMore: data.hasMore }
 }
 
-export async function postMessage(input: MessageInput): Promise<Message> {
+export async function postMessage(input: MessageInput, asAccount = false): Promise<Message> {
   const data = await request('/api/messages', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'X-Foris-Identity': asAccount ? 'account' : 'guest' },
     body: JSON.stringify(input),
   })
   if (!isRecord(data) || !isMessage(data.message)) {

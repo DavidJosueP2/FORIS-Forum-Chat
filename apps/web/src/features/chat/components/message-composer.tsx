@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import type { RefObject } from 'react'
 import type { MessageInput } from '@messages/contracts'
+import { Link } from 'react-router-dom'
 import { ArrowUp, LoaderCircle } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -17,10 +18,11 @@ interface MessageComposerProps {
   onSent: (body: string) => void
   sendMessage: (input: MessageInput) => Promise<void>
   inputRef: RefObject<HTMLTextAreaElement | null>
+  identityPending?: boolean
 }
 
 export function MessageComposer({
-  profile, draft, onDraftChange, onNameChange, onSent, sendMessage, inputRef,
+  profile, draft, onDraftChange, onNameChange, onSent, sendMessage, inputRef, identityPending = false,
 }: MessageComposerProps) {
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -29,10 +31,10 @@ export function MessageComposer({
 
   async function submit() {
     const body = draft.replaceAll('\r\n', '\n').trim()
-    if (!body || busyRef.current || body.length > MAX_MESSAGE_LENGTH) return
+    if (!body || busyRef.current || identityPending || body.length > MAX_MESSAGE_LENGTH) return
     const previous = attemptRef.current
     const input: MessageInput = previous
-      && previous.body === body && previous.author === profile.name
+      && previous.body === body && (Boolean(profile.accountId) || previous.author === profile.name)
       && previous.senderId === profile.senderId
       ? previous
       : { body, author: profile.name, senderId: profile.senderId, requestId: crypto.randomUUID() }
@@ -57,8 +59,10 @@ export function MessageComposer({
     <div className="composer-area">
       <div className="composer-identity">
         <span>Escribes como</span>
-        <GuestNameDialog profile={profile} onNameChange={onNameChange} />
-        {profile.name !== 'Invitado' && <span className="guest-label">Invitado</span>}
+        {profile.accountId
+          ? <Button asChild variant="ghost" className="guest-name-trigger h-11"><Link to="/profile"><span>{profile.name}</span></Link></Button>
+          : <GuestNameDialog profile={profile} onNameChange={onNameChange} />}
+        <span className="guest-label">{profile.accountId ? 'Miembro' : profile.name !== 'Invitado' ? 'Invitado' : ''}</span>
       </div>
       <form
         className="message-composer"
@@ -98,11 +102,11 @@ export function MessageComposer({
           </span>
           <Button
             type="submit"
-            disabled={sending || !draft.trim()}
+            disabled={sending || identityPending || !draft.trim()}
             className="send-button h-11 gap-2 px-5"
           >
             {sending ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : <ArrowUp aria-hidden="true" />}
-            <span>{sending ? 'Enviando' : error ? 'Reintentar' : 'Enviar'}</span>
+            <span>{identityPending ? 'Un momento' : sending ? 'Enviando' : error ? 'Reintentar' : 'Enviar'}</span>
           </Button>
         </div>
       </form>

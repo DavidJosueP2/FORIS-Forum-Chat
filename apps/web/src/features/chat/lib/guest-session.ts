@@ -8,6 +8,7 @@ const UUID = /^[\da-f]{8}-(?:[\da-f]{4}-){3}[\da-f]{12}$/i
 export interface GuestProfile {
   senderId: string
   name: string
+  accountId?: string
 }
 
 export function readGuestProfile(): GuestProfile {

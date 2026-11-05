@@ -6,7 +6,7 @@ import { mergeMessages } from '../lib/messages'
 
 export type ConnectionState = 'connecting' | 'live' | 'reconnecting' | 'offline'
 
-export function useChat() {
+export function useChat(accountId?: string) {
   const [messages, setMessages] = useState<Message[]>([])
   const [connection, setConnection] = useState<ConnectionState>(() =>
     navigator.onLine ? 'connecting' : 'offline')
@@ -171,9 +171,9 @@ export function useChat() {
   }, [messages, hasOlder])
 
   const sendMessage = useCallback(async (input: MessageInput) => {
-    const message = await postMessage(input)
+    const message = await postMessage(input, Boolean(accountId))
     setMessages(current => mergeMessages(current, [message]))
-  }, [])
+  }, [accountId])
 
   return {
     messages, connection, connections, historyStatus, historyError,

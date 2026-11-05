@@ -13,6 +13,7 @@ export function configureApplication(app: NestExpressApplication): void {
   const express = app.getHttpAdapter().getInstance() as Express;
   express.disable('x-powered-by');
   express.set('query parser', 'simple');
+  if (config.trustProxy) express.set('trust proxy', config.trustProxy);
   app.setGlobalPrefix('api');
   app.use(helmet({
     contentSecurityPolicy: {
@@ -24,6 +25,12 @@ export function configureApplication(app: NestExpressApplication): void {
     strictTransportSecurity: false,
   }));
   app.useStaticAssets(config.publicDirectory, { etag: true, maxAge: 0 });
+  for (const path of ['/login', '/profile']) {
+    express.get(path, (_request, response) => {
+      response.set('Cache-Control', 'no-store');
+      response.sendFile('index.html', { root: config.publicDirectory });
+    });
+  }
 }
 
 export async function createApplication(): Promise<NestExpressApplication> {

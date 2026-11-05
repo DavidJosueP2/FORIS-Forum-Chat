@@ -24,6 +24,7 @@
     "posttest": "node scripts/normalize-coverage.ts",
     "check": "npm run typecheck && npm run lint && npm test",
     "setup": "node scripts/setup.ts",
+    "setup:auth": "node scripts/setup-auth.ts",
     "sonar:report": "node --env-file-if-exists=.env scripts/sonar-report.ts"
   },
   "dependencies": {},

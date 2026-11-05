@@ -1,32 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowUpRight, MessageCircle, Moon, Sun, UserRound, Wifi, WifiOff } from 'lucide-react'
+import { ArrowUpRight, MessageCircle, UserRound, Wifi, WifiOff } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 import { Button } from '@/components/ui/button'
-import { useTheme } from '@/hooks/use-theme'
-import { AccountDialog } from '@/features/account/components/account-dialog'
+import { ThemeToggle } from '@/components/theme-toggle'
+import { AccountEntry } from '@/features/account/components/account-entry'
+import { useAuth } from '@/features/account/hooks/use-auth'
 import { useChat, type ConnectionState } from '../hooks/use-chat'
 import { readDraft, readGuestProfile, storeDraft, storeGuestProfile } from '../lib/guest-session'
 import { CommunityNotes, GuestNameDialog, RoomInfoDialog } from './chat-dialogs'
 import { MessageComposer } from './message-composer'
 import { MessageFeed } from './message-feed'
 import '../chat.css'
-
-function ThemeToggle() {
-  const { resolvedTheme, setTheme } = useTheme()
-  const label = resolvedTheme === 'dark' ? 'Usar tema claro' : 'Usar tema oscuro'
-  return (
-    <Button
-      variant="ghost"
-      size="icon"
-      className="h-11 w-11"
-      aria-label={label}
-      title={label}
-      onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-    >
-      {resolvedTheme === 'dark' ? <Sun aria-hidden="true" /> : <Moon aria-hidden="true" />}
-    </Button>
-  )
-}
 
 const connectionLabels: Record<ConnectionState, string> = {
   connecting: 'Conectando',
@@ -52,11 +37,16 @@ function ConnectionStatus({ state, connections }: { state: ConnectionState; conn
 }
 
 export function ChatHome() {
-  const chat = useChat()
+  const auth = useAuth()
+  const { session } = auth
+  const chat = useChat(session.user?.id)
   const [profile, setProfile] = useState(readGuestProfile)
   const [draft, setDraft] = useState(readDraft)
   const draftRef = useRef(draft)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const identity = session.user
+    ? { senderId: session.user.id, name: session.user.displayName, accountId: session.user.id }
+    : profile
 
   useEffect(() => { storeGuestProfile(profile) }, [profile])
 
@@ -90,8 +80,10 @@ export function ChatHome() {
           <div className="sidebar-profile">
             <span className="sidebar-profile-avatar" aria-hidden="true"><UserRound /></span>
             <div>
-              <GuestNameDialog profile={profile} onNameChange={changeName} />
-              <p>Participas como invitado</p>
+              {session.user
+                ? <Button asChild variant="ghost" className="guest-name-trigger h-11"><Link to="/profile"><span>{session.user.displayName}</span></Link></Button>
+                : <GuestNameDialog profile={profile} onNameChange={changeName} />}
+              <p>{session.user ? 'Tu perfil en Foris' : 'Participas como invitado'}</p>
             </div>
           </div>
         </div>
@@ -106,12 +98,18 @@ export function ChatHome() {
           <div className="header-actions">
             <span className="mobile-room-info"><RoomInfoDialog compact /></span>
             <ThemeToggle />
-            <AccountDialog />
+            <AccountEntry />
           </div>
         </header>
 
         <div className="conversation-layout">
           <main id="conversation" tabIndex={-1} className="conversation-main" aria-label="Conversación General">
+            {auth.status === 'error' && !session.user && (
+              <div className="connection-notice" role="alert">
+                <p>No pudimos comprobar tu sesión. Tu borrador sigue aquí.</p>
+                <Button variant="secondary" className="h-11" onClick={() => void auth.refresh()}>Revisar sesión</Button>
+              </div>
+            )}
             {(chat.connection === 'offline' || chat.connection === 'reconnecting') && (
               <div className="connection-notice">
                 <p>
@@ -124,7 +122,8 @@ export function ChatHome() {
             )}
             <MessageFeed
               messages={chat.messages}
-              senderId={profile.senderId}
+              senderId={identity.senderId}
+              accountId={identity.accountId}
               historyStatus={chat.historyStatus}
               historyError={chat.historyError}
               hasOlder={chat.hasOlder}
@@ -138,7 +137,8 @@ export function ChatHome() {
               }}
             />
             <MessageComposer
-              profile={profile}
+              identityPending={auth.status === 'loading' || (auth.status === 'error' && !session.user)}
+              profile={identity}
               draft={draft}
               onDraftChange={changeDraft}
               onNameChange={changeName}
@@ -155,8 +155,8 @@ export function ChatHome() {
             <p className="community-intro">Este espacio lo hacemos entre todos. Dale lugar a otras voces y comparte la tuya.</p>
             <CommunityNotes />
             <div className="community-footnote">
-              <p>Ahora, como invitado.</p>
-              <p>Siempre puedes elegir un nombre. No necesitas una cuenta para empezar.</p>
+              <p>{session.user ? 'Un espacio para tu voz.' : 'También como invitado.'}</p>
+              <p>{session.user ? 'Participas con tu perfil. Cada mensaje forma parte de una conversación pública.' : 'Puedes elegir un nombre o crear una cuenta. No necesitas registrarte para empezar.'}</p>
             </div>
           </aside>
         </div>
