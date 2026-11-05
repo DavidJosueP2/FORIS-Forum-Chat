@@ -22,7 +22,7 @@ Participantes de comunidades abiertas que quieren abrir la aplicacion y escribir
 - Historial persistente en PostgreSQL y entrega en tiempo real.
 - API monolitica modular NestJS con adaptador Express, ejecutable localmente con Node.
 - Un repositorio con npm workspaces: apps/api para NestJS, apps/web para React con Vite y packages/contracts para contratos publicos.
-- El frontend React esta inicializado con su plantilla; la interfaz de mensajeria y shadcn se incorporaran posteriormente. El frontend anterior ya se retiro del repositorio.
+- El frontend React incorpora Tailwind CSS y shadcn/ui como base compartida. En esta etapa se preparan el tema y los componentes; la vista del chat se implementara despues, segun la confirmacion del usuario.
 - Servidor y cliente en TypeScript estricto. El backend se compila a apps/api/dist y el frontend a apps/web/dist.
 - El acceso anonimo se conserva. Cuentas e inicio de sesion con Google son una evolucion prevista; aun no estan implementados.
 - Docker para PostgreSQL y SonarQube; conservar el Dockerfile como alternativa.
@@ -41,3 +41,11 @@ El usuario confirma construccion directa de la interfaz, sin una maqueta previa.
 - Diferenciar entrega al servidor de lectura por otra persona.
 - Mostrar el estado real de la conexion y permitir recuperarse.
 - Evitar contenido de ejemplo que parezca una conversacion real.
+
+## Brand Commitments
+
+- Apariencia humana, sencilla y pensada para conversar; evitar composiciones que parezcan una plantilla generada.
+- Colores solidos. Sin degradados, vidrio, fondos con tramas ni puntos decorativos.
+- Pocas tarjetas: organizar el contenido mediante tipografia, espacio y superficies tonales.
+- Las tarjetas y contenedores no llevan bordes decorativos ni contornos de colores. Los controles conservan una indicacion de foco visible para navegar con teclado.
+- Esta tarea prepara la base visual y todos los componentes de shadcn; no incluye construir la primera vista del chat.
