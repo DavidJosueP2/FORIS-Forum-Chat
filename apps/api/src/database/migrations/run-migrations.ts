@@ -1,8 +1,10 @@
 import type { DatabasePool, Migration } from '../database.types.js';
 import { createMessages } from './001-create-messages.js';
 import { createAuth } from './002-create-auth.js';
+import { createForum } from './003-create-forum.js';
+import { createCommunities } from './004-create-communities.js';
 
-const migrations: readonly Migration[] = [createMessages, createAuth];
+const migrations: readonly Migration[] = [createMessages, createAuth, createForum, createCommunities];
 
 export async function runMigrations(pool: DatabasePool): Promise<void> {
   const client = await pool.connect();

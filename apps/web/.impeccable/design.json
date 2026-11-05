@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-05T16:00:47.000Z",
+  "generatedAt": "2026-11-05T19:38:20.962Z",
   "title": "Design System: Foris",
   "extensions": {
     "colorMeta": {
@@ -42,7 +42,7 @@
       },
       "body": {
         "displayName": "Texto",
-        "purpose": "Plus Jakarta Sans: conversación, formularios y explicaciones."
+        "purpose": "Plus Jakarta Sans: publicaciones, comunidades, conversación, formularios y explicaciones."
       },
       "label": {
         "displayName": "Etiqueta",
@@ -50,15 +50,15 @@
       },
       "caption": {
         "displayName": "Ayuda y metadatos",
-        "purpose": "Plus Jakarta Sans: horas, fechas, estado de conexión y ayudas del compositor y los formularios de cuenta."
+        "purpose": "Plus Jakarta Sans: horas, fechas, estado de conexión y ayudas del chat y los formularios de cuenta; el foro usa label para sus metadatos y ayudas."
       },
       "heading": {
         "displayName": "Encabezado",
-        "purpose": "Axiforma: título General en escritorio y títulos de cuenta en móvil."
+        "purpose": "Axiforma: títulos de publicaciones, comunidades y avisos en las listas, título General en escritorio y títulos de cuenta en móvil."
       },
       "heading-compact": {
         "displayName": "Encabezado compacto",
-        "purpose": "Axiforma: título de la sala en móvil, títulos de los diálogos y secciones del perfil."
+        "purpose": "Axiforma: secciones del foro y títulos de publicaciones, comunidades y avisos en móvil, título de la sala en móvil, títulos de los diálogos y secciones del perfil."
       },
       "serif": {
         "displayName": "Acento serif",
@@ -123,15 +123,15 @@
       "name": "Campo",
       "kind": "input",
       "refersTo": "input",
-      "description": "Campo relleno, con etiqueta visible y foco funcional. Los formularios de cuenta amplían su altura sin cambiar los tokens de color o forma.",
+      "description": "Campo relleno, con etiqueta visible y foco funcional. Los formularios de cuenta, foro y comunidades amplían su altura sin cambiar los tokens de color o forma.",
       "html": "<label class=\"ds-field\"><span>Nombre visible</span><input placeholder=\"Invitado\" autocomplete=\"nickname\"></label>",
       "css": ".ds-field{display:grid;gap:.5rem;font:400 1rem/1.5 \"Plus Jakarta Sans\",sans-serif;color:var(--foreground)}.ds-field input{font:inherit;color:var(--foreground);background:var(--input);border:0;border-radius:.625rem;padding:.25rem .625rem;caret-color:var(--primary)}.ds-field input::placeholder{color:var(--muted-foreground)}.ds-field input:focus-visible{outline:2px solid var(--ring);outline-offset:3px}.ds-field input[aria-invalid=true]{background:var(--destructive-surface)}"
     },
     {
       "name": "Navegación",
       "kind": "nav",
-      "description": "Acceso a General con superficie tonal activa y extremos redondos.",
-      "html": "<nav class=\"ds-nav\" aria-label=\"Conversaciones\"><a href=\"#conversation\" aria-current=\"page\"><svg aria-hidden=\"true\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M7.9 20A9 9 0 1 0 4 16.1L2 22Z\"/></svg><span>General</span></a></nav>",
+      "description": "Cabecera compartida entre foro, comunidades y cuenta: Foros, Comunidades y Chat global, en ese orden, con superficie tonal activa y extremos redondos. NotificationEntry añade la bandeja privada para la cuenta activa; el chat conserva su navegación propia.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Navegación principal\"><a href=\"/\" aria-current=\"page\"><span>Foros</span></a><a href=\"/comunidades\"><span>Comunidades</span></a><a href=\"/chat\"><span>Chat global</span></a></nav>",
       "css": ".ds-nav{display:flex;font:600 .875rem \"Plus Jakarta Sans\",sans-serif}.ds-nav a{display:flex;min-height:3rem;align-items:center;gap:.75rem;padding:.75rem 1rem;border-radius:999px;color:var(--foreground);text-decoration:none;transition:background-color 150ms ease}.ds-nav svg{width:18px;height:18px;flex-shrink:0}.ds-nav a[aria-current=page]{background:var(--accent);color:var(--accent-foreground)}.ds-nav a:hover{background:var(--secondary-hover)}.ds-nav a:focus-visible{outline:2px solid var(--ring);outline-offset:3px}"
     },
     {
@@ -139,21 +139,21 @@
       "kind": "card",
       "refersTo": "surface",
       "description": "Superficie plana para un grupo que necesite contención; evitar repetirla como estructura de página.",
-      "html": "<section class=\"ds-surface\"><h3>General</h3><p>Sala abierta para conversar.</p></section>",
+      "html": "<section class=\"ds-surface\"><h3>Tu voz también tiene lugar</h3><p>Lee el foro sin cuenta; entra para publicar o responder.</p></section>",
       "css": ".ds-surface{padding:1rem;background:var(--card);color:var(--card-foreground);border:0;border-radius:.875rem;box-shadow:none;font:400 1rem/1.5 \"Plus Jakarta Sans\",sans-serif}.ds-surface h3{margin:0 0 .5rem;font-family:Axiforma,\"Plus Jakarta Sans\",sans-serif;font-size:1rem;font-weight:600}.ds-surface p{margin:0;color:var(--muted-foreground)}"
     },
     {
-      "name": "Compositor de General",
+      "name": "Compositor del chat global",
       "kind": "custom",
       "refersTo": "message-composer",
-      "description": "Control compuesto de texto público, con área interior y acción de envío en píldora; conserva radios propios frente a tarjetas y campos generales.",
+      "description": "Control compuesto del chat General en /chat, disponible para invitados y miembros, con área interior y acción de envío en píldora; conserva radios propios frente a tarjetas y campos generales.",
       "html": "<div class=\"ds-composer\"><label class=\"ds-composer-label\" for=\"ds-message\">Mensaje para General</label><textarea id=\"ds-message\" class=\"ds-composer-input\" rows=\"2\" maxlength=\"2000\" placeholder=\"Comparte algo con General…\"></textarea><div class=\"ds-composer-actions\"><span>Solo texto, muchas ideas</span><button type=\"button\">Enviar</button></div></div>",
       "css": ".ds-composer{padding:14px 16px 12px;border:0;border-radius:24px;background:var(--secondary);color:var(--foreground);font:400 1rem/1.6 \"Plus Jakarta Sans\",sans-serif}.ds-composer-label{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}.ds-composer-input{display:block;width:100%;min-height:64px;max-height:150px;resize:none;padding:2px 2px 8px;border:0;border-radius:4px;background:transparent;color:var(--foreground);font:inherit;caret-color:var(--primary)}.ds-composer-input::placeholder{color:var(--muted-foreground)}.ds-composer-input:focus-visible{outline:2px solid var(--ring);outline-offset:5px}.ds-composer-input[aria-invalid=true]{background:var(--destructive-surface)}.ds-composer-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px}.ds-composer-actions>span{color:var(--muted-foreground);font-size:.75rem}.ds-composer-actions button{min-width:106px;min-height:44px;padding:6px 20px;border:0;border-radius:999px;background:var(--primary);color:var(--primary-foreground);font:500 .875rem \"Plus Jakarta Sans\",sans-serif;cursor:pointer;transition:background-color 150ms ease}.ds-composer-actions button:hover{background:var(--primary-hover)}.ds-composer-actions button:focus-visible{outline:2px solid var(--ring);outline-offset:3px}.ds-composer-actions button:disabled{opacity:.5;cursor:not-allowed}@media(max-width:639px){.ds-composer{padding:12px 14px;border-radius:20px}.ds-composer-input{min-height:54px;max-height:110px}}"
     }
   ],
   "narrative": {
     "northStar": "Humano, sencillo y conversacional",
-    "overview": "Base visual de Foris para comunidades abiertas. La lectura manda; las formas suaves y los personajes aportan cercanía en momentos concretos. El contenido se organiza por tipografía, espacio y superficies sólidas. La pantalla inicial abre directamente la conversación General y mantiene la escritura como invitado al alcance.\n\nEl nombre, las cuatro familias tipográficas y el lenguaje de personajes forman la identidad actual. La composición de General se recoge en .impeccable/surfaces/apps-web-src-app-tsx.md y la de acceso y perfil en .impeccable/surfaces/apps-web-src-features-account-pages-login-page-tsx.md; las restricciones de estilo del usuario se conservan en el PRODUCT.md de la raíz.",
+    "overview": "Base visual de Foris para comunidades abiertas. La lectura manda; las formas suaves y los personajes aportan cercanía en momentos concretos. El contenido se organiza por tipografía, espacio y superficies sólidas. El inicio abre Foros con las publicaciones organizadas por tópico; Comunidades permite explorar espacios públicos y decidir cómo seguirlos. El chat global conserva la conversación inmediata y la escritura como invitado en /chat.\n\nEl nombre, las cuatro familias tipográficas y el lenguaje de personajes forman la identidad actual. La dirección del foro se recoge en .impeccable/forum-direction.md, la de comunidades en .impeccable/communities-direction.md, la del chat global en .impeccable/surfaces/apps-web-src-app-tsx.md y la de acceso y perfil en .impeccable/surfaces/apps-web-src-features-account-pages-login-page-tsx.md; las restricciones de estilo del usuario se conservan en el PRODUCT.md de la raíz.",
     "keyCharacteristics": [
       "Colores sólidos.",
       "Jerarquía por espacio y tipografía.",
@@ -175,6 +175,11 @@
         "section": "components"
       },
       {
+        "name": "Seguimiento de comunidades",
+        "body": "Usar las listas y formularios abiertos de features/communities con los tokens existentes. Distinguir pertenencia, favorita y avisos mediante texto y controles propios: guardar no implica unirse, silenciar no implica salir. La bandeja privada muestra avisos dentro de Foris y acciones explícitas de lectura y actualización; sus permisos y contrato se describen en docs/communities.md.",
+        "section": "components"
+      },
+      {
         "name": "Personajes de Foris",
         "body": "Nueve SVG originales en src/assets/characters, con fondo transparente, colores sólidos y una pareja de ojos expresivos. Comparten un lienzo de 160 × 160 y márgenes internos; cambian la silueta, la postura y la mirada. No llevan contornos, sombras, degradados ni animaciones automáticas.",
         "section": "components"
@@ -183,7 +188,7 @@
     "dos": [
       "Do usar colores semánticos y superficies sólidas.",
       "Do conservar foco visible y estados accesibles.",
-      "Do priorizar la lectura de la conversación.",
+      "Do priorizar la lectura de publicaciones y conversaciones, con permisos claros para cada superficie.",
       "Do usar un personaje cuando aporte cercanía o contexto."
     ],
     "donts": [

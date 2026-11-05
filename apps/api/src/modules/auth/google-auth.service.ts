@@ -11,12 +11,23 @@ import { record } from './auth-validation.js';
 import * as validate from './auth-validation.js';
 import { HttpError } from '../../common/errors/http-error.js';
 import type { AuthRequest } from './auth.types.js';
+import { returnTarget } from './return-target.js';
 
 type Intent = 'login' | 'link' | 'reauth';
 interface GoogleFlow {
   [key: string]: unknown;
   intent: Intent; user_id: string | null; session_id: string | null;
-  code_verifier: string; nonce: string;
+  code_verifier: string; nonce: string; return_to: string;
+}
+/** Conserva únicamente el destino local de un flujo ya validado. */
+export class GoogleCallbackError extends HttpError {
+  readonly returnTo: string;
+  constructor(cause: unknown, destination: string) {
+    super(cause instanceof HttpError ? cause.status : 503,
+      cause instanceof HttpError ? cause.code : 'GOOGLE_FAILED',
+      cause instanceof HttpError ? cause.message : 'No pudimos completar el acceso con Google.');
+    this.returnTo = returnTarget(destination);
+  }
 }
 @Injectable()
 export class GoogleAuthService {
@@ -40,7 +51,7 @@ export class GoogleAuthService {
   async start(body: unknown, request: AuthRequest, response: Response) {
     this.sessions.requireEnabled();
     if (!this.auth.options().google) throw new HttpError(503, 'GOOGLE_UNAVAILABLE', 'El acceso con Google no está disponible ahora.');
-    const fields = record(body, ['intent', 'currentPassword']);
+    const fields = record(body, ['intent', 'currentPassword', 'returnTo']);
     const intent = fields.intent ?? 'login';
     if (intent !== 'login' && intent !== 'link' && intent !== 'reauth') validate.invalid('La solicitud de Google no es válida.');
     const context = intent === 'login' ? null : await this.sessions.required(request);
@@ -60,9 +71,9 @@ export class GoogleAuthService {
           throw new HttpError(409, 'GOOGLE_NOT_LINKED', 'Tu cuenta no tiene Google vinculado.');
         }
       }
-      await client.query(`INSERT INTO auth_google_flows(state_hash,binding_hash,nonce,code_verifier,intent,user_id,session_id,expires_at)
-        VALUES($1,$2,$3,$4,$5,$6,$7,CURRENT_TIMESTAMP + INTERVAL '10 minutes')`,
-      [tokenHash(state), tokenHash(binding), nonce, pkce.codeVerifier, intent, context?.user.id ?? null, context?.sessionId ?? null]);
+      await client.query(`INSERT INTO auth_google_flows(state_hash,binding_hash,nonce,code_verifier,intent,user_id,session_id,return_to,expires_at)
+        VALUES($1,$2,$3,$4,$5,$6,$7,$8,CURRENT_TIMESTAMP + INTERVAL '10 minutes')`,
+      [tokenHash(state), tokenHash(binding), nonce, pkce.codeVerifier, intent, context?.user.id ?? null, context?.sessionId ?? null, returnTarget(fields.returnTo)]);
     });
     response.cookie(this.cookieName, binding, {
       httpOnly: true, secure: this.sessions.config.secureCookies, sameSite: 'lax',
@@ -86,60 +97,64 @@ export class GoogleAuthService {
       AND expires_at > CURRENT_TIMESTAMP RETURNING *`, [tokenHash(state), tokenHash(binding)]);
     const flow = result.rows[0];
     if (!flow) throw new HttpError(400, 'GOOGLE_FLOW_EXPIRED', 'Vuelve a iniciar el acceso con Google.');
-    if (query.error) throw new HttpError(400, 'GOOGLE_CANCELLED', 'No se completó el acceso con Google.');
-    const code = typeof query.code === 'string' ? query.code : '';
-    if (!code || code.length > 4096) throw new HttpError(400, 'GOOGLE_FAILED', 'No pudimos completar el acceso con Google.');
-    const tokenResult = await this.client.getToken({ code, codeVerifier: flow.code_verifier, redirect_uri: this.sessions.config.google.callbackUrl });
-    const idToken = tokenResult.tokens.id_token;
-    if (!idToken) throw new HttpError(400, 'GOOGLE_FAILED', 'Google no confirmó tu identidad.');
-    const ticket = await this.client.verifyIdToken({ idToken, audience: this.sessions.config.google.clientId });
-    const payload = ticket.getPayload();
-    const nonce = payload && 'nonce' in payload ? payload.nonce : undefined;
-    if (!payload || typeof nonce !== 'string' || !equalSecret(nonce, flow.nonce)
-      || payload.email_verified !== true || !payload.email || !payload.sub) {
-      throw new HttpError(400, 'GOOGLE_FAILED', 'Google no confirmó una cuenta de correo verificada.');
-    }
-    const email = validate.email(payload.email);
-    const cleanName = (value: string | undefined, maximum: number) => Array.from(value || '').filter(character => {
-      const point = character.codePointAt(0) ?? 0;
-      return point >= 32 && point !== 127;
-    }).join('').trim().slice(0, maximum);
-    const displayName = cleanName(payload.name, 32) || 'Miembro';
-    const context = flow.intent === 'login' ? null : await this.sessions.required(request);
-    const grant = await this.repository.transaction(async client => {
-      await this.repository.lockKey(client, 'google:' + payload.sub);
-      const identity = (await client.query<{ user_id: string }>('SELECT user_id FROM user_google_identities WHERE subject = $1', [payload.sub])).rows[0];
-      if (flow.intent !== 'login') {
-        if (!context || flow.user_id !== context.user.id || flow.session_id !== context.sessionId) throw new HttpError(401, 'SESSION_REQUIRED', 'Vuelve a entrar antes de vincular Google.');
-        const user = await this.repository.user(context.user.id, client, true);
-        await this.sessions.assertCurrent(client, context);
-        if (!user) throw new HttpError(401, 'SESSION_REQUIRED', 'Vuelve a entrar.');
-        if (flow.intent === 'reauth') {
-          if (!identity || identity.user_id !== user.id) throw new HttpError(409, 'GOOGLE_IDENTITY_MISMATCH', 'Elige la cuenta de Google vinculada a tu perfil.');
-          await client.query('DELETE FROM auth_sessions WHERE id = $1', [context.sessionId]);
+    try {
+      if (query.error) throw new HttpError(400, 'GOOGLE_CANCELLED', 'No se completó el acceso con Google.');
+      const code = typeof query.code === 'string' ? query.code : '';
+      if (!code || code.length > 4096) throw new HttpError(400, 'GOOGLE_FAILED', 'No pudimos completar el acceso con Google.');
+      const tokenResult = await this.client.getToken({ code, codeVerifier: flow.code_verifier, redirect_uri: this.sessions.config.google.callbackUrl });
+      const idToken = tokenResult.tokens.id_token;
+      if (!idToken) throw new HttpError(400, 'GOOGLE_FAILED', 'Google no confirmó tu identidad.');
+      const ticket = await this.client.verifyIdToken({ idToken, audience: this.sessions.config.google.clientId });
+      const payload = ticket.getPayload();
+      const nonce = payload && 'nonce' in payload ? payload.nonce : undefined;
+      if (!payload || typeof nonce !== 'string' || !equalSecret(nonce, flow.nonce)
+        || payload.email_verified !== true || !payload.email || !payload.sub) {
+        throw new HttpError(400, 'GOOGLE_FAILED', 'Google no confirmó una cuenta de correo verificada.');
+      }
+      const email = validate.email(payload.email);
+      const cleanName = (value: string | undefined, maximum: number) => Array.from(value || '').filter(character => {
+        const point = character.codePointAt(0) ?? 0;
+        return point >= 32 && point !== 127;
+      }).join('').trim().slice(0, maximum);
+      const displayName = cleanName(payload.name, 32) || 'Miembro';
+      const context = flow.intent === 'login' ? null : await this.sessions.required(request);
+      const grant = await this.repository.transaction(async client => {
+        await this.repository.lockKey(client, 'google:' + payload.sub);
+        const identity = (await client.query<{ user_id: string }>('SELECT user_id FROM user_google_identities WHERE subject = $1', [payload.sub])).rows[0];
+        if (flow.intent !== 'login') {
+          if (!context || flow.user_id !== context.user.id || flow.session_id !== context.sessionId) throw new HttpError(401, 'SESSION_REQUIRED', 'Vuelve a entrar antes de vincular Google.');
+          const user = await this.repository.user(context.user.id, client, true);
+          await this.sessions.assertCurrent(client, context);
+          if (!user) throw new HttpError(401, 'SESSION_REQUIRED', 'Vuelve a entrar.');
+          if (flow.intent === 'reauth') {
+            if (!identity || identity.user_id !== user.id) throw new HttpError(409, 'GOOGLE_IDENTITY_MISMATCH', 'Elige la cuenta de Google vinculada a tu perfil.');
+            await client.query('DELETE FROM auth_sessions WHERE id = $1', [context.sessionId]);
+            return this.sessions.issue(client, user.id);
+          }
+          if (identity && identity.user_id !== user.id) throw new HttpError(409, 'GOOGLE_IN_USE', 'Esta cuenta de Google ya está vinculada a otro perfil.');
+          if (user.google_email) throw new HttpError(409, 'GOOGLE_ALREADY_LINKED', 'Ya tienes Google vinculado.');
+          await client.query('INSERT INTO user_google_identities(user_id,subject,email) VALUES($1,$2,$3)', [user.id, payload.sub, email]);
+          await this.otp.invalidateUser(client, user.id);
+          return this.sessions.issue(client, user.id, true);
+        }
+        if (identity) {
+          const user = await this.repository.user(identity.user_id, client, true);
+          if (!user?.email_verified_at) throw new HttpError(401, 'GOOGLE_FAILED', 'No pudimos abrir esta cuenta.');
+          await client.query('UPDATE user_google_identities SET email = $2 WHERE user_id = $1', [user.id, email]);
           return this.sessions.issue(client, user.id);
         }
-        if (identity && identity.user_id !== user.id) throw new HttpError(409, 'GOOGLE_IN_USE', 'Esta cuenta de Google ya está vinculada a otro perfil.');
-        if (user.google_email) throw new HttpError(409, 'GOOGLE_ALREADY_LINKED', 'Ya tienes Google vinculado.');
-        await client.query('INSERT INTO user_google_identities(user_id,subject,email) VALUES($1,$2,$3)', [user.id, payload.sub, email]);
-        await this.otp.invalidateUser(client, user.id);
-        return this.sessions.issue(client, user.id, true);
-      }
-      if (identity) {
-        const user = await this.repository.user(identity.user_id, client, true);
-        if (!user?.email_verified_at) throw new HttpError(401, 'GOOGLE_FAILED', 'No pudimos abrir esta cuenta.');
-        await client.query('UPDATE user_google_identities SET email = $2 WHERE user_id = $1', [user.id, email]);
-        return this.sessions.issue(client, user.id);
-      }
-      // Coincidir por correo no autoriza la fusión ni el acceso a una cuenta local.
-      const id = randomUUID();
-      const inserted = await client.query(`INSERT INTO users(id,email,display_name,given_name,family_name,email_verified_at)
-        VALUES($1,$2,$3,$4,$5,CURRENT_TIMESTAMP) ON CONFLICT(email) DO NOTHING RETURNING id`,
-      [id, email, displayName, cleanName(payload.given_name, 80), cleanName(payload.family_name, 80)]);
-      if (!inserted.rows[0]) throw new HttpError(409, 'GOOGLE_ACCOUNT_EXISTS', 'Ya existe una cuenta con ese correo. Entra primero y vincula Google desde tu perfil.');
-      await client.query('INSERT INTO user_google_identities(user_id,subject,email) VALUES($1,$2,$3)', [id, payload.sub, email]);
-      return this.sessions.issue(client, id);
-    });
-    return { grant, intent: flow.intent };
+        // Coincidir por correo no autoriza la fusión ni el acceso a una cuenta local.
+        const id = randomUUID();
+        const inserted = await client.query(`INSERT INTO users(id,email,display_name,given_name,family_name,email_verified_at)
+          VALUES($1,$2,$3,$4,$5,CURRENT_TIMESTAMP) ON CONFLICT(email) DO NOTHING RETURNING id`,
+        [id, email, displayName, cleanName(payload.given_name, 80), cleanName(payload.family_name, 80)]);
+        if (!inserted.rows[0]) throw new HttpError(409, 'GOOGLE_ACCOUNT_EXISTS', 'Ya existe una cuenta con ese correo. Entra primero y vincula Google desde tu perfil.');
+        await client.query('INSERT INTO user_google_identities(user_id,subject,email) VALUES($1,$2,$3)', [id, payload.sub, email]);
+        return this.sessions.issue(client, id);
+      });
+      return { grant, intent: flow.intent, returnTo: returnTarget(flow.return_to) };
+    } catch (cause) {
+      throw new GoogleCallbackError(cause, flow.return_to);
+    }
   }
 }

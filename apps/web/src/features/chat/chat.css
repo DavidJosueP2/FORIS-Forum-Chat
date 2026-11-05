@@ -122,6 +122,7 @@
 .connection-status svg { width: 13px; height: 13px; flex-shrink: 0; }
 .connection-count { margin-left: 9px; }
 .header-actions { display: flex; flex-shrink: 0; align-items: center; gap: 6px; }
+.chat-communities-link { display: none; }
 .mobile-room-info { display: none; }
 
 .conversation-layout { display: grid; min-width: 0; min-height: 0; flex: 1; grid-template-columns: minmax(0, 1fr); }
@@ -198,6 +199,7 @@
 }
 
 @media (max-width: 1023px) {
+  .chat-communities-link { display: inline-flex; }
   .foris-app { grid-template-columns: minmax(0, 1fr); }
   .chat-sidebar { display: none; }
   .chat-header { min-height: 100px; padding: 20px 28px; }
@@ -206,10 +208,10 @@
 }
 
 @media (max-width: 639px) {
-  .chat-header { min-height: 100px; gap: 8px; padding: 18px 16px; }
+  .chat-header { min-height: 100px; gap: 8px; padding: 18px 16px; flex-wrap: wrap; }
   .room-heading { flex: 1; }
   .room-heading h1 { font-size: 1.25rem; line-height: 1.4; text-wrap: wrap; }
-  .header-actions { gap: 0; }
+  .header-actions { gap: 0; flex-wrap: wrap; width: 100%; }
   .account-trigger { width: 44px; padding-inline: 0; }
   .account-trigger > span { display: none; }
   .connection-status { gap: 5px; font-size: .75rem; }

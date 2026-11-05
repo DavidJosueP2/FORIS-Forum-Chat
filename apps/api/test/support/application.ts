@@ -22,11 +22,12 @@ export interface FixtureOptions {
   port?: number;
   pool?: DatabasePool;
   logger?: AppLogger;
+  auth?: boolean;
 }
 
 export async function createTestApplication(options: FixtureOptions = {}) {
   const pool = options.pool ?? (await testDatabase()).pool;
-  const config = readConfig({ PGPASSWORD: 'test-only' });
+  const config = readConfig({ PGPASSWORD: 'test-only', AUTH_SECRET: options.auth ? 'foris-test-secret-with-at-least-32-characters' : undefined });
   config.port = options.port ?? 3099;
   config.messagesPerMinute = options.sendLimit ?? 40;
   const builder = Test.createTestingModule({ imports: [AppModule] })

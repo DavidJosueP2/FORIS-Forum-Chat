@@ -11,10 +11,11 @@ export class AccountApiError extends Error {
     this.code = code
   }
 }
-export async function accountRequest<T>(path: string, method = 'GET', body?: unknown): Promise<T> {
+export async function accountRequest<T>(path: string, method = 'GET', body?: unknown, signal?: AbortSignal): Promise<T> {
   try {
     const response = await fetch('/api/' + path, {
-      method, credentials: 'same-origin', cache: 'no-store', signal: AbortSignal.timeout(20000),
+      method, credentials: 'same-origin', cache: 'no-store',
+      signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(20000)]) : AbortSignal.timeout(20000),
       headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
       body: body === undefined ? undefined : JSON.stringify(body),
     })
@@ -37,8 +38,8 @@ export async function accountRequest<T>(path: string, method = 'GET', body?: unk
 export function accountError(error: unknown): string {
   return error instanceof Error ? error.message : 'No pudimos completar la solicitud.'
 }
-export async function startGoogle(intent: 'login' | 'link' | 'reauth', currentPassword?: string) {
-  const result = await accountRequest<{ url: string }>('auth/google/start', 'POST', { intent, currentPassword })
+export async function startGoogle(intent: 'login' | 'link' | 'reauth', currentPassword?: string, returnTo?: string) {
+  const result = await accountRequest<{ url: string }>('auth/google/start', 'POST', { intent, currentPassword, returnTo })
   const url = new URL(result.url)
   if (url.origin !== 'https://accounts.google.com') throw new AccountApiError(502, 'INVALID_RESPONSE', 'No pudimos abrir Google.')
   window.location.assign(url.toString())

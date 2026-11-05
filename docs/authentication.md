@@ -1,6 +1,10 @@
 # Cuentas y autenticación de Foris
 
-El acceso invitado continúa disponible en General. La ruta /login concentra inicio de sesión, registro y recuperación; /profile permite editar datos, correo, contraseña y la vinculación con Google.
+El acceso invitado continúa disponible en el chat global (/chat). El foro se puede leer sin cuenta; crear publicaciones o respuestas requiere una sesión de cuenta verificada. La ruta /login concentra inicio de sesión, registro y recuperación; /profile permite editar datos, correo, contraseña y la vinculación con Google.
+
+Comunidades también permite lectura pública. Crear una, unirse, guardar favoritas, modificar preferencias y consultar la bandeja de notificaciones requiere una cuenta; escribir dentro de una comunidad exige pertenecer a ella. Los destinos de regreso tras acceso nativo, OTP o Google admiten las rutas conocidas de comunidades y notificaciones, y el parámetro comunidad al publicar. No se aceptan destinos externos. Los detalles están en [communities.md](communities.md).
+
+La cabecera ofrece Tu perfil como menú para una sesión activa: Ver tu perfil, una fila Tema con tres iconos para oscuro, claro y sistema, y Cerrar sesión. El tema seleccionado se resalta y cada icono conserva un nombre accesible y una ayuda al pasar el puntero. El tema se guarda localmente; si no hay una elección previa, sigue al sistema. Cerrar sesión usa el endpoint existente, espera su confirmación y muestra un error recuperable si falla. Los invitados conservan Entrar y el mismo selector compacto de temas.
 
 La implementación está preparada. El envío real de OTP y el acceso a Google requieren las credenciales que vas a completar en el archivo privado .env. No se ejecutaron compilaciones, comprobaciones del compilador, pruebas, migraciones, servidores ni envíos de correo durante esta entrega.
 
@@ -35,10 +39,15 @@ SMTP_PORT=587
 SMTP_SECURE=false
 SMTP_USER=tu-usuario-smtp
 SMTP_PASSWORD=tu-credencial-smtp
-MAIL_FROM="Foris <hola@tu-dominio.com>"
+MAIL_FROM="Foris - Chat & Enjoy"
+MAIL_FROM_ADDRESS=hola@tu-dominio.com
 ```
 
 El remitente debe estar autorizado por ese proveedor. Usa su credencial SMTP, que puede ser diferente de la contraseña de tu buzón. Si el proveedor exige una contraseña de aplicación, utiliza esa credencial.
+
+MAIL_FROM es el nombre visible. MAIL_FROM_ADDRESS permite indicar la dirección de remitente por separado. Si no se indica, se conserva la dirección del formato anterior `MAIL_FROM="Foris - Chat & Enjoy <hola@tu-dominio.com>"` o se usa SMTP_USER cuando es una dirección de correo. Si tu usuario SMTP es un identificador como «apikey», configura MAIL_FROM_ADDRESS. Un remitente sin dirección válida deja el correo deshabilitado en vez de intentar un envío inválido.
+
+Nodemailer recibe el nombre y la dirección por separado, por lo que el nombre puede contener espacios y «&». Este formato sigue su [documentación de direcciones](https://nodemailer.com/message/addresses). Tras cambiar estas variables, reinicia manualmente el backend para cargarlas; no basta con recargar la página.
 
 El puerto 587 exige STARTTLS; el 465 utiliza TLS desde el inicio y SMTP_SECURE=true. No se desactiva la validación de certificados. Los parámetros siguen el [transporte SMTP de Nodemailer](https://nodemailer.com/smtp).
 
@@ -74,7 +83,7 @@ Cuando cambies .env, reinicia manualmente el backend para cargar la configuraci�
 | Correo ya utilizado al entrar con otro Google | No une cuentas automáticamente. Hay que entrar a la cuenta existente y vincular Google desde el perfil. |
 | Vincular Google | Requiere sesión y confirmación de la contraseña local; la vuelta OAuth debe pertenecer al mismo navegador y sesión. |
 | Desvincular Google | Requiere una contraseña local y su confirmación. No permite eliminar el último método de acceso. |
-| Añadir contraseña a una cuenta Google | Exige acceso reciente con Google y un OTP al correo de la cuenta. |
+| Añadir contraseña a una cuenta Google | «Crear contraseña», en Contraseña o en la ayuda de Google, abre y enfoca el formulario. Se elige y repite la contraseña, se solicita un OTP y se confirma para guardarla. Exige acceso reciente con Google y un OTP al correo de la cuenta. |
 | Cambiar contraseña local | Confirma contraseña actual y OTP. Rota la sesión actual e invalida las demás. |
 | Recuperar contraseña | Solicitud genérica por correo y OTP; no revela si la cuenta existe. Tras confirmar, hay que volver a entrar. |
 | Cambiar correo | Confirma identidad y un OTP enviado al nuevo correo; la dirección anterior continúa hasta la confirmación. |

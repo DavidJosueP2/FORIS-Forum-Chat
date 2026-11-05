@@ -96,7 +96,7 @@ export function MessageFeed({
         }}
         tabIndex={0}
         role="region"
-        aria-label="Historial de General"
+        aria-label="Historial del chat global"
       >
         <div className={'feed-content' + (!hasMessages ? ' feed-content-empty' : '')}>
           {historyError && (
@@ -124,7 +124,7 @@ export function MessageFeed({
             <div className="chat-empty">
               <ForisCharacter mood="welcome" width={116} height={116} />
               <h2>Rompe el hielo.</h2>
-              <p>General es un espacio abierto. Comparte una idea, una pregunta o simplemente saluda.</p>
+              <p>El chat global es un espacio abierto. Comparte una idea, una pregunta o simplemente saluda.</p>
               <div className="empty-suggestions">
                 <Button variant="secondary" className="h-11 px-5" onClick={() => onSuggestion('Hola, soy nuevo por aquí. ¿Cómo están?')}>
                   Decir hola

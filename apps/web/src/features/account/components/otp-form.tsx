@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import type { ReactNode } from 'react'
+import type { ReactNode, Ref } from 'react'
 import type { OtpChallenge } from '@messages/contracts'
 import { LoaderCircle } from 'lucide-react'
 import { Input } from '@/components/ui/input'
@@ -12,8 +12,9 @@ interface OtpFormProps {
   onConfirm: (code: string) => Promise<void>
   children?: ReactNode
   submitLabel?: string
+  inputRef?: Ref<HTMLInputElement>
 }
-export function OtpForm({ challenge, onResent, onConfirm, children, submitLabel = 'Confirmar código' }: OtpFormProps) {
+export function OtpForm({ challenge, onResent, onConfirm, children, submitLabel = 'Confirmar código', inputRef }: OtpFormProps) {
   const id = useId()
   const [code, setCode] = useState('')
   const [now, setNow] = useState(Date.now)
@@ -40,7 +41,7 @@ export function OtpForm({ challenge, onResent, onConfirm, children, submitLabel 
     }} aria-busy={busy}>
       <div className="account-field">
         <label htmlFor={id}>Código de seis dígitos</label>
-        <Input id={id} name="otp" className="otp-code" inputMode="numeric" autoComplete="one-time-code"
+        <Input ref={inputRef} id={id} name="otp" className="otp-code" inputMode="numeric" autoComplete="one-time-code"
           value={code} onChange={event => { setCode(event.target.value.replace(/\D/g, '').slice(0, 6)); setError(null) }}
           pattern="[0-9]{6}" minLength={6} maxLength={6} required disabled={busy} aria-describedby={id + '-help'} />
         <p id={id + '-help'} className="account-hint">

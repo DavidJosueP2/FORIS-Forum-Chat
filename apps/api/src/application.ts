@@ -25,7 +25,7 @@ export function configureApplication(app: NestExpressApplication): void {
     strictTransportSecurity: false,
   }));
   app.useStaticAssets(config.publicDirectory, { etag: true, maxAge: 0 });
-  for (const path of ['/login', '/profile']) {
+  for (const path of ['/login', '/profile', '/chat', '/publicar', '/publicaciones/:id', '/comunidades', '/comunidades/crear', '/comunidades/:id', '/notificaciones']) {
     express.get(path, (_request, response) => {
       response.set('Cache-Control', 'no-store');
       response.sendFile('index.html', { root: config.publicDirectory });
@@ -50,6 +50,6 @@ export async function startServer(app: NestExpressApplication) {
   }
   let closing: Promise<void> | undefined;
   const close = () => { closing ??= app.close(); return closing; };
-  logger.info(`Mensajes disponible en http://${config.host}:${config.port}`);
+  logger.info(`Foris disponible en http://${config.host}:${config.port}`);
   return { app, server: app.getHttpServer() as Server, close };
 }

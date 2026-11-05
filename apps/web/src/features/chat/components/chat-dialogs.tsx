@@ -34,7 +34,7 @@ export function RoomInfoDialog({ compact = false }: { compact?: boolean }) {
         <Button
           variant="ghost"
           className={compact ? 'h-11 w-11 p-0' : 'sidebar-info h-11'}
-          aria-label="Información de General"
+          aria-label="Información del chat global"
         >
           <Info aria-hidden="true" />
           {!compact && <span>Sobre este espacio</span>}
@@ -42,7 +42,7 @@ export function RoomInfoDialog({ compact = false }: { compact?: boolean }) {
       </DialogTrigger>
       <DialogContent className="foris-dialog">
         <DialogHeader>
-          <DialogTitle className="text-xl">Así conversamos en General</DialogTitle>
+          <DialogTitle className="text-xl">Así conversamos en el chat global</DialogTitle>
           <DialogDescription className="text-base leading-relaxed">
             Un espacio compartido para preguntar, encontrar otras ideas y decir hola.
             Los nombres de invitado no son identidades verificadas.

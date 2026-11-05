@@ -6,6 +6,7 @@ import type { Transporter } from 'nodemailer';
 import { APP_CONFIG, APP_LOGGER } from '../../config/app-config.js';
 import type { AppConfig, AppLogger } from '../../config/app-config.js';
 import { readAuthConfig } from '../../config/auth-config.js';
+import { resolveMailSender } from '../../config/mail-sender.js';
 import { HttpError } from '../../common/errors/http-error.js';
 import { AuthRepository } from './auth.repository.js';
 import { seal, unseal } from './auth-crypto.js';
@@ -15,6 +16,7 @@ interface MailJob { to: string; subject: string; text: string }
 @Injectable()
 export class AuthMailService implements OnModuleInit, OnApplicationShutdown {
   private readonly config;
+  private readonly sender;
   private transport: Transporter | undefined;
   private timer: ReturnType<typeof setInterval> | undefined;
   private busy = false;
@@ -23,11 +25,14 @@ export class AuthMailService implements OnModuleInit, OnApplicationShutdown {
     @Inject(APP_CONFIG) config: AppConfig,
     @Inject(AuthRepository) private readonly repository: AuthRepository,
     @Inject(APP_LOGGER) private readonly logger: AppLogger,
-  ) { this.config = config.auth ?? readAuthConfig({}); }
+  ) {
+    this.config = config.auth ?? readAuthConfig({});
+    this.sender = resolveMailSender(this.config.mail);
+  }
 
   get enabled(): boolean {
     const { mail, secret } = this.config;
-    return Boolean(secret && mail.host && mail.user && mail.password && mail.from);
+    return Boolean(secret && mail.host && mail.user && mail.password && this.sender);
   }
   requireEnabled(): void {
     if (!this.enabled) throw new HttpError(503, 'MAIL_UNAVAILABLE', 'El envío de códigos no está disponible ahora. Inténtalo más tarde.');
@@ -66,7 +71,7 @@ export class AuthMailService implements OnModuleInit, OnApplicationShutdown {
     }, id, expiry);
   }
   private async deliver(): Promise<void> {
-    if (this.busy || !this.transport) return;
+    if (this.busy || !this.transport || !this.sender) return;
     this.busy = true;
     try {
       const { rows } = await this.repository.database.query<{
@@ -84,7 +89,7 @@ export class AuthMailService implements OnModuleInit, OnApplicationShutdown {
       if (job) {
         try {
           const data = unseal(this.config.secret, job.encrypted_payload) as MailJob;
-          await this.transport.sendMail({ from: this.config.mail.from, to: data.to, subject: data.subject, text: data.text });
+          await this.transport.sendMail({ from: this.sender, to: data.to, subject: data.subject, text: data.text });
           await this.repository.database.query('DELETE FROM auth_mail_outbox WHERE id = $1', [job.id]);
         } catch (error) {
           this.logger.error('auth_mail_delivery_failed', { type: error instanceof Error ? error.name : 'UnknownError' });
