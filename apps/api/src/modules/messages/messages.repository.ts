@@ -2,10 +2,10 @@ import { Inject, Injectable } from '@nestjs/common';
 import { HttpError } from '../../common/errors/http-error.js';
 import { DatabaseService } from '../../database/database.service.js';
 import type { SqlDatabase } from '../../database/database.types.js';
-import type { Message, MessageInput, MessagePage, Pagination } from '@messages/contracts';
-import type { MessageRepositoryPort, MessageRow, SaveResult } from './messages.types.js';
+import type { Message, MessagePage, Pagination } from '@messages/contracts';
+import type { MessageRepositoryPort, MessageRow, SaveResult, StoredMessageInput } from './messages.types.js';
 
-const COLUMNS = 'id, author, body, sender_id, request_id, created_at';
+const COLUMNS = 'id, author, body, sender_id, request_id, created_at, user_id';
 
 function toMessage(row: MessageRow): Message {
   return {
@@ -15,11 +15,13 @@ function toMessage(row: MessageRow): Message {
     senderId: row.sender_id,
     requestId: row.request_id,
     createdAt: new Date(row.created_at).toISOString(),
+    ...(row.user_id ? { accountId: row.user_id } : {}),
   };
 }
 
-function reusedMessage(message: Message, input: MessageInput): SaveResult {
-  if (message.senderId !== input.senderId || message.body !== input.body || message.author !== input.author) {
+function reusedMessage(message: Message, input: StoredMessageInput): SaveResult {
+  if (message.senderId !== input.senderId || message.body !== input.body || (!input.accountId && message.author !== input.author)
+    || (message.accountId ?? null) !== (input.accountId ?? null)) {
     throw new HttpError(409, 'SEND_CONFLICT', 'Este identificador ya corresponde a otro envío.');
   }
   return { message, created: false };
@@ -47,14 +49,14 @@ export class MessagesRepository implements MessageRepositoryPort {
     return { messages: selected.map(toMessage), hasMore: result.rows.length > limit };
   }
 
-  async save(input: MessageInput): Promise<SaveResult> {
+  async save(input: StoredMessageInput): Promise<SaveResult> {
     const { author, body, senderId, requestId } = input;
     const existing = await this.findRequest(requestId);
     if (existing) return reusedMessage(existing, input);
     const result = await this.database.query<MessageRow>(
-      `INSERT INTO messages (author, body, sender_id, request_id)
-       VALUES ($1, $2, $3, $4) ON CONFLICT (request_id) DO NOTHING RETURNING ${COLUMNS}`,
-      [author, body, senderId, requestId],
+      `INSERT INTO messages (author, body, sender_id, request_id, user_id)
+       VALUES ($1, $2, $3, $4, $5) ON CONFLICT (request_id) DO NOTHING RETURNING ${COLUMNS}`,
+      [author, body, senderId, requestId, input.accountId ?? null],
     );
     if (result.rows.length) return { message: toMessage(result.rows[0]), created: true };
     const concurrent = await this.findRequest(requestId);

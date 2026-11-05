@@ -11,13 +11,18 @@ test('adopta la tabla anterior sin perder mensajes y registra cada migración un
   const { pool } = await testDatabase();
   t.after(() => pool.end());
   await pool.query(createMessages.sql);
+  const input = { author: 'Ana', body: 'Historial anterior', senderId: randomUUID(), requestId: randomUUID() };
+  // Sembrar con el contrato SQL legado: user_id todavía no existe.
+  const legacy = await pool.query<{ id: string | number; created_at: Date }>(
+    'INSERT INTO messages(author,body,sender_id,request_id) VALUES($1,$2,$3,$4) RETURNING id,created_at',
+    [input.author, input.body, input.senderId, input.requestId],
+  );
+  await runMigrations(pool);
+  await runMigrations(pool);
   const database = new DatabaseService(pool, { info() {}, error() {} });
   const repository = new MessagesRepository(database);
-  const saved = await repository.save({ author: 'Ana', body: 'Historial anterior', senderId: randomUUID(), requestId: randomUUID() });
-  await runMigrations(pool);
-  await runMigrations(pool);
   const page = await repository.list({ limit: 50 });
-  assert.deepEqual(page.messages, [saved.message]);
-  const versions = await pool.query('SELECT version FROM app_schema_migrations');
-  assert.deepEqual(versions.rows, [{ version: 1 }]);
+  assert.deepEqual(page.messages, [{ ...input, id: String(legacy.rows[0].id), createdAt: new Date(legacy.rows[0].created_at).toISOString() }]);
+  const versions = await pool.query('SELECT version FROM app_schema_migrations ORDER BY version');
+  assert.deepEqual(versions.rows, [{ version: 1 }, { version: 2 }]);
 });

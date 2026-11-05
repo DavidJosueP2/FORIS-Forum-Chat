@@ -8,8 +8,10 @@ import { MessagesRepository } from './messages.repository.js';
 import { MessageEventsService } from './message-events.service.js';
 import { MessageRateLimitMiddleware } from './middleware/message-rate-limit.middleware.js';
 import { CreateMessagePipe, ListMessagesPipe } from './pipes/message-validation.pipe.js';
+import { AuthModule } from '../auth/auth.module.js';
 
 @Module({
+  imports: [AuthModule],
   controllers: [MessagesController],
   providers: [MessagesService, MessagesRepository, MessageEventsService, CreateMessagePipe, ListMessagesPipe],
 })

@@ -1,7 +1,8 @@
 import type { DatabasePool, Migration } from '../database.types.js';
 import { createMessages } from './001-create-messages.js';
+import { createAuth } from './002-create-auth.js';
 
-const migrations: readonly Migration[] = [createMessages];
+const migrations: readonly Migration[] = [createMessages, createAuth];
 
 export async function runMigrations(pool: DatabasePool): Promise<void> {
   const client = await pool.connect();

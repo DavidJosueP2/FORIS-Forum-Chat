@@ -1,12 +1,16 @@
 import { loadEnvFile } from 'node:process';
 import { fileURLToPath } from 'node:url';
 import type { PoolConfig } from 'pg';
+import { readAuthConfig } from './auth-config.js';
+import type { AuthConfig } from './auth-config.js';
 
 export const APP_CONFIG = Symbol('APP_CONFIG');
 export const APP_LOGGER = Symbol('APP_LOGGER');
 export type AppLogger = Pick<Console, 'info' | 'error'>;
 
 export interface AppConfig {
+  auth?: AuthConfig;
+  trustProxy?: number;
   host: string;
   port: number;
   database: PoolConfig;
@@ -35,6 +39,8 @@ function port(value: string, name: string): number {
 export function readConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   if (!env.PGPASSWORD) throw new Error('Falta PGPASSWORD. Configura la base de datos en .env.');
   return {
+    auth: readAuthConfig(env),
+    trustProxy: env.TRUST_PROXY === '1' ? 1 : 0,
     host: env.HOST || '127.0.0.1',
     port: port(env.PORT || env.APP_PORT || '3000', 'PORT'),
     publicDirectory: fileURLToPath(new URL('apps/web/dist/', root)),

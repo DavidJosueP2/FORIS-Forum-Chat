@@ -1,11 +1,18 @@
-import { ForisCharacter } from '@/components/brand/foris-character'
+import { ChatHome } from '@/features/chat/components/chat-home'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { LoginPage } from '@/features/account/pages/login-page'
+import { ProfilePage } from '@/features/account/pages/profile-page'
 
 function App() {
   return (
-    <main className="flex min-h-svh flex-col items-center justify-center gap-5 bg-background px-6 text-foreground">
-      <ForisCharacter mood="welcome" width={112} height={112} />
-      <h1 className="font-heading text-3xl font-semibold tracking-tight">Foris</h1>
-    </main>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<ChatHome />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
 
