@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none" role="img" aria-labelledby="welcome-title welcome-desc">
+  <title id="welcome-title">Mimo, bienvenida</title>
+  <desc id="welcome-desc">Una forma turquesa suave, inclinada hacia delante, con dos ojos atentos.</desc>
+  <path fill="#18A999" d="M48 25C64 17 98 17 114 28C137 44 143 74 132 105C125 128 103 143 77 142C49 143 24 129 22 106L18 69C17 48 28 32 48 25Z"/>
+  <g fill="#FFFCF6">
+    <rect x="56" y="63" width="14" height="29" rx="7" transform="rotate(-7 63 77.5)"/>
+    <rect x="87" y="59" width="14" height="31" rx="7" transform="rotate(-7 94 74.5)"/>
+  </g>
+</svg>

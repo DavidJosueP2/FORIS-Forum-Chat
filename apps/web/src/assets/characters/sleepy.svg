@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none" role="img" aria-labelledby="sleepy-title sleepy-desc">
+  <title id="sleepy-title">Lento, sueño</title>
+  <desc id="sleepy-desc">Una figura color cacao que descansa de lado con los ojos casi cerrados.</desc>
+  <path fill="#A67858" d="M30 49C47 33 75 38 96 34C120 30 139 49 139 73C153 92 142 120 120 127C98 139 77 128 58 133C33 138 17 118 20 97C10 80 15 61 30 49Z"/>
+  <g fill="#FFFCF6">
+    <path d="M45 82C52 89 61 89 70 84L69 93C59 99 50 96 45 90Z"/>
+    <path d="M86 83C94 87 104 87 113 80L112 89C104 98 93 97 86 92Z"/>
+  </g>
+</svg>

@@ -1,7 +1,7 @@
 {
   "name": "messages-sonnar",
   "version": "1.0.0",
-  "description": "Mensajería de texto en tiempo real, sin cuentas.",
+  "description": "Foris: comunidades y conversación en tiempo real.",
   "type": "module",
   "private": true,
   "workspaces": ["apps/*", "packages/*"],

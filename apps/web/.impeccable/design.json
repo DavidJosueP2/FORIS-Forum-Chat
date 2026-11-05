@@ -1,0 +1,171 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-05T12:54:52.977Z",
+  "title": "Design System: Foris",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Carbón vegetal",
+        "canonical": "#30362e",
+        "tonalRamp": [
+          "#181b16",
+          "#232820",
+          "#30362e",
+          "#5f6659",
+          "#adb5a4",
+          "#e0e6d8",
+          "#eef0e8",
+          "#fcfcf8"
+        ]
+      },
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Papel cálido",
+        "canonical": "#f7f7f2"
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Superficie suave",
+        "canonical": "#eef0e8"
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Tinta",
+        "canonical": "#272b25"
+      }
+    },
+    "typographyMeta": {
+      "title": {
+        "displayName": "Título",
+        "purpose": "Axiforma: nombre Foris y títulos principales."
+      },
+      "body": {
+        "displayName": "Texto",
+        "purpose": "Plus Jakarta Sans: conversación, formularios y explicaciones."
+      },
+      "label": {
+        "displayName": "Etiqueta",
+        "purpose": "Plus Jakarta Sans: controles y navegación habituales."
+      },
+      "serif": {
+        "displayName": "Acento serif",
+        "purpose": "Fraunces: frases editoriales y bienvenida puntual."
+      },
+      "ui": {
+        "displayName": "Alternativa de interfaz",
+        "purpose": "SF Pro Display: variante explícita para controles."
+      }
+    },
+    "shadows": [
+      {
+        "name": "flat",
+        "value": "none",
+        "purpose": "Separar superficies por tono y espacio."
+      }
+    ],
+    "motion": [
+      {
+        "name": "standard",
+        "value": "150ms cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "Cambios de estado breves; respetar movimiento reducido."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Botón principal",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Acción principal, con relleno sólido y foco de teclado.",
+      "html": "<button class=\"ds-primary\">Enviar</button>",
+      "css": ".ds-primary{background:var(--primary);color:var(--primary-foreground);font:500 .875rem \"Plus Jakarta Sans\",sans-serif;border:0;border-radius:.625rem;padding:.375rem .625rem;min-height:2rem;cursor:pointer;transition:background-color 150ms ease}.ds-primary:hover{background:var(--primary-hover)}.ds-primary:focus-visible{outline:2px solid var(--ring);outline-offset:3px}.ds-primary:disabled{opacity:.5;cursor:not-allowed}"
+    },
+    {
+      "name": "Botón secundario",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Acción secundaria con relleno tonal, sin contorno.",
+      "html": "<button class=\"ds-secondary\">Cancelar</button>",
+      "css": ".ds-secondary{background:var(--secondary);color:var(--secondary-foreground);font:500 .875rem \"Plus Jakarta Sans\",sans-serif;border:0;border-radius:.625rem;padding:.375rem .625rem;min-height:2rem;cursor:pointer}.ds-secondary:hover{background:var(--secondary-hover)}.ds-secondary:focus-visible{outline:2px solid var(--ring);outline-offset:3px}"
+    },
+    {
+      "name": "Campo",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Campo relleno, con etiqueta visible y foco funcional.",
+      "html": "<label class=\"ds-field\"><span>Nombre visible</span><input placeholder=\"Invitado\" autocomplete=\"nickname\"></label>",
+      "css": ".ds-field{display:grid;gap:.5rem;font:400 1rem/1.5 \"Plus Jakarta Sans\",sans-serif;color:var(--foreground)}.ds-field input{font:inherit;color:var(--foreground);background:var(--input);border:0;border-radius:.625rem;padding:.25rem .625rem;caret-color:var(--primary)}.ds-field input::placeholder{color:var(--muted-foreground)}.ds-field input:focus-visible{outline:2px solid var(--ring);outline-offset:3px}.ds-field input[aria-invalid=true]{background:var(--destructive-surface)}"
+    },
+    {
+      "name": "Navegación",
+      "kind": "nav",
+      "description": "Navegación textual, con una superficie tonal para el estado activo.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Salas\"><a href=\"#general\" aria-current=\"page\">General</a></nav>",
+      "css": ".ds-nav{display:flex;gap:.5rem;font:500 .875rem \"Plus Jakarta Sans\",sans-serif}.ds-nav a{padding:.5rem .75rem;border-radius:.5rem;color:var(--foreground);text-decoration:none}.ds-nav a[aria-current=page]{background:var(--accent);color:var(--accent-foreground)}.ds-nav a:hover{background:var(--muted)}.ds-nav a:focus-visible{outline:2px solid var(--ring);outline-offset:3px}"
+    },
+    {
+      "name": "Contenedor excepcional",
+      "kind": "card",
+      "refersTo": "surface",
+      "description": "Superficie plana para un grupo que necesite contención; evitar repetirla como estructura de página.",
+      "html": "<section class=\"ds-surface\"><h3>General</h3><p>Sala abierta para conversar.</p></section>",
+      "css": ".ds-surface{padding:1rem;background:var(--card);color:var(--card-foreground);border:0;border-radius:.875rem;box-shadow:none;font:400 1rem/1.5 \"Plus Jakarta Sans\",sans-serif}.ds-surface h3{margin:0 0 .5rem;font-family:Axiforma,\"Plus Jakarta Sans\",sans-serif;font-size:1rem;font-weight:600}.ds-surface p{margin:0;color:var(--muted-foreground)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Humano, sencillo y conversacional",
+    "overview": "Base visual de Foris para comunidades abiertas. La lectura manda; las formas suaves y los personajes aportan cercanía en momentos concretos. El contenido se organiza por tipografía, espacio y superficies sólidas. Esta configuración prepara la identidad y las primitivas; todavía no define ni implementa la vista del chat.",
+    "keyCharacteristics": [
+      "Colores sólidos",
+      "Jerarquía por espacio y tipografía",
+      "Pocas tarjetas",
+      "Sin bordes decorativos",
+      "Foco de teclado visible",
+      "Personajes de formas suaves con emociones diferentes"
+    ],
+    "rules": [
+      {
+        "name": "Superficies",
+        "body": "Separar grupos mediante tono y espacio; evitar contornos y sombras.",
+        "section": "elevation"
+      },
+      {
+        "name": "Interacción",
+        "body": "Conservar foco, selección y estados funcionales aunque el aspecto sea plano.",
+        "section": "components"
+      },
+      {
+        "name": "Personajes de Foris",
+        "body": "Nueve SVG originales de formas suaves y colores sólidos, sin contornos ni animación automática. Usar uno por momento. Por defecto son decorativos; añadir alt contextual cuando aporten significado.",
+        "section": "components"
+      }
+    ],
+    "dos": [
+      "Do usar colores semánticos y superficies sólidas.",
+      "Do conservar foco visible y estados accesibles.",
+      "Do priorizar la lectura de la conversación.",
+      "Do usar un personaje cuando aporte cercanía o contexto."
+    ],
+    "donts": [
+      "Don't usar degradados, vidrio ni puntos decorativos.",
+      "Don't construir la página como una cuadrícula de tarjetas.",
+      "Don't añadir bordes de colores ni contornos decorativos.",
+      "Don't usar personajes como identidades verificadas ni como señales de conexión real."
+    ]
+  }
+}
