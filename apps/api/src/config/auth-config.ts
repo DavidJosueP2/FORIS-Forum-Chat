@@ -3,7 +3,7 @@ export interface AuthConfig {
   secret: string;
   secureCookies: boolean;
   google: { clientId: string; clientSecret: string; callbackUrl: string };
-  mail: { host: string; port: number; secure: boolean; user: string; password: string; from: string };
+  mail: { host: string; port: number; secure: boolean; user: string; password: string; from: string; fromAddress?: string };
 }
 export function readAuthConfig(env: NodeJS.ProcessEnv): AuthConfig {
   const url = new URL(env.APP_URL || 'http://127.0.0.1:5173');
@@ -25,6 +25,7 @@ export function readAuthConfig(env: NodeJS.ProcessEnv): AuthConfig {
       host: env.SMTP_HOST || '', port: mailPort,
       secure: env.SMTP_SECURE === 'true' || mailPort === 465,
       user: env.SMTP_USER || '', password: env.SMTP_PASSWORD || '', from: env.MAIL_FROM || '',
+      fromAddress: env.MAIL_FROM_ADDRESS || '',
     },
   };
 }

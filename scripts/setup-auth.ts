@@ -13,7 +13,7 @@ const defaults: Record<string, string> = {
   AUTH_SECRET: randomBytes(32).toString('base64url'),
   GOOGLE_CLIENT_ID: '', GOOGLE_CLIENT_SECRET: '',
   SMTP_HOST: '', SMTP_PORT: '587', SMTP_SECURE: 'false',
-  SMTP_USER: '', SMTP_PASSWORD: '', MAIL_FROM: '',
+  SMTP_USER: '', SMTP_PASSWORD: '', MAIL_FROM: '"Foris - Chat & Enjoy"', MAIL_FROM_ADDRESS: '',
 };
 for (const [key, value] of Object.entries(defaults)) {
   if (values[key]) continue;
