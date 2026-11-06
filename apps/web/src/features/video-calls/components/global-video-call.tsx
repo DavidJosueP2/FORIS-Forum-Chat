@@ -98,7 +98,7 @@ export function GlobalVideoCall({ user, triggerContainer }: { user: AccountUser 
     </section>}
     {view.peers.map(peer => <RemoteCallAudio key={peer.id} id={peer.id} stream={peer.stream} register={registerAudio} onBlocked={onAudioBlocked} />)}
     {user && <Dialog open={open} onOpenChange={changeOpen}>
-      <DialogContent id="global-call-panel" className="call-stage" showCloseButton={false}
+      <DialogContent id="global-call-panel" layout="fullscreen" className="call-stage" showCloseButton={false}
         onCloseAutoFocus={event => { event.preventDefault(); triggerRef.current?.focus() }}>
         <header className="call-stage-header">
           <div><DialogTitle className="call-stage-title">Chat global</DialogTitle><DialogDescription>{active ? 'Videollamada · ' + (view.peers.length + 1) + ' de 4 personas' : 'Nos vemos en la videollamada'}</DialogDescription></div>
@@ -111,9 +111,9 @@ export function GlobalVideoCall({ user, triggerContainer }: { user: AccountUser 
           {!active && <div className="call-welcome">
             <h2>Un espacio para vernos y conversar.</h2>
             <p>Cualquier cuenta verificada puede unirse. Al entrar compartirás cámara y micrófono con hasta otras tres personas. Foris no graba la llamada.</p>
-            <p className="call-help" role="status">{statusError ?? (status ? (status.enabled ? status.participants + ' de ' + status.capacity + ' personas en la sala' : 'No disponible en este entorno') : 'Consultando disponibilidad…')}</p>
-            {status && !status.relay && <p className="call-help">La conexión directa puede revelar tu dirección IP a los participantes.</p>}
-            <div className="call-controls"><Button type="button" className="h-11" disabled={joining || !status?.enabled || Boolean(statusError)} onClick={join}>{joining ? 'Preparando cámara y micrófono…' : 'Entrar con cámara y micrófono'}</Button>
+            <p id="call-availability" className="call-help" role="status">{statusError ?? (status ? (status.enabled ? status.participants + ' de ' + status.capacity + ' personas en la sala' : 'Las videollamadas todavía no están habilitadas. Puedes seguir conversando en el chat.') : 'Consultando disponibilidad…')}</p>
+            {status?.enabled && !status.relay && <p className="call-help">La conexión directa puede revelar tu dirección IP a los participantes.</p>}
+            <div className="call-controls"><Button type="button" className="h-11" aria-describedby="call-availability" disabled={joining || !status?.enabled || Boolean(statusError)} onClick={join}>{joining ? 'Preparando cámara y micrófono…' : 'Entrar con cámara y micrófono'}</Button>
               {joining && <Button type="button" variant="ghost" className="h-11" onClick={() => client.current?.stop()}>Cancelar</Button>}</div>
           </div>}
           {active && <><div className="call-videos" data-count={view.peers.length + 1}><CallVideo stream={view.local!} name={user.displayName} local />{view.peers.map(peer => <CallVideo key={peer.id} stream={peer.stream} name={peer.displayName} state={peer.state} />)}</div>

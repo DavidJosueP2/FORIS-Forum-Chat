@@ -7,6 +7,7 @@ import type { AppConfig, AppLogger } from '../../config/app-config.js';
 import { HttpError } from '../../common/errors/http-error.js';
 import type { AuthContext } from '../auth/auth.types.js';
 import { VideoCallRepository, CALL_CAPACITY } from './video-call.repository.js';
+import { cloudflareTurnServers } from './cloudflare-turn.js';
 
 @Injectable()
 export class VideoCallService implements OnModuleInit, BeforeApplicationShutdown {
@@ -23,16 +24,20 @@ export class VideoCallService implements OnModuleInit, BeforeApplicationShutdown
   async beforeApplicationShutdown() { if (this.timer) clearInterval(this.timer); await this.cleanup; }
   requireEnabled() { if (!this.config.videoCalls.enabled) throw new HttpError(503, 'CALL_DISABLED', 'Las videollamadas todavía no están disponibles en este entorno.'); }
   async status(actor: AuthContext): Promise<VideoCallStatus> {
-    return { enabled: this.config.videoCalls.enabled, participants: await this.repository.count(actor), capacity: CALL_CAPACITY, relay: this.config.videoCalls.turnUrls.length > 0 };
+    return { enabled: this.config.videoCalls.enabled, participants: await this.repository.count(actor), capacity: CALL_CAPACITY, relay: this.config.videoCalls.turn !== null };
   }
   async join(actor: AuthContext, requestId: string): Promise<VideoCallJoin> {
     this.requireEnabled();
-    const member = await this.repository.join(actor, requestId);
     const config = this.config.videoCalls;
-    if (config.turnUrls.length) {
+    const turn = config.turn;
+    // El controlador ya exige sesión verificada. No reservar plazas si el proveedor falla.
+    const cloudflare = turn?.provider === 'cloudflare' ? await cloudflareTurnServers(turn) : undefined;
+    const member = await this.repository.join(actor, requestId);
+    if (cloudflare) return { ...member, iceTransportPolicy: 'relay', iceServers: cloudflare };
+    if (turn?.provider === 'coturn') {
       const username = Math.floor(Date.now() / 1000 + 3600) + ':' + member.memberId;
-      const credential = createHmac('sha1', config.turnSecret).update(username).digest('base64');
-      return { ...member, iceTransportPolicy: 'relay', iceServers: [{ urls: config.turnUrls, username, credential }] };
+      const credential = createHmac('sha1', turn.secret).update(username).digest('base64');
+      return { ...member, iceTransportPolicy: 'relay', iceServers: [{ urls: turn.urls, username, credential }] };
     }
     return { ...member, iceTransportPolicy: 'all', iceServers: config.stunUrls.length ? [{ urls: config.stunUrls }] : [] };
   }
