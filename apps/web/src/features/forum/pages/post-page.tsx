@@ -8,7 +8,6 @@ import { useAuth } from '@/features/account/hooks/use-auth'
 import { loginLink } from '@/features/account/lib/return-target'
 import { IdentityImage } from '@/features/media/components/identity-image'
 import { PostImages } from '@/features/media/components/post-images'
-import { ForumShell } from '../components/forum-shell'
 import { ForumEmpty, ForumError, ForumLoading, ForumTime } from '../components/forum-states'
 import { useResource } from '../hooks/use-forum'
 import { DocumentView } from '../editor/document-view'
@@ -62,7 +61,7 @@ export function PostPage() {
   const auth = useAuth()
   const { postId = '' } = useParams()
   const valid = /^[\da-f]{8}-(?:[\da-f]{4}-){3}[\da-f]{12}$/iu.test(postId)
-  return <ForumShell><main id="forum-content" className="forum-main post-reading" tabIndex={-1}>
+  return <main id="forum-content" className="forum-main post-reading" tabIndex={-1}>
     {valid ? <PostContent key={postId + (auth.session.user?.id ?? 'guest') + auth.status} id={postId} /> : <ForumEmpty title="Esta publicación no existe"><p>Vuelve al foro para encontrar otra conversación.</p><Link to="/">Ver publicaciones</Link></ForumEmpty>}
-  </main></ForumShell>
+  </main>
 }

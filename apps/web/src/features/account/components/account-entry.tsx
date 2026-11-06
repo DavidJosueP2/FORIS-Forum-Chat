@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ChevronDown, LoaderCircle, LogOut, UserRound } from 'lucide-react'
+import { LoaderCircle, LogOut, UserRound } from 'lucide-react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -39,8 +39,8 @@ function MemberAccountMenu() {
 
   return <DropdownMenu modal={false} open={open} onOpenChange={value => { setOpen(value); if (value) setError(null) }}>
     <DropdownMenuTrigger asChild>
-      <Button variant="secondary" className="account-trigger h-11 px-4" aria-label={busy ? 'Cerrando sesión' : 'Tu perfil'} disabled={busy}>
-        {session.user?.avatarId ? <IdentityImage mediaId={session.user.avatarId} name={session.user.displayName} className="account-photo" /> : <UserRound aria-hidden="true" />}<span>Tu perfil</span><ChevronDown className="hidden size-3 sm:block" aria-hidden="true" />
+      <Button variant="ghost" className="account-avatar-trigger h-11 w-11 p-0" aria-label={busy ? 'Cerrando sesión' : 'Abrir menú de tu cuenta: ' + session.user?.displayName} title="Tu perfil" aria-busy={busy} disabled={busy}>
+        <IdentityImage mediaId={session.user?.avatarId} name={session.user?.displayName ?? 'Cuenta'} className="navbar-avatar" />
       </Button>
     </DropdownMenuTrigger>
     <DropdownMenuContent align="end" sideOffset={8} collisionPadding={12} className="w-64 max-w-[calc(100vw-1.5rem)] bg-secondary p-2 text-secondary-foreground dark:bg-popover dark:text-popover-foreground" aria-busy={busy}>

@@ -3,7 +3,6 @@ import { Link, useParams } from 'react-router-dom'
 import type { ForumPost } from '@messages/contracts'
 import { useAuth } from '@/features/account/hooks/use-auth'
 import { CommunityWritingGate } from '@/features/communities/components/community-writing-gate'
-import { ForumShell } from '../components/forum-shell'
 import { ForumEmpty, ForumError, ForumLoading, ParticipationGate } from '../components/forum-states'
 import { useResource } from '../hooks/use-forum'
 
@@ -22,5 +21,5 @@ export function EditPostPage() {
   const auth = useAuth()
   const valid = /^[\da-f]{8}-(?:[\da-f]{4}-){3}[\da-f]{12}$/iu.test(postId)
   const next = '/publicaciones/' + postId + '/editar'
-  return <ForumShell><main id="forum-content" className="forum-main canvas-main" tabIndex={-1}>{valid ? <ParticipationGate next={next}>{auth.session.user && <EditablePost key={postId + auth.session.user.id} id={postId} userId={auth.session.user.id} />}</ParticipationGate> : <ForumEmpty title="Esta publicación no existe"><Link to="/">Volver a Foros</Link></ForumEmpty>}</main></ForumShell>
+  return <main id="forum-content" className="forum-main canvas-main" tabIndex={-1}>{valid ? <ParticipationGate next={next}>{auth.session.user && <EditablePost key={postId + auth.session.user.id} id={postId} userId={auth.session.user.id} />}</ParticipationGate> : <ForumEmpty title="Esta publicación no existe"><Link to="/">Volver a Foros</Link></ForumEmpty>}</main>
 }

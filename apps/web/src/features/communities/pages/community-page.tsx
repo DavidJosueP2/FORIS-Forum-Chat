@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button'
 import { useAuth } from '@/features/account/hooks/use-auth'
 import { accountError, accountRequest } from '@/features/account/api/account-api'
 import { loginLink } from '@/features/account/lib/return-target'
-import { ForumShell } from '@/features/forum/components/forum-shell'
 import { ForumEmpty, ForumError, ForumLoading } from '@/features/forum/components/forum-states'
 import { PostList } from '@/features/forum/components/post-list'
 import { useResource } from '@/features/forum/hooks/use-forum'
@@ -70,8 +69,8 @@ function CommunityContent({ id }: { id: string }) {
 export function CommunityPage() {
   const { communityId = '' } = useParams()
   const auth = useAuth()
-  return <ForumShell><main id="forum-content" className="forum-main" tabIndex={-1}>
+  return <main id="forum-content" className="forum-main" tabIndex={-1}>
     <Link to="/comunidades" className="forum-back"><ArrowLeft aria-hidden="true" />Comunidades</Link>
     {validCommunityId(communityId) ? <CommunityContent key={communityId + (auth.session.user?.id ?? 'guest') + auth.status} id={communityId} /> : <ForumEmpty title="Esta comunidad no existe"><p>Vuelve a explorar para encontrar otro espacio.</p><Link to="/comunidades">Ver comunidades</Link></ForumEmpty>}
-  </main></ForumShell>
+  </main>
 }

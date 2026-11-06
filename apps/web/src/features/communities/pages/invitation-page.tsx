@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button'
 import { useAuth } from '@/features/account/hooks/use-auth'
 import { accountError, accountRequest } from '@/features/account/api/account-api'
 import { loginLink } from '@/features/account/lib/return-target'
-import { ForumShell } from '@/features/forum/components/forum-shell'
 import { ForumError, ForumLoading } from '@/features/forum/components/forum-states'
 
 function InvitationContent({ token }: { token: string }) {
@@ -52,7 +51,7 @@ function InvitationContent({ token }: { token: string }) {
 export function InvitationPage() {
   const { token = '' } = useParams()
   const auth = useAuth()
-  return <ForumShell><main id="forum-content" className="forum-main" tabIndex={-1}>
+  return <main id="forum-content" className="forum-main" tabIndex={-1}>
     {auth.status === 'loading' ? <ForumLoading label="Comprobando tu cuenta…" /> : <InvitationContent key={token + (auth.session.user?.id ?? 'guest')} token={token} />}
-  </main></ForumShell>
+  </main>
 }

@@ -1,6 +1,8 @@
 import { useEffect, useId, useState } from 'react'
+import type { ReactNode } from 'react'
+import { useLocation } from 'react-router-dom'
 import type { ForumCategory, ForumTag } from '@messages/contracts'
-import { Check, ChevronLeft, ChevronRight, Search, SlidersHorizontal, X } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, PanelLeft, Search, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { useResource } from '../hooks/use-forum'
@@ -10,6 +12,7 @@ export interface FilterResource<T> { data: T | null; loading: boolean; error: st
 interface Props {
   query: DiscoveryQuery; categories: FilterResource<ForumCategory[]>; tags: FilterResource<ForumTag[]>; selectedTags: FilterResource<ForumTag[]>;
   onCategory: (id: string | null) => void; onTag: (id: string) => void; onClear: () => void; onSearchClear: () => void; onAuthorClear: () => void;
+  resourceScope: string;
 }
 const searchable = (value: string) => value.normalize('NFD').replace(/\p{M}/gu, '').toLocaleLowerCase('es')
 function ResourceIssue({ resource }: { resource: FilterResource<unknown> }) {
@@ -34,13 +37,13 @@ function CategoryFilter({ query, categories, onCategory }: Pick<Props, 'query' |
     {selected && <p className="discovery-filter-note">Incluye las subtemáticas de tu selección.</p>}
   </section>
 }
-function TagFilter({ query, tags, selectedTags, onTag }: Pick<Props, 'query' | 'tags' | 'selectedTags' | 'onTag'>) {
+function TagFilter({ query, tags, selectedTags, onTag, resourceScope }: Pick<Props, 'query' | 'tags' | 'selectedTags' | 'onTag' | 'resourceScope'>) {
   const [draft, setDraft] = useState('')
   const [search, setSearch] = useState('')
   const [error, setError] = useState('')
   const id = useId()
   useEffect(() => { const timer = setTimeout(() => setSearch(draft.trim()), 300); return () => clearTimeout(timer) }, [draft])
-  const searched = useResource<ForumTag[]>(search ? 'taxonomy/tags?limit=30&search=' + encodeURIComponent(search) : null)
+  const searched = useResource<ForumTag[]>(search ? 'taxonomy/tags?limit=30&search=' + encodeURIComponent(search) : null, resourceScope)
   const resource = search ? searched : tags
   const choices = [...(selectedTags.data ?? []), ...(resource.data ?? [])].filter((item, index, all) => all.findIndex(other => other.id === item.id) === index)
   return <section className="discovery-filter-section" aria-labelledby={id + '-heading'}><h3 id={id + '-heading'}>Etiquetas</h3><label className="discovery-filter-search"><Search aria-hidden="true" /><input type="search" aria-label="Buscar etiquetas" value={draft} onChange={event => setDraft(event.target.value)} placeholder="Buscar etiqueta" maxLength={64} /></label>
@@ -57,16 +60,26 @@ function TagFilter({ query, tags, selectedTags, onTag }: Pick<Props, 'query' | '
 function FilterPanel(props: Props) {
   return <div className="discovery-filter-panel" data-discovery-control><CategoryFilter {...props} /><TagFilter {...props} /></div>
 }
-export function DiscoveryFilters(props: Props) {
-  return <aside className="discovery-sidebar" aria-label="Explorar y filtrar publicaciones"><div className="discovery-sidebar-inner"><h2>Explorar</h2><FilterPanel {...props} /></div></aside>
+export function DiscoveryFilters({ navigation, ...props }: Props & { navigation?: ReactNode }) {
+  return <aside className="discovery-sidebar" aria-label="Explorar y filtrar publicaciones"><div className="discovery-sidebar-inner">{navigation}<h2>Explorar</h2><FilterPanel {...props} /></div></aside>
 }
-export function MobileDiscoveryFilters(props: Props) {
+export function MobileDiscoveryFilters({ navigation, ...props }: Props & { navigation?: (close: () => void) => ReactNode }) {
+  const location = useLocation()
+  const currentLocation = location.pathname + location.search
   const [open, setOpen] = useState(false)
   const [openedQuery, setOpenedQuery] = useState(props.query.path)
+  const [openedLocation, setOpenedLocation] = useState(currentLocation)
+  useEffect(() => {
+    const wide = window.matchMedia('(min-width: 1024px)')
+    const close = () => { if (wide.matches) setOpen(false) }
+    wide.addEventListener('change', close)
+    return () => wide.removeEventListener('change', close)
+  }, [])
   const count = Number(Boolean(props.query.category || props.query.topic)) + props.query.tags.length
-  return <Sheet open={open} onOpenChange={next => { if (next) setOpenedQuery(props.query.path); setOpen(next) }}><SheetTrigger asChild><Button type="button" variant="secondary" className="discovery-filter-trigger h-11"><SlidersHorizontal aria-hidden="true" />Filtrar{count > 0 && <span aria-label={count + ' filtros seleccionados'}>{count}</span>}</Button></SheetTrigger><SheetContent className="discovery-filter-sheet" side="right" onCloseAutoFocus={event => {
-    if (openedQuery !== props.query.path) { event.preventDefault(); const results = document.getElementById('discovery-heading'); results?.focus({ preventScroll: true }); results?.scrollIntoView({ block: 'start' }) }
-  }}><SheetHeader><SheetTitle>Filtrar publicaciones</SheetTitle><SheetDescription>Explora temáticas y combina etiquetas.</SheetDescription></SheetHeader><div className="discovery-filter-sheet-body"><FilterPanel {...props} /></div><SheetFooter><SheetClose asChild><Button type="button" className="h-11">Ver publicaciones</Button></SheetClose>{props.query.filtered && <Button type="button" variant="ghost" className="h-11" onClick={props.onClear}>Quitar filtros</Button>}</SheetFooter></SheetContent></Sheet>
+  return <Sheet open={open} onOpenChange={next => { if (next) { setOpenedQuery(props.query.path); setOpenedLocation(currentLocation) } setOpen(next) }}><SheetTrigger asChild><Button type="button" variant="ghost" className="platform-explore-trigger h-11 w-11" aria-label={count ? 'Abrir explorador, ' + count + ' filtros seleccionados' : 'Abrir explorador'} title="Explorar"><PanelLeft aria-hidden="true" /></Button></SheetTrigger><SheetContent className="discovery-filter-sheet platform-filter-sheet" side="left" onCloseAutoFocus={event => {
+    if (openedQuery !== props.query.path || openedLocation !== currentLocation) { event.preventDefault(); const results = document.getElementById('discovery-heading') ?? document.querySelector<HTMLElement>('main'); results?.focus({ preventScroll: true }); results?.scrollIntoView({ block: 'start' }) }
+    else if (window.matchMedia('(min-width: 1024px)').matches) { event.preventDefault(); document.querySelector<HTMLElement>('.discovery-sidebar [aria-pressed="true"]')?.focus({ preventScroll: true }) }
+  }}><SheetHeader><SheetTitle>Explorar</SheetTitle><SheetDescription className="sr-only">Navega por Foris y encuentra publicaciones por temática y etiquetas.</SheetDescription></SheetHeader><div className="discovery-filter-sheet-body">{navigation?.(() => setOpen(false))}<FilterPanel {...props} /></div><SheetFooter><SheetClose asChild><Button type="button" className="h-11">Continuar</Button></SheetClose>{props.query.filtered && <Button type="button" variant="ghost" className="h-11" onClick={props.onClear}>Quitar filtros</Button>}</SheetFooter></SheetContent></Sheet>
 }
 export function ActiveDiscoveryFilters(props: Props) {
   const { query } = props

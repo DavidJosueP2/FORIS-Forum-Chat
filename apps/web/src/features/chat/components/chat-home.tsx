@@ -1,12 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowUpRight, MessageCircle, UserRound, Wifi, WifiOff } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Wifi, WifiOff } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
-import { AccountEntry } from '@/features/account/components/account-entry'
-import { NotificationEntry } from '@/features/communities/components/notification-entry'
 import { GlobalVideoCall } from '@/features/video-calls/components/global-video-call'
-import { IdentityImage } from '@/features/media/components/identity-image'
 import { useAuth } from '@/features/account/hooks/use-auth'
 import { useChat, type ConnectionState } from '../hooks/use-chat'
 import { readDraft, readGuestProfile, storeDraft, storeGuestProfile } from '../lib/guest-session'
@@ -66,49 +62,18 @@ export function ChatHome() {
   return (
     <div className="foris-app">
       <a href="#message-body" className="skip-to-composer">Ir a escribir un mensaje</a>
-      <aside className="chat-sidebar" aria-label="Navegación de Foris">
-        <Link to="/" className="foris-wordmark" aria-label="Foris, publicaciones">Foris</Link>
-        <p className="sidebar-intro">Un lugar para encontrarnos.</p>
-        <nav aria-label="Conversaciones" className="room-navigation">
-          <h2>En Foris</h2>
-          <Link to="/" className="room-link"><ArrowUpRight aria-hidden="true" /><span>Foros</span></Link>
-          <Link to="/comunidades" className="room-link"><ArrowUpRight aria-hidden="true" /><span>Comunidades</span></Link>
-          <a href="#conversation" aria-current="page" className="room-link">
-            <MessageCircle aria-hidden="true" />
-            <span>Chat global</span>
-            <ArrowUpRight aria-hidden="true" className="room-link-arrow" />
-          </a>
-          <p>La conversación está abierta.<br />Tú también tienes lugar aquí.</p>
-        </nav>
-        <div className="sidebar-bottom">
-          <RoomInfoDialog />
-          <div className="sidebar-profile">
-            {session.user ? <IdentityImage mediaId={session.user.avatarId} name={session.user.displayName} className="sidebar-profile-avatar" /> : <span className="sidebar-profile-avatar" aria-hidden="true"><UserRound /></span>}
-            <div>
-              {session.user
-                ? <Button asChild variant="ghost" className="guest-name-trigger h-11"><Link to="/profile"><span>{session.user.displayName}</span></Link></Button>
-                : <GuestNameDialog profile={profile} onNameChange={changeName} />}
-              <p>{session.user ? 'Tu perfil en Foris' : 'Participas como invitado'}</p>
-            </div>
-          </div>
-        </div>
-      </aside>
-
       <div className="chat-workspace">
         <header className="chat-header">
           <div className="room-heading">
             <div className="room-title-row">
-              <h1><span className="mobile-wordmark">Foris <span aria-hidden="true">/</span> </span>Chat global</h1>
+              <h1>Chat global</h1>
               <div className="call-entry-slot" ref={setVideoCallTrigger} />
             </div>
             <ConnectionStatus state={chat.connection} connections={chat.connections} />
           </div>
           <div className="header-actions">
-            <Button asChild variant="ghost" className="h-11 px-3"><Link to="/">Foros</Link></Button>
-            <Button asChild variant="ghost" className="h-11 px-3 chat-communities-link"><Link to="/comunidades">Comunidades</Link></Button>
-            <span className="mobile-room-info"><RoomInfoDialog compact /></span>
-            <NotificationEntry />
-            <AccountEntry />
+            {!session.user && <GuestNameDialog profile={profile} onNameChange={changeName} />}
+            <RoomInfoDialog compact />
           </div>
         </header>
 

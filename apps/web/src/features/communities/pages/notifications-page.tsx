@@ -5,7 +5,6 @@ import type { CommunityNotification } from '@messages/contracts'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/features/account/hooks/use-auth'
 import { accountError, accountRequest } from '@/features/account/api/account-api'
-import { ForumShell } from '@/features/forum/components/forum-shell'
 import { ForumEmpty, ForumError, ForumLoading, ForumTime, ParticipationGate } from '@/features/forum/components/forum-states'
 import { useForumPage } from '@/features/forum/hooks/use-forum'
 import { notifyInboxChanged } from '../lib/notifications'
@@ -55,9 +54,9 @@ function Inbox() {
 export function NotificationsPage() {
   const auth = useAuth()
   const [version, setVersion] = useState(0)
-  return <ForumShell><main id="forum-content" className="forum-main forum-reading" tabIndex={-1}>
+  return <main id="forum-content" className="forum-main forum-reading" tabIndex={-1}>
     <header className="forum-intro"><div><h1>Tus notificaciones</h1><p>Las nuevas publicaciones de las comunidades que elegiste seguir.</p></div><Button variant="secondary" className="h-11 px-5" onClick={() => { setVersion(current => current + 1); notifyInboxChanged() }}><RefreshCw aria-hidden="true" />Actualizar</Button></header>
     <ParticipationGate next="/notificaciones" description="Entra con tu cuenta para ver los avisos de tus comunidades. Son privados y solo tú puedes consultarlos.">{auth.session.user && <Inbox key={auth.session.user.id + '.' + version} />}</ParticipationGate>
     <p className="forum-hint community-inbox-note">Puedes activar o silenciar los avisos en cada comunidad. Aquí solo recibes notificaciones dentro de Foris.</p>
-  </main></ForumShell>
+  </main>
 }

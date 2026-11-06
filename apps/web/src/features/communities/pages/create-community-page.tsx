@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { useAuth } from '@/features/account/hooks/use-auth'
 import { accountError, accountRequest } from '@/features/account/api/account-api'
-import { ForumShell } from '@/features/forum/components/forum-shell'
 import { ParticipationGate } from '@/features/forum/components/forum-states'
 import { useDraft } from '@/features/forum/hooks/use-draft'
 import { PortraitPicker } from '@/features/media/components/portrait-picker'
@@ -51,9 +50,9 @@ function CommunityForm({ userId }: { userId: string }) {
 }
 export function CreateCommunityPage() {
   const auth = useAuth()
-  return <ForumShell><main id="forum-content" className="forum-main forum-editor" tabIndex={-1}>
+  return <main id="forum-content" className="forum-main forum-editor" tabIndex={-1}>
     <Link to="/comunidades" className="forum-back"><ArrowLeft aria-hidden="true" />Comunidades</Link>
     <header className="forum-page-heading"><h1>Crea tu comunidad</h1><p>Dale una identidad y elige con quién compartirla.</p></header>
     <ParticipationGate next="/comunidades/crear" description="Crea una cuenta o inicia sesión para formar tu comunidad y reunir a otras personas.">{auth.session.user && <CommunityForm key={auth.session.user.id} userId={auth.session.user.id} />}</ParticipationGate>
-  </main></ForumShell>
+  </main>
 }

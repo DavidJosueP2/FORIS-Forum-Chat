@@ -5,7 +5,6 @@ import type { Community } from '@messages/contracts'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useAuth } from '@/features/account/hooks/use-auth'
-import { ForumShell } from '@/features/forum/components/forum-shell'
 import { ForumEmpty, ForumError, ForumLoading, ParticipationGate } from '@/features/forum/components/forum-states'
 import { useForumPage } from '@/features/forum/hooks/use-forum'
 import { IdentityImage } from '@/features/media/components/identity-image'
@@ -40,7 +39,7 @@ function CommunitiesIndex() {
   if (search) filters.set('search', search)
   const path = 'communities?' + filters.toString()
   const list = <CommunityList key={path + (auth.session.user?.id ?? 'guest') + auth.status} path={path} scope={scope} searched={Boolean(search)} />
-  return <ForumShell><main id="forum-content" className="forum-main" tabIndex={-1}>
+  return <main id="forum-content" className="forum-main" tabIndex={-1}>
     <header className="forum-intro"><div><h1>Encuentra tu gente.</h1><p>Un espacio para las ideas que compartes y las personas con quienes quieres seguir conversando.</p></div><Button asChild className="h-12 px-6"><Link to="/comunidades/crear"><Plus aria-hidden="true" />Crear comunidad</Link></Button></header>
     <form className="forum-search" role="search" onSubmit={event => { event.preventDefault(); const next = new URLSearchParams(params); if (query.trim()) next.set('q', query.trim()); else next.delete('q'); setParams(next) }}>
       <label htmlFor="community-search">Busca una comunidad</label><div><Input id="community-search" type="search" maxLength={120} value={query} onChange={event => setQuery(event.target.value)} placeholder="Un interés, un nombre, una idea…" /><Button type="submit" variant="secondary" className="h-12 px-5"><Search aria-hidden="true" />Buscar</Button></div>
@@ -50,7 +49,7 @@ function CommunitiesIndex() {
     </nav>
     {search && <p className="forum-active-filter"><span>Buscando «{search}»</span><Link to={scope === 'all' ? '/comunidades' : '/comunidades?vista=' + (scope === 'mine' ? 'mias' : 'favoritas')}>Quitar búsqueda</Link></p>}
     {scope === 'all' ? list : <ParticipationGate next="/comunidades" description="Entra con tu cuenta para encontrar tus comunidades y guardar tus favoritas.">{list}</ParticipationGate>}
-  </main></ForumShell>
+  </main>
 }
 export function CommunitiesPage() {
   const [params] = useSearchParams()
