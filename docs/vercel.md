@@ -21,6 +21,8 @@ Vercel usa `dist/vercel` como `outputDirectory`. La entrada `.mjs` identifica ex
 
 Esta salida evita depender de que Services conserve el contexto ESM al trasladar directamente `dist/main.js` a la raíz de la función. El error recibido fue `SyntaxError: Cannot use import statement outside a module` en `/var/task/main.js`, anterior al arranque de Nest y a cualquier conexión con PostgreSQL. Hay un [reporte del mismo problema en Vercel](https://github.com/vercel/vercel/issues/17651).
 
+La entrada inicia Nest mediante `bootstrap().catch(...)`, sin `await` en el nivel superior del módulo, como en el [ejemplo de NestJS en Vercel](https://vercel.com/docs/frameworks/backend/nestjs). El archivo `index.mjs` importa la API de forma dinámica y registra la fase `entrypoint` antes de cargar sus dependencias. Después aparecen las fases `nest` y `listen`. Los errores se registran como `foris_startup_failed`, con su fase y código, sin imprimir variables de entorno.
+
 ## Aplicar el cambio
 
 1. Sube los cambios al repositorio y despliega ese nuevo commit. Si haces un Redeploy, desmarca **Use existing Build Cache**.
@@ -30,3 +32,9 @@ Esta salida evita depender de que Services conserve el contexto ESM al trasladar
 Mantén las variables de producción en Vercel, en el entorno correspondiente al despliegue. Esta API lee `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD` y `PGSSL=1` para PostgreSQL con TLS; no usa `DATABASE_URL`. `APP_URL` debe ser el origen HTTPS de Foris para la autenticación. No subas archivos `.env` al repositorio.
 
 La corrección se revisó de forma estática. El nuevo despliegue y su respuesta de health quedan pendientes de comprobar en Vercel.
+
+## Inspección del 6 de noviembre de 2026
+
+El despliegue de producción `dpl_8rQQcHtXQd5f2pdMXFA5UmTt9D6e`, commit `0d122c94e169344edd1da334bc50a21d21d48929`, figura como `READY`. La consulta de `/api/health/` devolvió HTTP 500 con `INTERNAL_FUNCTION_INVOCATION_FAILED`; el identificador de la petición fue `iad1:iad1::b86kr-1794003023224-a3f66ea0acb2` (22:11:23 UTC). El MCP no devolvió logs de ejecución ni una traza para ese despliegue y esa petición.
+
+Los logs ESM encontrados en la consulta general corresponden al despliegue anterior `dpl_CMs6DAa3Nbp5JQizosnEkARXaEmf`. No confirman la causa del fallo actual. El cambio de arranque y los registros de fases deben validarse en un nuevo despliegue; no se ha publicado desde esta revisión.
