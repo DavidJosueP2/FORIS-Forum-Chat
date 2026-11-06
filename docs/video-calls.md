@@ -14,6 +14,7 @@ WebRTC transporta audio y vídeo entre navegadores; Nest coordina únicamente pr
 | --- | --- |
 | apps/api/src/modules/video-calls/ | Autenticación, autorización, plazas, señales y limpieza |
 | apps/api/src/config/video-call-config.ts | Habilitación e infraestructura STUN/TURN |
+| apps/api/src/modules/video-calls/cloudflare-turn.ts | Credenciales temporales de Cloudflare Realtime TURN, sin exponer la clave |
 | apps/api/src/database/migrations/006-create-video-calls.ts | Sala, participantes y señales efímeras |
 | packages/contracts/src/video-calls.d.ts | Contratos públicos de llamada |
 | apps/web/src/features/video-calls/lib/video-call-client.ts | Dispositivos, conexiones, negociación y liberación |
@@ -46,14 +47,43 @@ CALLS_TURN_URLS=
 CALLS_TURN_SECRET=
 ```
 
-STUN es configurable, admite hasta cuatro URLs separadas por comas y se puede dejar vacío para pruebas exclusivamente locales. No se configura ni consulta infraestructura TURN durante esta entrega.
+STUN es configurable, admite hasta cuatro URLs separadas por comas y se puede dejar vacío para pruebas exclusivamente locales. La integración no crea infraestructura ni claves TURN: se configuran aparte siguiendo los pasos de producción.
 
 ## Producción
 
-Sin CALLS_ENABLED, producción deja la función deshabilitada. Para habilitarla necesitas HTTPS y un servicio TURN compatible con credenciales temporales mediante secreto compartido, como coturn con use-auth-secret. No basta con introducir credenciales de usuario/contraseña permanentes de otro proveedor: ese proveedor debe soportar este mecanismo.
+Sin CALLS_ENABLED, producción deja la función deshabilitada. Para habilitarla necesitas HTTPS y TURN. Se admiten Cloudflare Realtime TURN y coturn con secreto compartido; la selección se hace en el backend. El contrato del navegador y la sala compartida no cambian.
+
+### Cloudflare Realtime TURN en Vercel
+
+1. Abre [Realtime en Cloudflare](https://dash.cloudflare.com/?to=/:account/calls), elige tu cuenta y entra en TURN. El panel puede aparecer con el nombre Calls.
+2. Crea una clave TURN para Foris. Guarda su **Key ID** y su **API Token** en privado. Son credenciales de Realtime TURN; las credenciales S3 de R2 no sirven aquí.
+3. En Vercel → proyecto Foris → Settings → Environment Variables, configura estas variables para **Production**. Añádelas también a Preview si necesitas llamadas en los despliegues de vista previa:
+
+   ```dotenv
+   CALLS_ENABLED=true
+   CALLS_TURN_PROVIDER=cloudflare
+   CALLS_CLOUDFLARE_TURN_KEY_ID=EL_KEY_ID_DE_TURN
+   CALLS_CLOUDFLARE_TURN_API_TOKEN=EL_API_TOKEN_DE_ESTA_CLAVE_TURN
+   ```
+
+4. Deja `CALLS_TURN_URLS` y `CALLS_TURN_SECRET` vacías o sin definir; pertenecen a coturn. Guarda el API Token como Secret. Ninguna variable lleva prefijo `VITE_`.
+5. Sube este cambio y despliega el nuevo commit. Cambiar variables no actualiza las funciones de un despliegue anterior. `APP_URL` debe seguir siendo el origen HTTPS exacto desde el que abres Foris.
+
+Para usar Cloudflare también en local, copia las mismas cuatro variables a `.env.development.local` y reinicia únicamente la API; se recomienda otra clave TURN para desarrollo. El frontend no necesita variables nuevas. Si no configuras TURN en local, se mantiene la conexión directa con STUN.
+
+Nest solicita credenciales con una duración de una hora al endpoint fijo HTTPS de Cloudflare, antes de reservar una plaza. Cada intento tiene un límite de ocho segundos y no sigue redirecciones. El navegador solo recibe URLs relay de Cloudflare y su usuario/contraseña temporal; nunca el API Token. Se descartan STUN y el puerto alternativo 53 para evitar retrasos de ICE sin trickle. Si Cloudflare falla, no se crea una participación nueva y el usuario puede volver a intentarlo. Una reserva posterior puede ser rechazada si la sala se llenó mientras se preparaba la conexión; en ese caso no se entregan las credenciales.
+
+La configuración se valida al arrancar: detecta claves incompletas, proveedores desconocidos y mezcla de variables. No se llama a Cloudflare al arrancar ni al consultar disponibilidad, solo al intentar entrar con una cuenta verificada. Una clave inválida puede permitir mostrar el botón, pero la entrada devuelve `CALL_TURN_AUTH_FAILED`; comprueba su Key ID/API Token y que esa clave siga activa. `CALL_TURN_UNAVAILABLE` indica un fallo de conexión o respuesta HTTP no satisfactoria; `CALL_TURN_INVALID_RESPONSE`, que no se recibieron credenciales relay utilizables. No se registran las respuestas ni las credenciales del proveedor.
+
+Cloudflare TURN tiene una [capa gratuita y facturación por tráfico](https://developers.cloudflare.com/realtime/turn/faq/). Consulta su panel para consumo y condiciones. Referencia de la integración: [generación de credenciales temporales](https://developers.cloudflare.com/realtime/turn/generate-credentials/).
+
+### Coturn
+
+La alternativa existente conserva las variables anteriores. El servicio debe admitir TURN REST con `use-auth-secret`; no basta con credenciales estáticas de usuario/contraseña de otro proveedor.
 
 ```dotenv
 CALLS_ENABLED=true
+CALLS_TURN_PROVIDER=coturn
 CALLS_TURN_URLS=turns:relay.example.com:5349?transport=tcp,turn:relay.example.com:3478?transport=udp
 CALLS_TURN_SECRET=
 ```
@@ -64,7 +94,17 @@ Cuando hay TURN, el cliente selecciona exclusivamente relay y no utiliza candida
 
 Los navegadores deben poder llegar a los puertos de TURN y su rango de relay. El backend no transporta el vídeo ni necesita proxy WebSocket: la señalización usa /api bajo el mismo origen. APP_URL debe coincidir con el frontend y su proxy. En despliegues con funciones suspendidas, el recolector por temporizador necesita un proceso persistente; la limpieza al recibir peticiones mantiene el límite lógico, pero no garantiza la eliminación física puntual de SDP cuando no hay tráfico.
 
-Referencias: [getUserMedia y contextos seguros](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia), [negociación WebRTC](https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API/Perfect_negotiation), [credenciales temporales de coturn](https://github.com/coturn/coturn/wiki/turnserver).
+Referencias: [getUserMedia y contextos seguros](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia), [negociación WebRTC](https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API/Perfect_negotiation), [configuración de coturn](https://github.com/coturn/coturn/blob/master/examples/etc/turnserver.conf).
+
+### Pantalla completa y comprobación del despliegue
+
+La vista usa `DialogContent layout="fullscreen"`. Este modo omite las clases de centrado, traslación, anchura máxima y animación del diálogo habitual. El CSS de la videollamada define la distribución interior y conserva los controles, el foco y la acción de minimizar.
+
+En el CSS de producción inspeccionado, `.call-stage` se había optimizado a `transform: translate(0,0)` mientras Tailwind mantenía `translate: -50% -50%` mediante las clases del diálogo. Las dos propiedades son independientes: el contenido acababa media pantalla fuera de la ventana. El modo fullscreen evita aplicar esas clases, en lugar de depender de contrarrestarlas en otra hoja de estilos. Los demás diálogos conservan su diseño centrado.
+
+Después de configurar TURN y desplegar, entra en `/chat` con una cuenta verificada. Al abrir Videollamada se debe ver toda la cabecera y el botón Cerrar. En Red, `GET /api/video-call` debe devolver `enabled: true` y `relay: true`. Solo al pulsar Entrar se solicitan cámara/micrófono. Comprueba la conexión con dos cuentas en navegadores y redes diferentes, después minimizar, volver y salir. No compartas el cuerpo de la respuesta de entrada: contiene las credenciales temporales de TURN.
+
+En esta corrección se inspeccionaron el CSS publicado y los nombres de variables de Vercel sin descargar sus secretos. No se modificaron las variables remotas ni se hizo un despliegue. Quedan pendientes la clave TURN real y la comprobación con medios. Se añadieron fuentes de pruebas del adaptador y sus errores; no se ejecutaron por la restricción vigente de revisión estática.
 
 ## API y comprobación
 

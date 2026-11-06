@@ -52,6 +52,8 @@ S3_SECRET_ACCESS_KEY=
 
 Completa los valores desde las credenciales existentes, sin sustituir secretos reales por los ejemplos. El endpoint es el origen HTTPS de la API S3, sin nombre de bucket, rutas ni parámetros. Mantén el bucket privado, clase Standard, sin r2.dev. El token de objetos debe estar limitado a lectura/escritura en ese bucket. Las claves nunca viajan al frontend. APP_URL debe coincidir exactamente con el origen público del frontend; conserva el proxy /api al backend.
 
+Para R2, `S3_ACCESS_KEY_ID` es el Access Key ID de 32 caracteres hexadecimales y `S3_SECRET_ACCESS_KEY` es el Secret Access Key de 64 caracteres hexadecimales. Copia ambos desde R2 → Manage API tokens al generar credenciales con Object Read & Write sobre el bucket. La API comprueba ese formato al arrancar y explica qué variable corregir, sin mostrar su valor. Esta comprobación es específica de `S3_PROVIDER=r2`; otros proveedores conservan su formato. Referencia: [autenticación S3 de R2](https://developers.cloudflare.com/r2/api/tokens/).
+
 En AWS S3 u otro proveedor compatible se selecciona el mismo driver y se cambian proveedor, región, endpoint, bucket y credenciales. Se exige compatibilidad con PUT condicional If-None-Match, HEAD, GET, DELETE y firmas S3; cada proveedor requiere comprobación de integración antes de producción.
 
 ### CORS del bucket
@@ -73,6 +75,16 @@ En R2 → foris-media → Settings → CORS policy, configura los orígenes que 
 Para producción reemplaza AllowedOrigins por el dominio exacto de Foris, por ejemplo https://foris.example. Evita comodines y dominios de previews que no controles. Puedes mantener orígenes locales si realmente pruebas contra ese bucket; el perfil local no necesita CORS de R2.
 
 El cliente envía Content-Type exactamente como fue firmado. El identificador de medios se firma como metadato en la URL y no añade encabezado de navegador. Si se amplían los encabezados enviados, actualiza esta política y la firma juntas. CORS permite al navegador utilizar una URL prefirmada; el acceso al objeto sigue dependiendo de esa URL temporal. Referencia: [CORS de R2](https://developers.cloudflare.com/r2/buckets/cors/) y [URLs prefirmadas](https://developers.cloudflare.com/r2/api/s3/presigned-urls/).
+
+### Diagnóstico de fallos
+
+`request_failed` incluye ID de correlación, método, ruta sin consulta, estado HTTP, código público y mensaje. La respuesta lleva ese ID en `X-Request-Id`. Las solicitudes rechazadas con 4xx se registran como `request_rejected`. Las causas internas se describen mediante tipo, código, pista de corrección, metadatos HTTP del proveedor y frames acotados; nunca se serializan mensajes internos, SQL, parámetros, credenciales, cookies ni URLs firmadas. Los errores operativos conocidos no repiten su stack.
+
+`media_operation_failed` identifica la operación (`object_head`, `object_read`, `object_write`, `object_delete`, etc.), driver y proveedor. La confirmación conserva su excepción original mediante `cause`; la limpieza también conserva su diagnóstico.
+
+Si falla el PUT del navegador, su consola muestra `media_upload_failed` con tipo de fallo, estado, código, orígenes y nombres de encabezados. No incluye el archivo, la URL completa ni sus firmas. En disco se conserva el mensaje JSON de la API; en S3 se distinguen errores HTTP accesibles y permisos caducados. Un fallo con `status: 0` no permite identificar por sí solo la causa: el navegador puede bloquear CORS o la red, y R2 puede omitir encabezados CORS en respuestas de error, como las URLs caducadas. Revisa en Red el estado y código del PUT; no amplíes los orígenes a `*` para ocultar un rechazo del proveedor.
+
+`MEDIA_STORAGE_CHANGED` indica una imagen creada con otro perfil, por ejemplo en disco antes de seleccionar R2. Esa lectura antigua no confirma un fallo al enviar una imagen nueva. Cambiar variables no migra los archivos; hay que volver a subirlos o preparar su migración conservando los controles de acceso.
 
 ### Respaldo de limpieza
 

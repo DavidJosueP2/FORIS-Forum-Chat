@@ -23,6 +23,24 @@ test('desarrollo usa disco sin credenciales S3 y producción exige configuració
   assert.throws(() => readMediaConfig({ NODE_ENV: 'production' }, process.cwd()), /S3_BUCKET/u);
   for (const value of ['0', '-1', 'abc', '90000000000000000']) assert.throws(() => readMediaConfig({ MEDIA_MAX_IMAGE_BYTES: value }, process.cwd()));
 });
+
+test('R2 rechaza credenciales de ejemplo sin revelar sus valores y otros proveedores conservan su formato', () => {
+  const env = { NODE_ENV: 'test', STORAGE_DRIVER: 's3', S3_PROVIDER: 'r2', S3_REGION: 'auto',
+    S3_ENDPOINT: 'https://storage.example.test', S3_BUCKET: 'test-media',
+    S3_ACCESS_KEY_ID: 'a'.repeat(32), S3_SECRET_ACCESS_KEY: 'b'.repeat(64) };
+  assert.equal(readMediaConfig(env, process.cwd()).provider, 'r2');
+  for (const field of ['S3_ACCESS_KEY_ID', 'S3_SECRET_ACCESS_KEY'] as const) {
+    const placeholder = 'credencial-de-ejemplo-privada';
+    assert.throws(() => readMediaConfig({ ...env, [field]: placeholder }, process.cwd()), (error: unknown) => {
+      assert.ok(error instanceof Error);
+      assert.match(error.message, new RegExp(field));
+      assert.ok(!error.message.includes(placeholder));
+      return true;
+    });
+  }
+  assert.equal(readMediaConfig({ ...env, S3_PROVIDER: 'minio', S3_REGION: 'us-east-1',
+    S3_ACCESS_KEY_ID: 'minio-user', S3_SECRET_ACCESS_KEY: 'minio-password' }, process.cwd()).provider, 'minio');
+});
 test('tipos, tamaños, solicitudes y claves físicas no permiten SVG ni rutas arbitrarias', () => {
   const config = configuration();
   const input = { originalName: 'foto.png', mime: 'image/png', bytes: 100, requestId: randomUUID() };
