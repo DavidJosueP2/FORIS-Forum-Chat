@@ -8,7 +8,7 @@ import { accountError, accountRequest } from '@/features/account/api/account-api
 import { loginLink } from '@/features/account/lib/return-target'
 import { ForumShell } from '@/features/forum/components/forum-shell'
 import { ForumEmpty, ForumError, ForumLoading } from '@/features/forum/components/forum-states'
-import { PostList } from '@/features/forum/pages/forum-page'
+import { PostList } from '@/features/forum/components/post-list'
 import { useResource } from '@/features/forum/hooks/use-forum'
 import { validCommunityId } from '../lib/notifications'
 import { IdentityImage } from '@/features/media/components/identity-image'

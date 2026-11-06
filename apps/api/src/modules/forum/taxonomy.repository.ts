@@ -44,14 +44,14 @@ export class TaxonomyRepository {
     }
     return selected?.id ?? root?.id ?? null;
   }
-  async tags(search: string, limit: number, userId: string | null): Promise<ForumTag[]> {
+  async tags(search: string, limit: number, userId: string | null, ids: string[] = []): Promise<ForumTag[]> {
     const pattern = '%' + search.replace(/[\\%_]/gu, '\\$&') + '%';
     // Una etiqueta privada no se convierte en una sugerencia pública por existir en el vocabulario.
     const result = await this.database.query<ForumTag & QueryResultRow>(`
-      SELECT t.id,t.name FROM forum_tags t WHERE t.name ILIKE $2 AND
+      SELECT t.id,t.name FROM forum_tags t WHERE t.name ILIKE $2 ${ids.length ? 'AND t.id=ANY($4::uuid[])' : ''} AND
       (t.is_seeded OR EXISTS(SELECT 1 FROM forum_post_tags pt JOIN forum_posts p ON p.id=pt.post_id
         WHERE pt.tag_id=t.id AND ${readablePost('$1')}))
-      ORDER BY t.is_seeded DESC,t.name,t.id LIMIT $3`, [userId, pattern, limit]);
+      ORDER BY t.is_seeded DESC,t.name,t.id LIMIT $3`, ids.length ? [userId, pattern, limit, ids] : [userId, pattern, limit]);
     return result.rows;
   }
   async attachTags(client: SqlClient, postId: string, names: string[]): Promise<void> {

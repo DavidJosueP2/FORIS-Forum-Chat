@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { forumCatalog } from '../../src/database/seeds/forum-catalog.js';
 import { createPostInput, forumFilters, forumId } from '../../src/modules/forum/forum-validation.js';
 import { encodePostCursor, decodePostCursor } from '../../src/modules/forum/forum-cursor.js';
-import { postTags, tagFilters } from '../../src/modules/forum/taxonomy-validation.js';
+import { postTags, tagFilters, filterTagIds } from '../../src/modules/forum/taxonomy-validation.js';
 import { pageInput } from '../../src/common/validation/input.js';
 
 test('el catálogo tiene ramas profundas, rutas sin ciclos y padres de la misma raíz', () => {
@@ -65,4 +65,15 @@ test('cursores cronológicos validan versión, fecha, UUID y formato; respuestas
   for (const altered of [{ ...payload, v: 2 }, { ...payload, t: '2026-02-30T12:00:00.123Z' }, { ...payload, t: 'invalid' }, { ...payload, id: '12' }, { ...payload, extra: true }]) {
     assert.throws(() => decodePostCursor(Buffer.from(JSON.stringify(altered)).toString('base64url')));
   }
+});
+
+test('combina etiquetas por UUID sin duplicados y limita la complejidad de las consultas', () => {
+  const first = randomUUID(); const second = randomUUID();
+  assert.deepEqual(filterTagIds(first + ',' + first.toUpperCase()), [first]);
+  assert.deepEqual(forumFilters({ tags: first + ',' + second, tag: first }).tags, [first, second]);
+  assert.deepEqual(tagFilters({ ids: first + ',' + second }).ids, [first, second]);
+  assert.deepEqual(filterTagIds(undefined), []);
+  for (const value of [[first], 'no-es-uuid', Array.from({ length: 9 }, () => randomUUID()).join(','), 'x'.repeat(296)]) assert.throws(() => filterTagIds(value));
+  assert.throws(() => forumFilters({ tags: Array.from({ length: 8 }, () => randomUUID()).join(','), tag: randomUUID() }));
+  assert.throws(() => forumFilters({ search: 'x'.repeat(121) }));
 });

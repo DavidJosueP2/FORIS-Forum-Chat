@@ -9,14 +9,16 @@ import { ForumRepository } from './forum.repository.js';
 import { ForumWriteMiddleware } from './forum-write.middleware.js';
 import { TaxonomyController } from './taxonomy.controller.js';
 import { TaxonomyRepository } from './taxonomy.repository.js';
+import { ForumReadMiddleware } from './forum-read.middleware.js';
 
 @Module({
   imports: [AuthModule, CommunitiesModule, MediaModule],
   controllers: [ForumController, TaxonomyController],
-  providers: [ForumRepository, ForumWriteMiddleware, TaxonomyRepository],
+  providers: [ForumRepository, ForumWriteMiddleware, ForumReadMiddleware, TaxonomyRepository],
 })
 export class ForumModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(ForumReadMiddleware).forRoutes({ path: 'posts', method: RequestMethod.GET }, { path: 'taxonomy/tags', method: RequestMethod.GET });
     consumer.apply(ForumWriteMiddleware, json({ limit: '256kb', strict: true }))
       .forRoutes({ path: 'posts', method: RequestMethod.POST }, { path: 'posts/:id/replies', method: RequestMethod.POST }, { path: 'posts/:id', method: RequestMethod.PATCH });
   }

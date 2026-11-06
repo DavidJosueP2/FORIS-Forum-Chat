@@ -1,4 +1,4 @@
-import { inputText, invalidInput } from '../../common/validation/input.js';
+import { inputText, invalidInput, requestId } from '../../common/validation/input.js';
 
 export function tagName(value: unknown): string {
   if (typeof value !== 'string' || value.length > 128 || /[\p{Cc}\p{Cf}]/u.test(value)) invalidInput('La etiqueta no es válida.');
@@ -11,10 +11,17 @@ export function postTags(value: unknown): string[] {
   if (!Array.isArray(value) || value.length > 8) invalidInput('Puedes añadir hasta ocho etiquetas.');
   return [...new Set(value.map(tagName))].sort();
 }
-export function tagFilters(query: Record<string, unknown>): { search: string; limit: number } {
-  if (Object.keys(query).some(key => key !== 'search' && key !== 'limit')) invalidInput('El filtro de etiquetas no es válido.');
+export function filterTagIds(value: unknown): string[] {
+  if (value === undefined || value === '') return [];
+  if (typeof value !== 'string' || value.length > 295) invalidInput('Elige hasta ocho etiquetas válidas.');
+  const ids = value.split(',');
+  if (ids.length > 8) invalidInput('Elige hasta ocho etiquetas.');
+  return [...new Set(ids.map(requestId))];
+}
+export function tagFilters(query: Record<string, unknown>): { search: string; limit: number; ids: string[] } {
+  if (Object.keys(query).some(key => key !== 'search' && key !== 'limit' && key !== 'ids')) invalidInput('El filtro de etiquetas no es válido.');
   const raw = query.limit ?? '20';
   if (typeof raw !== 'string' || !/^\d{1,2}$/u.test(raw) || Number(raw) < 1 || Number(raw) > 30) invalidInput('El límite debe estar entre 1 y 30.');
   const search = query.search === undefined || query.search === '' ? '' : inputText(query.search, 'La búsqueda', 64).normalize('NFKC').toLowerCase();
-  return { search, limit: Number(raw) };
+  return { search, limit: Number(raw), ids: filterTagIds(query.ids) };
 }

@@ -2,7 +2,7 @@
 
 Foris organiza publicaciones mediante un catálogo jerárquico de temáticas y etiquetas múltiples. Una publicación tiene UUID propio, título, texto, imágenes opcionales y respuestas; puede pertenecer a una comunidad. Sus miembros pueden publicar y responder dentro de ella. Las comunidades, favoritas y avisos se describen en [communities.md](communities.md).
 
-El inicio conserva sus cinco filtros y su diseño. La creación usa ahora un lienzo con editor visual, imágenes dentro del contenido, clasificación jerárquica, etiquetas y comunidad opcional. El formato se conserva en la vista previa y en el detalle. Sus herramientas, borradores y validación se describen en [editor.md](editor.md).
+El inicio abre un flujo de publicaciones con títulos serif, texto e imágenes, búsqueda automática y Crear publicación en el navbar, y filtros por temáticas jerárquicas y etiquetas. En escritorio se exploran a un lado del contenido y en móvil desde Filtrar. La experiencia y sus límites están en [discovery.md](discovery.md). La creación y edición usan el lienzo descrito en [editor.md](editor.md).
 
 | Acción | Invitado | Cuenta verificada con sesión vigente |
 | --- | --- | --- |
@@ -19,9 +19,10 @@ El chat global se conserva con su historial y sus eventos en tiempo real. Sus pe
 
 | Ruta | Contenido |
 | --- | --- |
-| / | Índice de publicaciones, búsqueda y filtros |
+| / | Flujo de publicaciones, búsqueda automática y filtros |
 | /?topico=general | Publicaciones del tópico elegido |
 | /?autor=UUID | Publicaciones de un perfil; el perfil propio ofrece «Mis publicaciones» |
+| /?categoria=UUID&etiqueta=UUID | Exploración por temática y etiqueta; etiqueta puede repetirse |
 | /publicar | Lienzo de publicación o acceso a una cuenta |
 | /publicar?topico=proyectos | Lienzo con esa raíz preseleccionada si no existe un borrador |
 | /publicaciones/:postId | Publicación y respuestas; postId es un UUID |
@@ -49,7 +50,7 @@ Los enlaces para participar conservan un destino next al pasar por el acceso. El
 | GET / POST | /api/messages | Chat global, conserva acceso invitado |
 | GET | /api/events | Eventos del chat global |
 
-GET /api/posts admite topic (raíz por slug, compatibilidad), category (UUID, incluye descendientes), tag (UUID de una etiqueta), author, community, search, before y limit. Los filtros se combinan con AND y se aplican después de comprobar acceso en SQL. La búsqueda compara texto literal sin interpretar % o _ como comodines. Las páginas se ordenan por created_at e id descendentes; before es un cursor opaco base64url con versión, fecha y UUID. El cliente debe reenviar nextCursor sin interpretarlo. Las fechas de publicaciones usan TIMESTAMPTZ(3) para conservar exactamente la precisión de milisegundos del cursor. El UUID solo desempata fechas iguales: su orden no representa antigüedad.
+GET /api/posts admite topic (raíz por slug, compatibilidad), category (UUID, incluye descendientes), tag (UUID de una etiqueta), tags (hasta ocho UUID separados por comas), author, community, search, before y limit. Todas las etiquetas elegidas deben estar presentes. Los filtros se combinan con AND y se aplican después de comprobar acceso en SQL. La búsqueda compara texto literal sin interpretar % o _ como comodines. Las páginas se ordenan por created_at e id descendentes; before es un cursor opaco base64url con versión, fecha y UUID. El cliente debe reenviar nextCursor sin interpretarlo. Las fechas de publicaciones usan TIMESTAMPTZ(3) para conservar exactamente la precisión de milisegundos del cursor. El UUID solo desempata fechas iguales: su orden no representa antigüedad.
 
 GET de respuestas conserva before numérico y orden de ID descendente. En ambos casos el límite predeterminado es 20, el máximo 50 y la respuesta usa items, hasMore y nextCursor. Los IDs de publicaciones son UUID; los de respuestas, comunidades y avisos siguen siendo BIGINT representados como cadenas. Las referencias a publicaciones en respuestas, medios y notificaciones también son UUID.
 
@@ -65,7 +66,7 @@ GET /api/topics proyecta las raíces como los cinco tópicos anteriores. El topi
 
 tags recibe hasta ocho nombres por publicación, de 1 a 32 caracteres cada uno. Se normalizan con NFKC, espacios simples y minúsculas, se deduplican y se ordenan. Se permiten letras Unicode, números, espacios y puntuación de nombres como c++, c# y node.js; se rechazan controles y marcado. Las etiquetas son transversales a temáticas y comunidades y se crean al publicar, bajo los mismos permisos y límites de frecuencia. La relación muchos a muchos evita etiquetas repetidas. Las respuestas de publicación incluyen category y tags con UUID y nombre.
 
-GET /api/taxonomy/tags admite search y limit (20 por defecto, máximo 30). Devuelve las etiquetas iniciales o las utilizadas en publicaciones que el visitante puede leer. Una etiqueta exclusiva de una comunidad privada no aparece para invitados, terceros ni exmiembros. No se publican contadores globales de uso. Las sugerencias usan no-store para evitar reutilizar una respuesta privada entre sesiones.
+GET /api/taxonomy/tags admite search, limit (20 por defecto, máximo 30) e ids (hasta ocho UUID separados por comas). Devuelve las etiquetas iniciales o las utilizadas en publicaciones que el visitante puede leer, incluso al resolver nombres por identificador. Una etiqueta exclusiva de una comunidad privada no aparece para invitados, terceros ni exmiembros. No se publican contadores globales de uso. Las sugerencias usan no-store para evitar reutilizar una respuesta privada entre sesiones.
 
 Ejemplo del contrato de texto que se conserva para clientes anteriores:
 

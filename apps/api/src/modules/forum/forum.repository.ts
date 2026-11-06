@@ -14,35 +14,41 @@ import { readablePost } from '../communities/community-access.js';
 import { TaxonomyRepository } from './taxonomy.repository.js';
 import { encodePostCursor } from './forum-cursor.js';
 
-interface PostRow extends QueryResultRow {
+interface PostSummaryRow extends QueryResultRow {
   id: string; title: string; body: string; topic_id: string; topic_name: string; topic_description: string;
   category_id: string | null; category_slug: string; category_name: string; category_description: string;
   category_parent_id: string | null; category_root_id: string; category_depth: number; category_path: string[]; category_position: number;
-  author_id: string; display_name: string; reply_count: number; created_at: Date; last_activity_at: Date; request_id: string;
-  community_id: string | null; community_name: string | null; media_request_ids: string[]; tag_request_names: string[];
-  content: ForumDocument | null;
-  revision: number; updated_at: Date | null;
+  author_id: string; display_name: string; reply_count: number; created_at: Date; last_activity_at: Date;
+  community_id: string | null; community_name: string | null;
+  author_avatar_id: string | null;
+}
+interface PostRow extends PostSummaryRow {
+  request_id: string; media_request_ids: string[]; tag_request_names: string[];
+  content: ForumDocument | null; revision: number; updated_at: Date | null;
 }
 interface ReplyRow extends QueryResultRow {
   id: string; post_id: string; author_id: string; display_name: string; body: string; created_at: Date; request_id: string;
 }
-const POSTS = `SELECT p.*,COALESCE(t.slug,g.slug) AS topic_id,COALESCE(t.name,g.name) AS topic_name,
-  COALESCE(t.description,g.description) AS topic_description,u.display_name,c.name AS community_name,
+const POST_CONTEXT = `COALESCE(t.slug,g.slug) AS topic_id,COALESCE(t.name,g.name) AS topic_name,
+  COALESCE(t.description,g.description) AS topic_description,u.display_name,author_avatar.id AS author_avatar_id,c.name AS community_name,
   k.slug AS category_slug,k.name AS category_name,k.description AS category_description,
   k.parent_id AS category_parent_id,k.root_id AS category_root_id,k.depth AS category_depth,k.path AS category_path,k.position AS category_position
   FROM forum_posts p JOIN users u ON u.id=p.author_id
+  LEFT JOIN media author_avatar ON author_avatar.avatar_user_id=u.id AND author_avatar.state='READY'
   JOIN forum_categories g ON g.parent_id IS NULL AND g.slug='general'
   LEFT JOIN forum_categories k ON k.id=p.category_id LEFT JOIN forum_categories t ON t.id=k.root_id
   LEFT JOIN communities c ON c.id=p.community_id`;
+const POSTS = 'SELECT p.*,' + POST_CONTEXT;
+const POST_SUMMARIES = 'SELECT p.id,p.title,p.body,p.category_id,p.author_id,p.reply_count,p.created_at,p.last_activity_at,p.community_id,' + POST_CONTEXT;
 const REPLIES = 'SELECT r.*,u.display_name FROM forum_replies r JOIN users u ON u.id=r.author_id';
-function summary(row: PostRow): ForumPostSummary {
+function summary(row: PostSummaryRow): ForumPostSummary {
   return {
-    id: String(row.id), title: row.title, excerpt: row.body.replace(/\s+/gu, ' ').slice(0, 240),
+    id: String(row.id), title: row.title, excerpt: row.body.replace(/\s+/gu, ' ').slice(0, 420),
     topic: { id: row.topic_id, name: row.topic_name, description: row.topic_description },
     category: row.category_id ? { id: row.category_id, slug: row.category_slug, name: row.category_name, description: row.category_description,
       parentId: row.category_parent_id, rootId: row.category_root_id, depth: row.category_depth, path: row.category_path, position: row.category_position } : null,
     tags: [],
-    author: { id: row.author_id, displayName: row.display_name }, replyCount: row.reply_count,
+    author: { id: row.author_id, displayName: row.display_name, ...(row.author_avatar_id ? { avatarId: row.author_avatar_id } : {}) }, replyCount: row.reply_count,
     community: row.community_id ? { id: String(row.community_id), name: row.community_name! } : null, images: [],
     createdAt: new Date(row.created_at).toISOString(), lastActivityAt: new Date(row.last_activity_at).toISOString(),
   };
@@ -84,8 +90,8 @@ export class ForumRepository {
       await this.taxonomy.get(filters.category);
       values.push(filters.category); where.push('$' + values.length + '::uuid=ANY(k.path)');
     }
-    if (filters.tag) {
-      values.push(filters.tag);
+    for (const tag of filters.tags) {
+      values.push(tag);
       where.push('EXISTS(SELECT 1 FROM forum_post_tags pt WHERE pt.post_id=p.id AND pt.tag_id=$' + values.length + ')');
     }
     if (filters.author) { values.push(filters.author); where.push('p.author_id=$' + values.length); }
@@ -98,7 +104,7 @@ export class ForumRepository {
       where.push('(p.title ILIKE $' + values.length + ' OR p.body ILIKE $' + values.length + ')');
     }
     values.push(filters.limit + 1);
-    const result = await this.database.query<PostRow>(POSTS + ' WHERE ' + where.join(' AND ') + ' ORDER BY p.created_at DESC,p.id DESC LIMIT $' + values.length, values);
+    const result = await this.database.query<PostSummaryRow>(POST_SUMMARIES + ' WHERE ' + where.join(' AND ') + ' ORDER BY p.created_at DESC,p.id DESC LIMIT $' + values.length, values);
     const items = result.rows.slice(0, filters.limit).map(summary);
     const hasMore = result.rows.length > filters.limit;
     const selected = { items, hasMore, nextCursor: hasMore ? encodePostCursor(items.at(-1)!) : null };

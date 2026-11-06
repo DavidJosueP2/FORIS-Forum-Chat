@@ -161,6 +161,11 @@ test('una comunidad privada no filtra contenido en búsquedas, detalle, respuest
   const post = await api.post('/api/posts').set('Origin', origin).set('Cookie', owner.cookie)
     .send({ ...postInput(id, 'Una conversación privada'), tags: ['reserva confidencial'] }).expect(201);
   const postId = post.body.post.id as string;
+  const privateTag = post.body.post.tags[0].id as string;
+  const tagLookup = '/api/taxonomy/tags?ids=' + privateTag;
+  assert.deepEqual((await api.get(tagLookup).expect(200)).body, []);
+  assert.deepEqual((await api.get(tagLookup).set('Cookie', outsider.cookie).expect(200)).body, []);
+  assert.equal((await api.get(tagLookup).set('Cookie', invited.cookie).expect(200)).body[0].name, 'reserva confidencial');
   await api.get('/api/posts/' + postId).expect(404);
   await api.get('/api/posts/' + postId + '/replies').set('Cookie', outsider.cookie).expect(404);
   await api.get('/api/posts?community=' + id).set('Cookie', outsider.cookie).expect(404);
@@ -173,6 +178,7 @@ test('una comunidad privada no filtra contenido en búsquedas, detalle, respuest
   assert.equal((await api.get('/api/notifications/count').set('Cookie', invited.cookie)).body.unreadCount, 1);
   await api.delete('/api/communities/' + id + '/membership').set('Origin', origin).set('Cookie', invited.cookie).send({}).expect(200);
   await api.get('/api/posts/' + postId).set('Cookie', invited.cookie).expect(404);
+  assert.deepEqual((await api.get(tagLookup).set('Cookie', invited.cookie).expect(200)).body, []);
   assert.deepEqual((await api.get(suggestion).set('Cookie', invited.cookie).expect(200)).body, []);
   assert.equal((await api.get('/api/notifications/count').set('Cookie', invited.cookie)).body.unreadCount, 0);
   await api.post('/api/community-invitations/accept').set('Origin', origin).set('Cookie', invited.cookie).send({ token }).expect(410);

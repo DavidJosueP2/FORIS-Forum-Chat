@@ -59,6 +59,18 @@ typography:
     fontSize: "2rem"
     fontWeight: 400
     lineHeight: 1.25
+  discovery-title:
+    fontFamily: "Fraunces, Georgia, serif"
+    fontSize: "1.875rem"
+    fontWeight: 500
+    lineHeight: 1.3
+    letterSpacing: "-0.02em"
+  discovery-title-compact:
+    fontFamily: "Fraunces, Georgia, serif"
+    fontSize: "1.5rem"
+    fontWeight: 500
+    lineHeight: 1.35
+    letterSpacing: "-0.02em"
   ui:
     fontFamily: "SF Pro Display, Plus Jakarta Sans, system-ui, sans-serif"
     fontSize: "0.875rem"
@@ -93,6 +105,21 @@ components:
     textColor: "{colors.ink}"
     rounded: "{rounded.control}"
     padding: "4px 10px"
+  discovery-search:
+    backgroundColor: "{colors.secondary}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.button}"
+    padding: "0 4px 0 14px"
+    height: "44px"
+  discovery-post-title:
+    textColor: "{colors.ink}"
+    typography: "{typography.discovery-title}"
+  discovery-tag:
+    backgroundColor: "{colors.canvas-tag-background}"
+    textColor: "{colors.canvas-tag-foreground}"
+    rounded: "{rounded.button}"
+    padding: "8px 14px"
+    height: "44px"
   canvas-tag:
     backgroundColor: "{colors.canvas-tag-background}"
     textColor: "{colors.canvas-tag-foreground}"
@@ -125,9 +152,9 @@ components:
 
 **Creative North Star: "Humano, sencillo y conversacional"**
 
-Base visual de Foris para conversar en comunidades públicas o privadas. La lectura manda; las formas suaves y los personajes aportan cercanía en momentos concretos. El contenido se organiza por tipografía, espacio y superficies sólidas. El inicio abre Foros con las publicaciones organizadas por tópico; Comunidades permite explorar espacios públicos y acceder a los privados de los que se forma parte. El chat global conserva la conversación inmediata y la escritura como invitado en /chat.
+Base visual de Foris para conversar en comunidades públicas o privadas. La lectura manda; las formas suaves y los personajes aportan cercanía en momentos concretos. El contenido se organiza por tipografía, espacio y superficies sólidas. El inicio abre directamente un flujo de publicaciones con títulos Fraunces, imágenes disponibles y exploración por temáticas jerárquicas y etiquetas; Comunidades permite explorar espacios públicos y acceder a los privados de los que se forma parte. El chat global conserva la conversación inmediata y la escritura como invitado en /chat.
 
-El nombre, las cuatro familias tipográficas y el lenguaje de personajes forman la identidad actual. La dirección del foro se recoge en .impeccable/forum-direction.md, la de comunidades en .impeccable/communities-direction.md y su extensión de privacidad y fotos en .impeccable/communities-privacy-direction.md, la del chat global en .impeccable/surfaces/apps-web-src-app-tsx.md, la de acceso y perfil en .impeccable/surfaces/apps-web-src-features-account-pages-login-page-tsx.md y la del lienzo en .impeccable/surfaces/src-features-forum-pages-create-post-page-tsx.md; las restricciones de estilo del usuario se conservan en el PRODUCT.md de la raíz.
+El nombre, las cuatro familias tipográficas y el lenguaje de personajes forman la identidad actual. La dirección del inicio se recoge en .impeccable/surfaces/src-features-forum-pages-forum-page-tsx.md; sustituye la composición inicial descrita en .impeccable/forum-direction.md y conserva sus pautas para las demás páginas del foro. La dirección de comunidades está en .impeccable/communities-direction.md y su extensión de privacidad y fotos en .impeccable/communities-privacy-direction.md, la del chat global en .impeccable/surfaces/apps-web-src-app-tsx.md, la de acceso y perfil en .impeccable/surfaces/apps-web-src-features-account-pages-login-page-tsx.md y la del lienzo en .impeccable/surfaces/src-features-forum-pages-create-post-page-tsx.md; las restricciones de estilo del usuario se conservan en el PRODUCT.md de la raíz.
 
 **Key Characteristics:**
 
@@ -141,9 +168,9 @@ El nombre, las cuatro familias tipográficas y el lenguaje de personajes forman 
 
 ## Colors
 
-Paleta de neutros cálidos con un matiz vegetal discreto. Los valores generales de la cabecera corresponden a los tokens de src/index.css; ese archivo contiene también sus equivalentes oscuros y estados funcionales. Los tokens canvas-tag y dark-canvas-tag proceden de src/features/forum/editor/canvas.css y se limitan a las etiquetas seleccionadas del lienzo.
+Paleta de neutros cálidos con un matiz vegetal discreto. Los valores generales de la cabecera corresponden a los tokens de src/index.css; ese archivo contiene también sus equivalentes oscuros y estados funcionales. Los tokens canvas-tag y dark-canvas-tag proceden de src/features/forum/editor/canvas.css. El inicio reutiliza sus mismos valores mediante los tokens locales discovery-tag de src/features/forum/discovery/discovery.css para etiquetas de lectura y filtros seleccionados; no incorpora otra paleta.
 
-El turquesa aprobado distingue esos chips en ambos temas: fondo suave, texto contrastado y un tono de interacción para quitar una etiqueta. Es un papel de color local; conserva los neutros de las demás acciones y no sustituye secondary ni su variante oscura. Las comprobaciones de contraste de los pares declarados son 7.59:1 en claro y 7.57:1 en oscuro; el fondo de interacción mantiene 6.77:1 y 5.23:1, respectivamente. Son cálculos de colores de fuente, sin validación visual en navegador.
+El turquesa aprobado distingue esos chips en ambos temas: fondo suave, texto contrastado y un tono de interacción para quitar una selección o abrir una etiqueta del inicio. Es un papel de color local; conserva los neutros de las demás acciones y no sustituye secondary ni su variante oscura. Las comprobaciones de contraste de los pares declarados son 7.59:1 en claro y 7.57:1 en oscuro; el fondo de interacción mantiene 6.77:1 y 5.23:1, respectivamente. Son cálculos de colores de fuente, sin validación visual en navegador.
 
 Los personajes añaden turquesa, naranja, azul, salvia, dorado, lavanda, rosa, cacao y tinta. Estos colores pertenecen a los SVG de marca y no sustituyen los tokens semánticos de la interfaz. Una emoción o un color de personaje no implica un estado del usuario, del mensaje ni de la conexión.
 
@@ -157,22 +184,28 @@ Las cuatro familias elegidas y facilitadas por el usuario se sirven desde src/as
 | --- | --- | --- | --- |
 | Títulos | Axiforma | font-heading | Encabezados y nombre Foris; peso 600 habitual. |
 | Texto sans serif | Plus Jakarta Sans | font-sans | Publicaciones, conversación, formularios y controles; 400 para texto y 500 para etiquetas. |
-| Acento serif | Fraunces | font-serif | Frases editoriales o mensajes de bienvenida puntuales. |
+| Lectura editorial y acento serif | Fraunces | font-serif | Títulos de las publicaciones del inicio, frases editoriales y mensajes de bienvenida puntuales. |
 | Alternativa de interfaz | SF Pro Display | font-ui | Controles de una superficie que elija expresamente esta variante. |
 
 html y el texto general usan Jakarta. h1–h6 usan Axiforma por defecto; las utilidades de familia pueden sustituirla. Jakarta admite pesos variables de 200 a 800, y Fraunces de 100 a 900, en redonda y cursiva. Axiforma declara los pesos 100, 300, 400, 500, 600, 700, 800 y 900 en ambas variantes. SF Pro declara únicamente los pesos y estilos presentes: redonda 400/500/700 y cursiva 100/200/300/600/800/900. No depender de una variante ausente de SF Pro.
 
-La escala usada en General corresponde a 12, 14, 16, 20, 24, 30 y 32 píxeles mediante rem. El texto de lectura parte de 1rem; el cuerpo de los mensajes usa interlineado 1.65 y un máximo de 70 caracteres de ancho. Las etiquetas usan el rol label y las horas, fechas, estados y ayudas el rol caption. General usa heading, con heading-compact en móvil; el nombre Foris usa title. La bienvenida usa Fraunces con el rol serif, reducido al tamaño de title en móvil. La serif es un acento, no una fuente para toda la conversación; SF Pro es una alternativa preparada, no una cuarta voz obligatoria en cada pantalla.
+La escala usada en General corresponde a 12, 14, 16, 20, 24, 30 y 32 píxeles mediante rem. El texto de lectura parte de 1rem; el cuerpo de los mensajes usa interlineado 1.65 y un máximo de 70 caracteres de ancho. Las etiquetas usan el rol label y las horas, fechas, estados y ayudas el rol caption. General usa heading, con heading-compact en móvil; el nombre Foris usa title. La bienvenida usa Fraunces con el rol serif, reducido al tamaño de title en móvil. La serif también conduce los títulos del inicio; el texto de lectura y los controles conservan Jakarta. SF Pro es una alternativa preparada, no una cuarta voz obligatoria en cada pantalla.
 
-El foro reutiliza esta escala: títulos de página entre 1.875rem y 2rem, títulos de publicaciones en el índice a 1.5rem y a 1.25rem en móvil, y encabezados de sección a 1.25rem. Los metadatos y las ayudas usan 0.875rem; las publicaciones anteriores de texto y las respuestas conservan los saltos de línea, un máximo de 70ch e interlineado 1.9. El documento enriquecido conserva ese interlineado y un ancho de hasta 72ch, con encabezados, listas, tablas y pies de imagen que comparten la escala. En el lienzo, Crear publicación usa el encabezado compacto; el título editable usa 2rem, reducido a 1.5rem en móvil, y el estado del borrador usa caption. El código emplea la familia monoespaciada del sistema solo para contenido técnico. Las comunidades y la bandeja reutilizan los títulos de fila de 1.5rem y 1.25rem en móvil; las descripciones conservan saltos de línea, hasta 70ch e interlineado 1.8. No añadir una escala tipográfica distinta para estas superficies.
+El foro reutiliza esta escala: títulos de página entre 1.875rem y 2rem y encabezados de sección a 1.25rem. El inicio usa discovery-title para los títulos de publicaciones y discovery-title-compact por debajo de 768px: Fraunces con peso 500 y espaciado ligeramente cerrado. Sus extractos usan cuerpo de 1rem, interlineado 1.8 y hasta 70ch, con un máximo de cinco líneas visibles en escritorio y cuatro en móvil. Autor, comunidad y controles usan label; la fecha usa caption y el encabezado Recientes o Resultados usa Jakarta a 1rem y peso 600. La lista conservada dentro de las comunidades mantiene títulos Axiforma de 1.5rem y 1.25rem en móvil.
+
+Los metadatos y las ayudas habituales del foro usan 0.875rem; las publicaciones anteriores de texto y las respuestas conservan los saltos de línea, un máximo de 70ch e interlineado 1.9. El documento enriquecido conserva ese interlineado y un ancho de hasta 72ch, con encabezados, listas, tablas y pies de imagen que comparten la escala. En el lienzo, Crear publicación usa el encabezado compacto; el título editable usa 2rem, reducido a 1.5rem en móvil, y el estado del borrador usa caption. El código emplea la familia monoespaciada del sistema solo para contenido técnico. Las comunidades y la bandeja reutilizan los títulos de fila de 1.5rem y 1.25rem en móvil; las descripciones conservan saltos de línea, hasta 70ch e interlineado 1.8. No añadir una escala tipográfica distinta para estas superficies.
 
 Evitar texto principal en mayúsculas, espaciados exagerados o tipografía monoespaciada decorativa. La conversación tiene prioridad.
 
 ## Layout
 
-Usar el ritmo de espaciado de Tailwind, con grupos próximos y separación clara entre tareas. El índice del foro en / organiza búsqueda, filtros por tópico y filas abiertas de publicaciones dentro de un máximo de 1040px. La cabecera compartida entre foro, comunidades y cuenta, con un máximo de 1280px, reúne Foris y los enlaces Foros, Comunidades y Chat global en ese orden; después ofrece notificaciones para la cuenta activa, tema y cuenta. /publicaciones/:postId conserva un ancho máximo de 840px para la lectura y una lista vertical de respuestas. /publicar y /publicaciones/:postId/editar amplían el espacio hasta 1040px: Volver se alinea con un título de tarea pequeño y Vista previa y Publicar o Guardar cambios quedan a la derecha; debajo aparecen el estado discreto del borrador, el título editable y el contenido. La comunidad, la temática y las etiquetas se muestran al final; la comunidad permanece fija al editar. La estructura se sostiene con espacio y tipografía, sin tarjetas repetidas.
+Usar el ritmo de espaciado de Tailwind, con grupos próximos y separación clara entre tareas. El inicio / abre artículos de publicaciones dentro de un máximo de 1200px, con una columna Explorar de 220px y un flujo de hasta 760px separados por 48px. Por debajo de 1180px, la columna lateral pasa a 200px y la separación a 32px; por debajo de 900px, desaparece y Filtrar abre un Sheet lateral con el mismo catálogo. Los artículos se separan con espacio, sin fondos de tarjeta ni contornos. Las imágenes reservan su proporción y una altura entre 160px y 480px, con radio surface y ajuste contain durante la lectura; carga, autorización y error usan el mismo espacio.
 
-Por debajo de 1024px, la cabecera compartida pasa la navegación a una fila completa y permite que los enlaces se ajusten sin ocultarlos. Por debajo de 768px, la introducción y su acción se apilan y el contenido usa márgenes laterales de 20px. Los filtros por tópico se ajustan a varias líneas. Búsqueda, formularios y acciones conservan etiquetas visibles y controles de 44px o más. No trasladar al foro el desplazamiento interno ni el compositor fijo del chat.
+La cabecera compartida entre foro, comunidades y cuenta, con un máximo de 1280px, reúne Foris y los enlaces Foros, Comunidades y Chat global en ese orden; después ofrece notificaciones para la cuenta activa, tema y cuenta. Solo en el inicio, ForumShell añade la búsqueda automática y Crear publicación mediante su espacio discovery y mantiene la cabecera sticky. Por debajo de 1180px, esas herramientas ocupan una fila completa; por debajo de 768px, la navegación pasa a un menú accesible y la acción se abrevia a Crear conservando su nombre accesible. Los destinos de foco y el enlace Ir al contenido compensan la altura medida de la cabecera, con valores responsive de respaldo.
+
+/publicaciones/:postId conserva un ancho máximo de 840px para la lectura y una lista vertical de respuestas. /publicar y /publicaciones/:postId/editar amplían el espacio hasta 1040px: Volver se alinea con un título de tarea pequeño y Vista previa y Publicar o Guardar cambios quedan a la derecha; debajo aparecen el estado discreto del borrador, el título editable y el contenido. La comunidad, la temática y las etiquetas se muestran al final; la comunidad permanece fija al editar. La estructura se sostiene con espacio y tipografía, sin tarjetas repetidas.
+
+En los demás contextos, por debajo de 1024px la cabecera compartida pasa la navegación a una fila completa y permite que los enlaces se ajusten sin ocultarlos. Por debajo de 768px, sus introducciones y acciones se apilan y el contenido usa márgenes laterales de 20px. El inicio mantiene esos márgenes de 20px en móvil, pero entra directamente al flujo sin una introducción. Búsqueda, formularios y acciones conservan nombres accesibles y controles de 44px o más; los formularios mantienen etiquetas visibles. No trasladar al foro el desplazamiento interno ni el compositor fijo del chat.
 
 El lienzo abre directamente la escritura, sin portada introductoria ni clasificación obligatoria. Su barra de herramientas compacta usa una superficie sólida y permanece junto al contenido al desplazar la página. En móvil, las acciones pasan a una fila completa, las herramientas se ajustan en varias líneas y las opciones finales se apilan cuando falta espacio; conservan áreas de al menos 44px. Las tablas disponen de desplazamiento horizontal dentro del documento.
 
@@ -210,7 +243,11 @@ Los estilos comunes se centralizan en src/index.css para que las primitivas cons
 
 **Botones.** Primario sólido para enviar y acciones principales; secundario tonal para recuperación y sugerencias; ghost para utilidades y el nombre de invitado. Todos parten de la forma de píldora. La política global elimina bordes y sombras de las primitivas sin eliminar el foco de teclado. Mantener los estados deshabilitado, enviando y reintento con texto comprensible.
 
-**Publicaciones.** ForumShell reúne la navegación principal y los accesos de tema y cuenta; forum.css aplica los tokens compartidos sin otra paleta, tipografía ni sistema de formas. ForumPage presenta búsqueda de título o cuerpo, filtros por tópico o autor y filas con tópico, autor, fecha, título, extracto y número real de respuestas. Los tópicos son General, Tecnología, Aprendizaje, Creatividad y Proyectos; son filtros, no comunidades creadas por usuarios. Las páginas de 20 elementos se ordenan de más recientes a anteriores y se amplían con una acción explícita. El foro no incorpora SSE ni sondeo periódico.
+**Publicaciones.** ForumShell reúne la navegación principal y los accesos de tema y cuenta; forum.css aplica los tokens compartidos sin otra paleta ni sistema de formas. ForumPage compone DiscoverySearch, DiscoveryFilters, MobileDiscoveryFilters, ActiveDiscoveryFilters y DiscoveryFeed desde features/forum/discovery. El inicio presenta artículos abiertos con avatar disponible de 36px, autor, comunidad cuando corresponde, fecha, título Fraunces, extracto de hasta 420 caracteres y primera imagen disponible. La temática y las etiquetas son enlaces de exploración. Responder o el recuento real de respuestas abre el destino correspondiente; Leer publicación abre el detalle y Copiar enlace confirma el resultado o presenta un campo de copia manual. Las fotos conservan permisos temporales y se solicitan al acercarse al área visible; las publicaciones con varias imágenes ofrecen acceso al conjunto. No se añaden votos, ranking ni presencia.
+
+**Descubrimiento.** La búsqueda de título o cuerpo vive en la cabecera: espera 350ms de pausa, respeta IME, valida hasta 120 caracteres y actualiza la URL con replace. Buscar o cambiar filtros conserva el foco del control; los enlaces de autor, temática y etiqueta llevan el foco al encabezado del flujo. Explorar permite buscar una temática, abrir sus subniveles y elegir cualquier nivel con sus descendientes. Las etiquetas se combinan hasta ocho con condición de coincidencia de todas; los filtros activos se retiran individualmente o juntos. Quitar filtros cancela también el texto de búsqueda pendiente. En móvil, Sheet conserva el foco dentro del panel y Ver publicaciones devuelve al flujo después de cambiar la consulta. Carga, vacío, error y reintento proceden del resultado real; las peticiones anteriores se abortan y sus respuestas se descartan al cambiar de consulta. Los enlaces antiguos topico siguen siendo compatibles, pero las cinco raíces ya no son una fila fija de filtros. Las páginas de 20 elementos se ordenan de más recientes a anteriores y se amplían con una acción explícita. El contrato completo y los límites de verificación están en [docs/discovery.md](../../docs/discovery.md).
+
+La lista anterior se conserva en components/post-list.tsx para las publicaciones de comunidades, con su presentación existente. El foro no incorpora SSE ni sondeo periódico. El inicio no altera el detalle, el lienzo, la edición, el chat, las cuentas ni los permisos.
 
 **Crear, editar y responder.** CreatePostPage y EditPostPage cargan el mismo lienzo enriquecido bajo demanda y mantienen título y escritura como tarea principal. La barra agrupa formato, encabezados, listas y tareas, citas, código, enlaces HTTP(S), alineación, tablas, imágenes y deshacer o rehacer. Los controles reutilizan botones píldora, menús opacos y foco del sistema; la selección de herramientas usa los tonos semánticos existentes. Vista previa muestra el mismo documento que la lectura y permite volver al lienzo. El lienzo no muestra contadores ni limita la escritura con un corte automático: al superar los 160 caracteres del título o los 10000 del texto aparece el error junto al contenido afectado y se exige corregirlo para publicar o guardar. Durante el envío se bloquean la edición y las opciones para conservar el contenido enviado.
 
@@ -218,13 +255,13 @@ Las imágenes se insertan donde se escribe y conservan descripción alternativa 
 
 Comunidad, temática jerárquica y etiquetas son opciones al final del lienzo. Sus selectores permiten buscar, explorar niveles y quitar selecciones; la comunidad ofrece los espacios de los que se forma parte y expresa si la publicación será pública o seguirá el acceso de esa comunidad. Al crear, el botón vacío dice «Seleccionar comunidad»; dentro del selector, «Sin comunidad» permite elegir una publicación pública general. Al editar, el destino se muestra como texto fijo con su icono. ParticipationGate permite leer sin cuenta y explica que publicar, editar o responder requiere una sesión vigente de una cuenta verificada, requisito que también impone la API. El enlace de acceso conserva la publicación o tarea de retorno; el chat global sigue al alcance para escribir como invitado.
 
-**Etiquetas del lienzo.** Los chips seleccionados usan los tokens turquesa canvas-tag en ambos temas, con forma de píldora, texto de 0.875rem e interlineado 1.5, altura mínima de 44px y 16px de espacio a la izquierda. La acción de quitar conserva un área de 44 × 44px, nombre accesible con la etiqueta y foco del sistema; solo su fondo cambia a canvas-tag-hover al pasar el cursor. Los tokens viven en el lienzo y no cambian las etiquetas de lectura ni los botones secundarios.
+**Etiquetas del lienzo y del inicio.** Los chips seleccionados del lienzo usan los tokens turquesa canvas-tag en ambos temas, con forma de píldora, texto de 0.875rem e interlineado 1.5, altura mínima de 44px y 16px de espacio a la izquierda. La acción de quitar conserva un área de 44 × 44px, nombre accesible con la etiqueta y foco del sistema; solo su fondo cambia a canvas-tag-hover al pasar el cursor. El inicio reutiliza esos colores en las etiquetas de lectura, las opciones seleccionadas y los filtros activos: las etiquetas enlazadas tienen 14px de relleno horizontal y los filtros activos una acción de quitar de 44 × 44px. Las opciones sin seleccionar y los demás filtros usan los tonos neutrales existentes. Este uso compartido no cambia los botones secundarios ni la presentación de etiquetas de las otras páginas.
 
 **Edición de publicaciones.** El detalle ofrece Editar publicación a su autor y muestra Editado con fecha cuando corresponde. El mismo lienzo permite cambiar título, documento, imágenes, temática y etiquetas; Guardar cambios mantiene la comunidad y su acceso. La autorización exige autoría, cuenta verificada y pertenencia vigente a la comunidad. Una revisión incompatible conserva el borrador y ofrece Ver versión publicada en otra pestaña o Cargar versión publicada; reemplazarlo requiere confirmar el descarte, con texto para copiar antes los cambios que se quieran conservar. La carga vuelve a consultar el servidor y bloquea temporalmente el lienzo. Guardar mantiene la fecha de creación, los contadores y el orden cronológico, sin avisos de publicación nueva.
 
 El lienzo guarda automáticamente el borrador en sessionStorage de la pestaña: al crear, por cuenta y contexto de comunidad; al editar, por cuenta y publicación con una clave independiente y la revisión de partida. Recupera el formato anterior de texto e imágenes. Las respuestas conservan su propio borrador por cuenta y publicación. El estado discreto comunica guardando, guardado o fallo del almacenamiento; un fallo de envío conserva el contenido y permite reintentar. Solo la creación o edición confirmada limpia su borrador. Los documentos y borradores guardan referencias de imagen por UUID, sin binarios ni URLs firmadas. Los permisos de comunidad y medios se conservan; el contrato y los límites estructurales están en [docs/editor.md](../../docs/editor.md).
 
-**Estados del foro.** Carga, errores con reintento, tópico o búsqueda sin resultados, publicación inexistente y ausencia de respuestas tienen texto específico. ForumEmpty usa Lupa únicamente después de resolver una colección vacía. El bloque de acceso usa una superficie tonal con el radio surface; no convierte cada publicación o respuesta en tarjeta. Ningún estado vacío introduce publicaciones, autores o recuentos ficticios.
+**Estados del foro.** Carga, errores con reintento, filtros o búsqueda sin resultados, publicación inexistente y ausencia de respuestas tienen texto específico. ForumEmpty usa Lupa únicamente después de resolver una colección vacía. El bloque de acceso usa una superficie tonal con el radio surface; no convierte cada publicación o respuesta en tarjeta. Ningún estado vacío introduce publicaciones, autores o recuentos ficticios.
 
 **Comunidades.** communities.css extiende las listas, formularios y estados del foro con los mismos tokens. El directorio distingue pertenencia de favorita: el texto indica «Formas parte» o «La creaste tú», mientras la estrella identifica una favorita. En el detalle, guardar favorita usa un botón con aria-pressed y no implica unirse. Unirse activa los avisos dentro de Foris; la ayuda lo explica antes de la acción. Los miembros pueden silenciarlos mediante un checkbox con etiqueta y descripción visibles. Salir conserva la favorita y detiene los avisos futuros; el creador conserva su pertenencia. Cada cambio muestra confirmación o error junto a los controles y bloquea envíos simultáneos.
 

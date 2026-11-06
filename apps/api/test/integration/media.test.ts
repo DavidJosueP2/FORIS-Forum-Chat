@@ -121,17 +121,31 @@ test('no basta con declarar un MIME permitido: se rechaza el contenido inválido
 test('las fotos de perfil se vinculan a su propietario y no se reutilizan como imágenes de publicaciones', async t => {
   const { api, user, upload } = await fixture(t);
   const owner = await user(); const other = await user();
+  const publication = await api.post('/api/posts').set('Origin', origin).set('Cookie', owner.cookie).send({ title: 'Mi publicación', body: 'Con mi identidad de autor.', requestId: randomUUID() }).expect(201);
+  const postId = publication.body.post.id as string;
+  assert.equal(publication.body.post.author.avatarId, undefined);
   const image = await upload(owner.cookie, 'avatar');
   const id = image.body.id as string;
   await api.patch('/api/account/avatar').set('Origin', origin).set('Cookie', other.cookie).send({ mediaId: id }).expect(404);
   await api.patch('/api/account/avatar').set('Origin', origin).set('Cookie', owner.cookie).send({ mediaId: id }).expect(200);
   assert.equal((await api.get('/api/auth/session').set('Cookie', owner.cookie)).body.user.avatarId, id);
   assert.equal((await api.get('/api/profiles/' + owner.id + '/avatar')).body.avatarId, id);
+  const feed = await api.get('/api/posts').expect(200);
+  assert.equal(feed.body.items.length, 1);
+  assert.equal(feed.body.items[0].author.avatarId, id);
+  assert.equal((await api.get('/api/posts/' + postId).expect(200)).body.author.avatarId, id);
   await api.get('/api/media/' + id + '/read-url').expect(200);
   await api.post('/api/posts').set('Origin', origin).set('Cookie', owner.cookie).send({ title: 'No reutilizar', body: 'Texto', topicId: 'general', requestId: randomUUID(), mediaIds: [id] }).expect(409);
+  const replacement = (await upload(owner.cookie, 'avatar')).body.id as string;
+  await api.patch('/api/account/avatar').set('Origin', origin).set('Cookie', owner.cookie).send({ mediaId: replacement }).expect(200);
+  const updatedFeed = await api.get('/api/posts').expect(200);
+  assert.equal(updatedFeed.body.items.length, 1);
+  assert.equal(updatedFeed.body.items[0].author.avatarId, replacement);
   await api.patch('/api/account/avatar').set('Origin', origin).set('Cookie', owner.cookie).send({ mediaId: null }).expect(200);
   assert.equal((await api.get('/api/profiles/' + owner.id + '/avatar')).body.avatarId, null);
   await api.get('/api/media/' + id + '/read-url').expect(404);
+  assert.equal((await api.get('/api/posts').expect(200)).body.items[0].author.avatarId, undefined);
+  assert.equal((await api.get('/api/posts/' + postId).expect(200)).body.author.avatarId, undefined);
 });
 
 test('imágenes de comunidades privadas y publicaciones no se exponen mediante IDs de medios', async t => {

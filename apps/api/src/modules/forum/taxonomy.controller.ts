@@ -16,6 +16,6 @@ export class TaxonomyController {
   }
   @Get('tags') @Header('Cache-Control', 'no-store') async tags(@Query() query: Record<string, unknown>, @Req() request: AuthRequest) {
     const filters = tagFilters(query);
-    return this.repository.tags(filters.search, filters.limit, (await this.sessions.optional(request))?.user.id ?? null);
+    return this.repository.tags(filters.search, filters.limit, (await this.sessions.optional(request))?.user.id ?? null, filters.ids);
   }
 }

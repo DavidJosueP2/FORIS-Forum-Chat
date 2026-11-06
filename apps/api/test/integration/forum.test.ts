@@ -24,6 +24,12 @@ async function fixture(t: TestContext) {
   return { ...instance, api, member };
 }
 
+test('una base nueva permite listar el foro vacío sin exigir usuarios ni fotos de perfil', async t => {
+  const { api } = await fixture(t);
+  const page = await api.get('/api/posts').expect(200);
+  assert.deepEqual(page.body, { items: [], hasMore: false, nextCursor: null });
+});
+
 test('invitados leen el foro y escriben en el chat global, pero no crean publicaciones ni respuestas', async t => {
   const { api, member } = await fixture(t);
   const user = await member();
@@ -245,4 +251,21 @@ test('editar una publicación de comunidad no duplica avisos ni permite editar d
   assert.equal((await api.get('/api/notifications/count').set('Cookie', owner.cookie)).body.unreadCount, 1);
   await api.delete('/api/communities/' + id + '/membership').set('Origin', origin).set('Cookie', author.cookie).send({}).expect(200);
   await api.patch('/api/posts/' + post.body.post.id).set('Origin', origin).set('Cookie', author.cookie).send({ ...input, revision: 2, requestId: randomUUID() }).expect(403);
+});
+
+test('el inicio combina búsqueda, rama temática y todas las etiquetas sin perder compatibilidad', async t => {
+  const { api, member } = await fixture(t);
+  const user = await member();
+  const catalog = (await api.get('/api/taxonomy/categories').expect(200)).body as ForumCategory[];
+  const leaf = catalog.find(item => item.slug === 'frontend')!;
+  const parent = catalog.find(item => item.id === leaf.parentId)!;
+  const first = await api.post('/api/posts').set('Origin', origin).set('Cookie', user.cookie).send({ title: 'Proceso compartido', body: 'Un avance del proyecto.', categoryId: leaf.id, tags: ['proceso', 'feedback'], requestId: randomUUID() }).expect(201);
+  await api.post('/api/posts').set('Origin', origin).set('Cookie', user.cookie).send({ title: 'Otra idea', body: 'Otro proceso.', categoryId: leaf.id, tags: ['proceso'], requestId: randomUUID() }).expect(201);
+  const tags = first.body.post.tags as { id: string; name: string }[];
+  const ids = tags.map(tag => tag.id).join(',');
+  const result = await api.get('/api/posts').query({ search: 'compartido', category: parent.id, tags: ids, author: user.id }).expect(200);
+  assert.deepEqual(result.body.items.map((post: { id: string }) => post.id), [first.body.post.id]);
+  assert.equal((await api.get('/api/posts').query({ topic: 'tecnologia', tag: tags.find(tag => tag.name === 'proceso')!.id }).expect(200)).body.items.length, 2);
+  assert.deepEqual((await api.get('/api/taxonomy/tags').query({ ids }).expect(200)).body.map((tag: { name: string }) => tag.name).sort(), ['feedback', 'proceso']);
+  await api.get('/api/posts').query({ tags: Array.from({ length: 9 }, () => randomUUID()).join(',') }).expect(400);
 });
