@@ -6,6 +6,8 @@ import type { ForumCategory, ForumPost } from '@messages/contracts'
 import { ArrowLeft, Check, Eye, LoaderCircle, PencilLine, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
+import { ForisCharacter } from '@/components/brand/foris-character'
+import { canvasCompanion } from '@/lib/foris-characters'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
 import { AccountApiError, accountError, accountRequest } from '@/features/account/api/account-api'
 import { useResource } from '../hooks/use-forum'
@@ -21,6 +23,7 @@ import './canvas.css'
 
 export default function PostCanvas({ userId, initialTopic, initialCommunity, post }: { userId: string; initialTopic: string; initialCommunity: string | null; post?: ForumPost }) {
   const { draft, latest, storage, change: changeDraft, clear, alive, replacePublished } = useCanvasDraft(userId, initialCommunity, initialTopic, post)
+  const [companion] = useState(() => canvasCompanion(draft.requestId))
   const categories = useResource<ForumCategory[]>('taxonomy/categories')
   const [extensions] = useState(canvasExtensions)
   const [preview, setPreview] = useState(false)
@@ -100,7 +103,7 @@ export default function PostCanvas({ userId, initialTopic, initialCommunity, pos
   return <section className="post-canvas" aria-labelledby="canvas-heading" aria-busy={publishing || recovering} onKeyDown={event => {
     if ((event.ctrlKey || event.metaKey) && event.key === 'Enter' && !(event.target instanceof Element && event.target.closest('[role="dialog"], [role="alertdialog"]'))) { event.preventDefault(); void publish() }
   }}>
-    <header className="canvas-header"><div className="canvas-heading"><Button asChild variant="ghost" size="icon" className="h-11 w-11"><Link to={back} aria-label={post ? 'Volver a la publicación' : initialCommunity ? 'Volver a la comunidad' : 'Volver a Foros'} title="Volver"><ArrowLeft aria-hidden="true" /></Link></Button><h1 id="canvas-heading">{post ? 'Editar publicación' : 'Crear publicación'}</h1></div>
+    <header className="canvas-header"><div className="canvas-heading"><Button asChild variant="ghost" size="icon" className="h-11 w-11"><Link to={back} aria-label={post ? 'Volver a la publicación' : initialCommunity ? 'Volver a la comunidad' : 'Volver a Foros'} title="Volver"><ArrowLeft aria-hidden="true" /></Link></Button><h1 id="canvas-heading">{post ? 'Editar publicación' : 'Crear publicación'}</h1><ForisCharacter scene={companion} width={48} height={48} className="canvas-companion" /></div>
       <div className="canvas-header-actions"><Button type="button" variant="ghost" className="h-11" disabled={publishing || recovering} aria-pressed={preview} onClick={() => setPreview(current => !current)}>{preview ? <PencilLine aria-hidden="true" /> : <Eye aria-hidden="true" />}<span>{preview ? 'Seguir creando' : 'Vista previa'}</span></Button><Button type="button" className="h-11 px-6" disabled={!editor || publishing || recovering || images.busy} onClick={() => void publish()}>{publishing && <LoaderCircle className="animate-spin" aria-hidden="true" />}{publishing ? post ? 'Guardando…' : 'Publicando…' : saveLabel}</Button></div>
     </header>
     <div className="canvas-draft-status" role="status">{storage === 'unavailable' ? 'No pudimos guardar el borrador en esta pestaña. Conserva una copia antes de salir.' : storage === 'saving' ? 'Guardando borrador…' : <><Check aria-hidden="true" />Borrador guardado en esta pestaña</>}</div>

@@ -30,6 +30,9 @@
 .person-see-communities { padding-inline: 0; font-size: .75rem; }
 .person-empty, .person-status { padding-block: 16px; font-size: .875rem; line-height: 1.7; color: var(--muted-foreground); }
 .person-empty button, .person-empty a { margin-top: 12px; }
+.person-empty.with-character { display: flex; align-items: center; gap: 16px; }
+.person-empty.with-character > div { min-width: 0; max-width: 50ch; }
+.person-empty.with-character [data-slot="button"] { max-width: 100%; min-height: 44px; height: auto; white-space: normal; }
 .person-communities { max-width: 856px; }
 @media (max-width: 1279px) {
   .forum-main.person-page { max-width: 960px; }

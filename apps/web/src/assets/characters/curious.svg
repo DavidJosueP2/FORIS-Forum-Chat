@@ -1,9 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none" role="img" aria-labelledby="curious-title curious-desc">
-  <title id="curious-title">Lupa, curiosidad</title>
-  <desc id="curious-desc">Una figura azul asimétrica mira con un ojo más abierto que el otro.</desc>
-  <path fill="#4F83EC" d="M51 20L112 31C135 35 143 53 137 76L124 121C119 139 101 147 80 141L35 127C15 121 14 101 21 82L29 43C32 29 39 20 51 20Z"/>
-  <g fill="#FFFCF6">
-    <rect x="53" y="69" width="14" height="23" rx="7" transform="rotate(8 60 80.5)"/>
-    <ellipse cx="94" cy="73" rx="11" ry="18" transform="rotate(8 94 73)"/>
-  </g>
+  <title id="curious-title">Lupa, curiosidad y descubrimiento</title>
+  <desc id="curious-desc">Una postura amigable del personaje de Foris, con color sólido y ojos transparentes.</desc>
+  <defs>
+    <mask id="curious-eyes" maskUnits="userSpaceOnUse" x="0" y="0" width="160" height="160">
+      <rect width="160" height="160" fill="#fff"/>
+      <g fill="#000"><rect x="47" y="77" width="14" height="26" rx="7"/><rect x="79" y="77" width="14" height="26" rx="7"/></g>
+    </mask>
+  </defs>
+  <g fill="#4F83EC" mask="url(#curious-eyes)"><ellipse cx="74" cy="88" rx="50" ry="48"/><path d="M113 98Q132 91 126 69" fill="none" stroke="#4F83EC" stroke-width="13" stroke-linecap="round"/></g><path d="M116 59L104 74" stroke="#ECAF38" stroke-width="8" stroke-linecap="round"/><circle cx="127" cy="45" r="17" fill="none" stroke="#ECAF38" stroke-width="8"/>
 </svg>

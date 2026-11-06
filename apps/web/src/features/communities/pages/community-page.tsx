@@ -1,7 +1,7 @@
 import { publicProfileLink } from '@/features/account/lib/public-profile'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Bell, Check, Globe2, LockKeyhole, Plus, Star, UsersRound } from 'lucide-react'
+import { ArrowLeft, Bell, LockKeyhole, Plus, Star, UsersRound } from 'lucide-react'
 import type { Community, CommunityPreferences } from '@messages/contracts'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/features/account/hooks/use-auth'
@@ -12,7 +12,6 @@ import { PostList } from '@/features/forum/components/post-list'
 import { useResource } from '@/features/forum/hooks/use-forum'
 import { validCommunityId } from '../lib/notifications'
 import { IdentityImage } from '@/features/media/components/identity-image'
-import { FollowButton } from '@/features/forum/following/follow-button'
 import { CommunityManagement } from '../components/community-management'
 
 function CommunityControls({ community, onChanged }: { community: Community; onChanged: (value: Community) => void }) {
@@ -41,14 +40,14 @@ function CommunityControls({ community, onChanged }: { community: Community; onC
     finally { guard.current = false; if (alive.current) setBusy(false) }
   }
   return <section className="community-controls" aria-label="Tu relación con esta comunidad" aria-busy={busy}>
-    <div className="forum-actions"><FollowButton kind="community" id={community.id} name={community.name} initial={community.isFollowing} />
-      {community.membership ? <span className="community-member-status"><Check aria-hidden="true" />{community.membership.role === 'owner' ? 'Creaste esta comunidad' : 'Formas parte de esta comunidad'}</span> : <Button className="h-11 px-6" disabled={busy} onClick={() => void change('join')}>Unirme a la comunidad</Button>}
+    <div className="forum-actions">
+      {!community.membership && <Button className="h-11 px-6" disabled={busy} onClick={() => void change('join')}>Unirme</Button>}
       <Button variant="secondary" className="h-11 px-5 community-star" data-active={community.isFavorite} aria-pressed={community.isFavorite} disabled={busy} onClick={() => void change('preferences', { favorite: !community.isFavorite })}><Star aria-hidden="true" />{community.isFavorite ? 'En favoritas' : 'Guardar favorita'}</Button>
       {community.membership?.role === 'member' && <Button variant="ghost" className="h-11 px-5" disabled={busy} onClick={() => void change('leave')}>Salir de la comunidad</Button>}
     </div>
-    {community.membership ? <label className="community-notification-setting"><input type="checkbox" checked={community.membership.notifyPosts} disabled={busy} onChange={event => void change('preferences', { notifyPosts: event.target.checked })} /><span><strong><Bell aria-hidden="true" />Avisos de nuevas publicaciones</strong><span>Recíbelos dentro de Foris. No te avisaremos de tus propias publicaciones.</span></span></label> : <p className="forum-hint">Al unirte recibirás avisos dentro de Foris; puedes silenciarlos aquí cuando quieras. Guardar una favorita no te une a la comunidad.</p>}
+    {community.membership && <label className="community-notification-setting"><input type="checkbox" checked={community.membership.notifyPosts} disabled={busy} onChange={event => void change('preferences', { notifyPosts: event.target.checked })} /><span><strong><Bell aria-hidden="true" />Avisos de publicaciones</strong></span></label>}
     {error && <p className="forum-error" role="alert">{error}</p>}
-    {notice && <p className="forum-success" role="status">{notice}</p>}
+    {notice && <p className="sr-only" role="status">{notice}</p>}
   </section>
 }
 function CommunityContent({ id }: { id: string }) {
@@ -59,12 +58,12 @@ function CommunityContent({ id }: { id: string }) {
   if (!community.data) return null
   const item = community.data
   return <>
-    <header className="community-heading"><IdentityImage mediaId={item.imageId} name={item.name} className="community-photo" /><div><h1>{item.name}</h1><p className="community-description">{item.description}</p><div className="forum-meta"><span className="community-members">{item.visibility === 'private' ? <LockKeyhole aria-hidden="true" /> : <Globe2 aria-hidden="true" />}{item.visibility === 'private' ? 'Privada' : 'Pública'}</span><span className="community-members"><UsersRound aria-hidden="true" />{item.memberCount} {item.memberCount === 1 ? 'miembro' : 'miembros'}</span><span>{item.postCount} {item.postCount === 1 ? 'publicación' : 'publicaciones'}</span><span>Creada por <Link to={publicProfileLink(item.owner.id)}>{item.owner.displayName}</Link></span></div></div></header>
-    {auth.status === 'loading' ? <ForumLoading label="Comprobando tu cuenta…" /> : auth.status === 'error' ? <ForumError message={auth.error ?? 'No pudimos comprobar tu cuenta.'} retry={() => void auth.refresh()} /> : auth.session.user ? <CommunityControls community={item} onChanged={community.setData} /> : <section className="community-controls"><div className="forum-actions"><Button asChild className="h-11 px-6"><Link to={loginLink('/comunidades/' + id)}>Entrar para unirme</Link></Button><Button asChild variant="secondary" className="h-11 px-5"><Link to={loginLink('/comunidades/' + id)}><Star aria-hidden="true" />Guardar favorita</Link></Button></div><p className="forum-hint">Puedes leer sin cuenta. Para unirte o guardar favoritas, entra con Google o con tu correo.</p></section>}
+    <header className="community-heading"><IdentityImage fallbackKey={'community:' + item.id} mediaId={item.imageId} name={item.name} className="community-photo" /><div><div className="community-page-title"><Button asChild variant="ghost" size="icon" className="h-11 w-11 shrink-0"><Link to="/comunidades" aria-label="Volver a comunidades" title="Volver"><ArrowLeft aria-hidden="true" /></Link></Button><h1>{item.name}</h1></div><p className="community-description">{item.description}</p><div className="forum-meta">{item.visibility === 'private' && <span className="community-members"><LockKeyhole aria-hidden="true" />Privada</span>}<span className="community-members"><UsersRound aria-hidden="true" />{item.memberCount} {item.memberCount === 1 ? 'miembro' : 'miembros'}</span><span>{item.postCount} {item.postCount === 1 ? 'publicación' : 'publicaciones'}</span><span>Creada por <Link to={publicProfileLink(item.owner.id)}>{item.owner.displayName}</Link></span>{item.membership && <span>Tu rol: <strong>{item.membership.role === 'owner' ? 'Creador' : 'Miembro'}</strong></span>}</div></div></header>
+    {auth.status === 'loading' ? <ForumLoading label="Comprobando tu cuenta…" /> : auth.status === 'error' ? <ForumError message={auth.error ?? 'No pudimos comprobar tu cuenta.'} retry={() => void auth.refresh()} /> : auth.session.user ? <CommunityControls community={item} onChanged={community.setData} /> : <section className="community-controls"><div className="forum-actions"><Button asChild className="h-11 px-6"><Link to={loginLink('/comunidades/' + id)}>Entrar para unirme</Link></Button><Button asChild variant="secondary" className="h-11 px-5"><Link to={loginLink('/comunidades/' + id)}><Star aria-hidden="true" />Guardar favorita</Link></Button></div></section>}
     {item.membership?.role === 'owner' && <CommunityManagement community={item} onChanged={community.setData} />}
     <section className="community-forums" aria-labelledby="community-forums-heading">
-      <div className="forum-list-heading"><h2 id="community-forums-heading">Foros de la comunidad</h2>{item.membership && <Button asChild className="h-11 px-5"><Link to={'/publicar?comunidad=' + id}><Plus aria-hidden="true" />Nueva publicación</Link></Button>}</div>
-      <PostList key={id} path={'posts?community=' + id} filtered={false} createTo={'/publicar?comunidad=' + id} emptyTitle="Una comunidad empieza escuchando" />
+      <div className="forum-list-heading"><h2 id="community-forums-heading">Publicaciones</h2>{item.membership && <Button asChild className="h-11 px-5"><Link to={'/publicar?comunidad=' + id}><Plus aria-hidden="true" />Nueva publicación</Link></Button>}</div>
+      <PostList key={id} path={'posts?community=' + id} filtered={false} createTo={'/publicar?comunidad=' + id} />
     </section>
   </>
 }
@@ -72,7 +71,6 @@ export function CommunityPage() {
   const { communityId = '' } = useParams()
   const auth = useAuth()
   return <main id="forum-content" className="forum-main" tabIndex={-1}>
-    <Link to="/comunidades" className="forum-back"><ArrowLeft aria-hidden="true" />Comunidades</Link>
     {validCommunityId(communityId) ? <CommunityContent key={communityId + (auth.session.user?.id ?? 'guest') + auth.status} id={communityId} /> : <ForumEmpty title="Esta comunidad no existe"><p>Vuelve a explorar para encontrar otro espacio.</p><Link to="/comunidades">Ver comunidades</Link></ForumEmpty>}
   </main>
 }

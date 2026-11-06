@@ -39,15 +39,4 @@ export class ForumFollowRepository {
       return { isFollowing: follow };
     });
   }
-  async followCommunity(id: string, follow: boolean, actor: AuthContext): Promise<FollowState> {
-    return this.database.transaction(async client => {
-      await this.access.member(client, actor);
-      if (follow) {
-        const target = await client.query('SELECT c.id FROM communities c WHERE c.id=$1 AND ' + readableCommunity('c', '$2') + ' FOR UPDATE OF c', [id, actor.user.id]);
-        if (!target.rows[0]) throw new HttpError(404, 'COMMUNITY_NOT_FOUND', 'Esta comunidad no está disponible.');
-        await client.query('INSERT INTO community_follows(user_id,community_id) VALUES($1,$2) ON CONFLICT DO NOTHING', [actor.user.id, id]);
-      } else await client.query('DELETE FROM community_follows WHERE user_id=$1 AND community_id=$2', [actor.user.id, id]);
-      return { isFollowing: follow };
-    });
-  }
 }

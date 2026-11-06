@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none" role="img" aria-labelledby="brio-profile-saved-title brio-profile-saved-desc">
+  <title id="brio-profile-saved-title">Brío celebra los datos guardados</title>
+  <desc id="brio-profile-saved-desc">Una postura del personaje original, con color sólido y ojos recortados en transparente.</desc>
+  <defs>
+    <mask id="brio-profile-saved-eyes" maskUnits="userSpaceOnUse" x="0" y="0" width="160" height="160">
+      <rect width="160" height="160" fill="#fff"/>
+      <g fill="#000"><path d="M47 79Q58 61 69 79M90 79Q101 61 112 79" fill="none" stroke="#000" stroke-width="8" stroke-linecap="round"/></g>
+    </mask>
+  </defs>
+  <g transform="rotate(-4 80 80)"><g fill="#F47B45" mask="url(#brio-profile-saved-eyes)"><circle cx="80" cy="80" r="57"/></g></g>
+</svg>

@@ -13,13 +13,13 @@ function CommunityList({ path, scope, searched }: { path: string; scope: string;
   const page = useForumPage<Community>(path)
   if (page.loading && !page.ready) return <ForumLoading label="Buscando comunidades…" />
   if (page.error) return <ForumError message={page.error} retry={page.retry} />
-  if (!page.items.length) return <ForumEmpty title={searched ? 'No encontramos esa comunidad' : scope === 'favorites' ? 'Tus favoritas tendrán lugar aquí' : scope === 'mine' ? 'Encuentra un espacio para ti' : 'La primera comunidad puede ser la tuya'}>
+  if (!page.items.length) return <ForumEmpty scene={searched ? 'communitySearch' : scope === 'all' ? 'communityDiscovery' : 'communityList'} placement="end" title={searched ? 'No encontramos esa comunidad' : scope === 'favorites' ? 'Tus favoritas tendrán lugar aquí' : scope === 'mine' ? 'Encuentra un espacio para ti' : 'La primera comunidad puede ser la tuya'}>
     <p>{searched ? 'Prueba otro nombre o una palabra diferente.' : scope === 'favorites' ? 'Guarda una comunidad con la estrella de su página. Puedes hacerlo sin unirte.' : scope === 'mine' ? 'Explora las comunidades y únete a las que te interesen.' : 'Reúne a otras personas alrededor de una idea que te importe.'}</p>
     <Button asChild variant="secondary" className="h-11 mt-5 px-6"><Link to={scope === 'all' && !searched ? '/comunidades/crear' : '/comunidades'}>{scope === 'all' && !searched ? 'Crear comunidad' : 'Explorar comunidades'}</Link></Button>
   </ForumEmpty>
   return <>
     <ol className="community-list" aria-label="Comunidades">
-      {page.items.map(item => <li key={item.id}><article className="community-row community-row-with-image"><IdentityImage mediaId={item.imageId} name={item.name} className="community-list-photo" /><div>
+      {page.items.map(item => <li key={item.id}><article className="community-row community-row-with-image"><IdentityImage fallbackKey={'community:' + item.id} mediaId={item.imageId} name={item.name} className="community-list-photo" /><div>
         <div className="community-row-title"><h2><Link to={'/comunidades/' + item.id}>{item.name}<ArrowUpRight aria-hidden="true" /></Link></h2>{item.isFavorite && <Star className="community-saved-star" aria-label="En favoritas" />}{item.membership && <span className="forum-topic-label">{item.membership.role === 'owner' ? 'La creaste tú' : 'Formas parte'}</span>}</div>
         <p className="community-description">{item.description}</p>
         <div className="forum-meta">{item.visibility === 'private' && <span className="community-members"><LockKeyhole aria-hidden="true" />Privada</span>}<span className="community-members"><UsersRound aria-hidden="true" />{item.memberCount} {item.memberCount === 1 ? 'miembro' : 'miembros'}</span><span>{item.postCount} {item.postCount === 1 ? 'publicación' : 'publicaciones'}</span></div>

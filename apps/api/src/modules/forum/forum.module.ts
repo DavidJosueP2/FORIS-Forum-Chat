@@ -23,7 +23,7 @@ import { ForumFollowController } from './forum-follow.controller.js';
 export class ForumModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
     consumer.apply(ForumReadMiddleware).forRoutes({ path: 'authors/:id', method: RequestMethod.GET }, { path: 'authors/:id/posts', method: RequestMethod.GET }, { path: 'authors/:id/communities', method: RequestMethod.GET });
-    consumer.apply(ForumWriteMiddleware, json({ limit: '8kb', strict: true })).forRoutes({ path: 'authors/:id/follow', method: RequestMethod.PUT }, { path: 'communities/:id/follow', method: RequestMethod.PUT });
+    consumer.apply(ForumWriteMiddleware, json({ limit: '8kb', strict: true })).forRoutes({ path: 'authors/:id/follow', method: RequestMethod.PUT });
     consumer.apply(ForumReadMiddleware).forRoutes({ path: 'posts', method: RequestMethod.GET }, { path: 'posts/:id', method: RequestMethod.GET }, { path: 'posts/:id/replies', method: RequestMethod.GET }, { path: 'posts/:id/replies/:replyId', method: RequestMethod.GET }, { path: 'taxonomy/tags', method: RequestMethod.GET });
     consumer.apply(ForumWriteMiddleware, json({ limit: '256kb', strict: true }))
       .forRoutes({ path: 'posts', method: RequestMethod.POST }, { path: 'posts/:id/replies', method: RequestMethod.POST }, { path: 'posts/:id', method: RequestMethod.PATCH },

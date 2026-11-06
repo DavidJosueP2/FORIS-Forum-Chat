@@ -40,7 +40,7 @@ function MemberAccountMenu() {
   return <DropdownMenu modal={false} open={open} onOpenChange={value => { setOpen(value); if (value) setError(null) }}>
     <DropdownMenuTrigger asChild>
       <Button variant="ghost" className="account-avatar-trigger h-11 w-11 p-0" aria-label={busy ? 'Cerrando sesión' : 'Abrir menú de tu cuenta: ' + session.user?.displayName} title="Tu perfil" aria-busy={busy} disabled={busy}>
-        <IdentityImage mediaId={session.user?.avatarId} name={session.user?.displayName ?? 'Cuenta'} className="navbar-avatar" />
+        <IdentityImage fallbackKey={session.user ? 'user:' + session.user.id : undefined} mediaId={session.user?.avatarId} name={session.user?.displayName ?? 'Cuenta'} className="navbar-avatar" />
       </Button>
     </DropdownMenuTrigger>
     <DropdownMenuContent align="end" sideOffset={8} collisionPadding={12} className="w-64 max-w-[calc(100vw-1.5rem)] bg-secondary p-2 text-secondary-foreground dark:bg-popover dark:text-popover-foreground" aria-busy={busy}>

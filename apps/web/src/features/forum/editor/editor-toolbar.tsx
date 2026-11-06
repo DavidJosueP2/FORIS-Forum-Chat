@@ -4,6 +4,7 @@ import { useEditorState } from '@tiptap/react'
 import { AlignCenter, AlignJustify, AlignLeft, AlignRight, Bold, CheckSquare, ChevronDown, Code, CodeXml, Heading2, Heading3, Highlighter, ImagePlus, Italic, Link2, List, ListOrdered, Minus, Pilcrow, Quote, Redo2, RemoveFormatting, Strikethrough, Subscript, Superscript, Table2, Underline, Undo2 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { ForisCharacter } from '@/components/brand/foris-character'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { safeLink } from './document'
@@ -23,7 +24,7 @@ function LinkTool({ editor }: { editor: Editor }) {
   }
   return <Popover open={open} onOpenChange={value => { setOpen(value); setError(''); if (value) setUrl(String(editor.getAttributes('link').href ?? '')) }}>
     <PopoverTrigger asChild><Button type="button" variant="ghost" size="icon" className="canvas-tool" title="Añadir o editar enlace" aria-label="Añadir o editar enlace" aria-pressed={active} disabled={!editor.isEditable}><Link2 aria-hidden="true" /></Button></PopoverTrigger>
-    <PopoverContent className="canvas-popover" align="start"><label htmlFor="canvas-link">Dirección del enlace</label><input id="canvas-link" type="url" placeholder="https://" value={url} onChange={event => setUrl(event.target.value)} onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); event.stopPropagation(); apply() } }} />
+    <PopoverContent className="canvas-popover" align="start"><div className="canvas-link-heading"><label htmlFor="canvas-link">Dirección del enlace</label><ForisCharacter scene="editorHelp" width={48} height={48} /></div><input id="canvas-link" type="url" placeholder="https://" value={url} onChange={event => setUrl(event.target.value)} onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); event.stopPropagation(); apply() } }} />
       {error && <p className="forum-error" role="alert">{error}</p>}<div className="canvas-inline-actions"><Button type="button" className="h-11" onClick={apply}>Aplicar enlace</Button><Button type="button" variant="ghost" className="h-11" onClick={() => { editor.chain().focus().extendMarkRange('link').unsetLink().run(); setOpen(false) }}>Quitar enlace</Button></div>
     </PopoverContent>
   </Popover>

@@ -10,8 +10,9 @@ import { postDocuments } from './008-post-documents.js';
 import { postEditing } from './009-post-editing.js';
 import { forumDiscussion } from './010-forum-discussion.js';
 import { following } from './011-following.js';
+import { communityMembershipFeed } from './012-community-membership-feed.js';
 
-const migrations: readonly Migration[] = [createMessages, createAuth, createForum, createCommunities, createMedia, createVideoCalls, communityPrivacyAndPortraits, postDocuments, postEditing, forumDiscussion, following];
+const migrations: readonly Migration[] = [createMessages, createAuth, createForum, createCommunities, createMedia, createVideoCalls, communityPrivacyAndPortraits, postDocuments, postEditing, forumDiscussion, following, communityMembershipFeed];
 
 export async function runMigrations(pool: DatabasePool): Promise<void> {
   const client = await pool.connect();

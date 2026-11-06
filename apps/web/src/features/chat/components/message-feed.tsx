@@ -125,7 +125,7 @@ export function MessageFeed({
           )}
           {historyStatus === 'ready' && !hasMessages && (
             <div className="chat-empty">
-              <ForisCharacter mood="welcome" width={116} height={116} />
+              <ForisCharacter scene="chat" width={116} height={116} />
               <h2>Rompe el hielo.</h2>
               <p>El chat global es un espacio abierto. Comparte una idea, una pregunta o simplemente saluda.</p>
               <div className="empty-suggestions">
@@ -164,7 +164,7 @@ export function MessageFeed({
                 <li key={message.id}>
                   {startDay && <p className="message-day">{messageDay(message)}</p>}
                   <article data-message-id={message.id} className={'message-row' + (own ? ' message-own' : '')}>
-                    <IdentityImage userId={message.accountId} name={message.author} className="message-avatar" />
+                    <IdentityImage fallbackKey={message.accountId ? 'user:' + message.accountId : 'guest:' + message.senderId} userId={message.accountId} name={message.author} className="message-avatar" />
                     <div className="message-text">
                       <header className="message-meta">
                         {message.accountId ? <Link to={publicProfileLink(message.accountId)} className="message-author">{message.author}</Link> : <span className="message-author">{message.author}</span>}

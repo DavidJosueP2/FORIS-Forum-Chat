@@ -88,7 +88,6 @@
 .discovery-read-post { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; margin-left: auto; font-size: .875rem; font-weight: 500; }
 .discovery-post-meta a:hover, .discovery-post-category:hover, .discovery-post-action:hover, .discovery-read-post:hover, .discovery-image-more:hover { text-decoration: underline; text-underline-offset: 4px; }
 .discovery-feed-more { display: flex; margin: 12px auto 24px; padding-inline: 24px; }
-.discovery-feed-end { margin-block: 24px; color: var(--muted-foreground); font-size: .875rem; line-height: 1.8; text-align: center; }
 .discovery-invalid { display: grid; justify-items: start; gap: 16px; padding-block: 24px; color: var(--destructive); line-height: 1.8; }
 .discovery-copy-panel { width: min(360px, calc(100vw - 32px)); padding: 16px; font-size: .875rem; line-height: 1.6; }
 .discovery-copy-panel input { width: 100%; min-height: 44px; background: var(--secondary); color: var(--foreground); padding: 10px; border-radius: 10px; }
@@ -120,6 +119,10 @@
 .discovery-feed-tabs { display: inline-flex; align-items: center; gap: 4px; }
 .discovery-feed-tabs button { padding-inline: 18px; font-size: .875rem; }
 .discovery-follow-empty { padding: 28px 0; }
+.discovery-follow-empty.has-character { display: grid; grid-template-columns: minmax(0, 1fr) 80px; align-items: center; gap: 16px; }
+.discovery-follow-empty.has-character > .foris-character { grid-column: 2; grid-row: 1; }
+.discovery-follow-empty.has-character > div { grid-column: 1; grid-row: 1; min-width: 0; }
+.discovery-follow-empty.has-character [data-slot="button"] { max-width: 100%; min-height: 44px; height: auto; white-space: normal; }
 .discovery-follow-empty h2 { font-size: 1.25rem; line-height: 1.5; font-weight: 600; }
 .discovery-follow-empty p { margin-block: 8px 16px; color: var(--muted-foreground); line-height: 1.7; max-width: 50ch; }
 @media (max-width: 639px) {

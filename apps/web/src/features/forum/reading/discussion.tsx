@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { IdentityImage } from '@/features/media/components/identity-image'
+import { ForisCharacter } from '@/components/brand/foris-character'
 import { accountError, accountRequest } from '@/features/account/api/account-api'
 import { ForumError, ForumLoading, ForumTime } from '../components/forum-states'
 import { useForumPage, useResource } from '../hooks/use-forum'
@@ -15,7 +16,7 @@ import { ShareLink, VoteButtons } from './reading-actions'
 import type { Participation } from './reading-actions'
 
 export function ReaderIdentity({ reply, authorId }: { reply: ForumReply; authorId: string }) {
-  return <header className="reading-comment-meta">{!reply.deleted && <IdentityImage mediaId={reply.author.avatarId} name={reply.author.displayName} className="reading-avatar" />}
+  return <header className="reading-comment-meta">{!reply.deleted && <IdentityImage fallbackKey={'user:' + reply.author.id} mediaId={reply.author.avatarId} name={reply.author.displayName} className="reading-avatar" />}
     {reply.deleted ? <span>Comentario eliminado</span> : <><Link to={publicProfileLink(reply.author.id)} className="reading-name">{reply.author.displayName}</Link>{reply.author.id === authorId && <abbr className="reading-author-mark" title="Autor de la publicación">AU</abbr>}</>}
     <ForumTime value={reply.createdAt} />{!reply.deleted && reply.updatedAt && <span title={new Date(reply.updatedAt).toLocaleString('es-EC')}>editado</span>}
     {reply.pinned && <span className="reading-pinned"><Pin aria-hidden="true" />Anclado</span>}
@@ -105,7 +106,7 @@ function ReplyList({ post, participation, parentId = null, onCount, rootComposer
   return <>
     {rootComposer && <div id="responder" className="reading-reply-entry" tabIndex={-1}>{participation.userId && !participation.href && <ReplyComposer key={participation.userId} postId={post.id} userId={participation.userId} onSaved={result => { page.prepend(result.reply); onCount(result.replyCount) }} />}</div>}
     {page.loading && !page.ready && <ForumLoading label="Cargando comentarios…" />}{page.error && <ForumError message={page.error} retry={page.retry} />}
-    {page.ready && !items.length && <p className="reading-empty">{parentId ? 'Todavía no hay respuestas.' : 'Sé el primero en comentar.'}</p>}
+    {page.ready && !page.error && !items.length && <div className="reading-empty-state">{!parentId && post.replyCount === 0 && <ForisCharacter scene="firstComment" width={48} height={48} />}<p className="reading-empty">{parentId ? 'Todavía no hay respuestas.' : 'Sé el primero en comentar.'}</p></div>}
     <ol className="reading-comment-list" aria-label={parentId ? 'Respuestas al comentario' : 'Comentarios'}>{items.map(item => <li key={item.id}><Comment item={item} post={post} participation={participation} onChange={page.update} onCount={onCount} onPin={pin} /></li>)}</ol>
     {page.moreError && <p role="alert" className="forum-error">{page.moreError}</p>}{page.hasMore && <Button type="button" variant="ghost" className="reading-action" disabled={page.loadingMore} onClick={() => void page.loadMore()}>{page.loadingMore ? 'Cargando…' : 'Ver más comentarios'}</Button>}
   </>
@@ -125,7 +126,7 @@ function LinkedComment({ id, post, participation, onCount }: { id: string; post:
 
 export function Discussion({ post, participation, target, onCount }: { post: ForumPost; participation: Participation; target: string | null; onCount: (count: number) => void }) {
   return <section id="respuestas" className="reading-discussion" aria-labelledby="replies-heading">
-    <header className="reading-discussion-heading"><h2 id="replies-heading">Comentarios <span>{post.replyCount}</span></h2>{!target && <span>Anclado primero · Recientes</span>}</header>
+    <header className="reading-discussion-heading"><h2 id="replies-heading">Comentarios <span>{post.replyCount}</span></h2>{!target && <span>Recientes</span>}</header>
     <div className="reading-reply-entry">
       {participation.pending ? <p className="reading-empty" role="status">Comprobando acceso…</p> : participation.href && <p className="reading-sign-in"><Link to={participation.href}>{participation.userId ? 'Únete a la comunidad para participar' : 'Entra o crea una cuenta para comentar'}</Link></p>}
     </div>

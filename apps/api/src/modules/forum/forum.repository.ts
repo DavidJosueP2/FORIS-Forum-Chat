@@ -69,7 +69,7 @@ export class ForumRepository {
     const where: string[] = [readablePost('$1')];
     if (filters.publicOnly) where.push(publicPost());
     const values: unknown[] = [userId];
-    if (filters.feed === 'following') where.push('(EXISTS(SELECT 1 FROM author_follows af WHERE af.follower_id=$1 AND af.author_id=p.author_id) OR EXISTS(SELECT 1 FROM community_follows cf WHERE cf.user_id=$1 AND cf.community_id=p.community_id))');
+    if (filters.feed === 'following') where.push('(EXISTS(SELECT 1 FROM author_follows af WHERE af.follower_id=$1 AND af.author_id=p.author_id) OR EXISTS(SELECT 1 FROM community_memberships fm WHERE fm.user_id=$1 AND fm.community_id=p.community_id))');
     if (filters.community) {
       await this.communities.get(filters.community, userId);
       values.push(filters.community); where.push('p.community_id=$' + values.length);

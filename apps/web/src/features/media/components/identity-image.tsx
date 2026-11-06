@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import type { MediaReadUrl } from '@messages/contracts'
 import { accountRequest } from '@/features/account/api/account-api'
+import { ForisCharacter } from '@/components/brand/foris-character'
+import { avatarMood } from '@/lib/foris-characters'
 import '../media.css'
 
 /** Imagen pasiva: puede vivir dentro de un botón sin introducir controles anidados. */
-export function IdentityImage({ mediaId, userId, name, className = '' }: { mediaId?: string | null; userId?: string; name: string; className?: string }) {
+export function IdentityImage({ mediaId, userId, fallbackKey, name, className = '' }: { mediaId?: string | null; userId?: string; fallbackKey?: string; name: string; className?: string }) {
   const [source, setSource] = useState<{ identity: string; url: string } | null>(null)
   const identity = mediaId ?? userId ?? ''
   useEffect(() => {
@@ -24,7 +26,9 @@ export function IdentityImage({ mediaId, userId, name, className = '' }: { media
     void load()
     return () => { abort.abort(); clearTimeout(timer) }
   }, [identity, mediaId, userId])
-  return <span className={'identity-image ' + className} aria-hidden="true">
-    {source?.identity === identity ? <img src={source.url} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setSource(null)} /> : Array.from(name.trim())[0]?.toLocaleUpperCase('es') ?? '?'}
+  const photo = source?.identity === identity ? source.url : null
+  const mood = avatarMood(fallbackKey ?? (userId ? 'user:' + userId : 'name:' + name))
+  return <span className={'identity-image ' + className} data-fallback={photo ? undefined : 'character'} aria-hidden="true">
+    {photo ? <img src={photo} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setSource(null)} /> : <ForisCharacter mood={mood} width={160} height={160} className="identity-character" />}
   </span>
 }

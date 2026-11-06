@@ -1,11 +1,12 @@
 import { Body, Controller, Get, Header, Inject, Param, Put, Query, Req } from '@nestjs/common';
-import { inputRecord, invalidInput, pageInput, requestId, resourceId } from '../../common/validation/input.js';
+import { inputRecord, invalidInput, requestId } from '../../common/validation/input.js';
 import { SessionService } from '../auth/session.service.js';
 import type { AuthRequest } from '../auth/auth.types.js';
 import { ForumFollowRepository } from './forum-follow.repository.js';
 import { ForumRepository } from './forum.repository.js';
 import { forumFilters } from './forum-validation.js';
 import { CommunityRepository } from '../communities/community.repository.js';
+import { communityFilters } from '../communities/community-validation.js';
 
 function followingInput(body: unknown): boolean {
   const value = inputRecord(body, ['following']).following;
@@ -31,14 +32,10 @@ export class ForumFollowController {
     const author = requestId(id);
     const viewer = (await this.sessions.optional(request))?.user.id ?? null;
     await this.repository.author(author, viewer);
-    return this.communities.list({ ...pageInput(query), scope: 'all', publicMemberId: author }, viewer);
+    return this.communities.list({ ...communityFilters({ before: query.before, limit: query.limit }), publicMemberId: author }, viewer);
   }
   @Put('authors/:id/follow') @Header('Cache-Control', 'no-store') async authorFollow(@Param('id') id: string, @Body() body: unknown, @Req() request: AuthRequest) {
     const actor = await this.sessions.required(request);
     return this.repository.followAuthor(requestId(id), followingInput(body), actor);
-  }
-  @Put('communities/:id/follow') @Header('Cache-Control', 'no-store') async communityFollow(@Param('id') id: string, @Body() body: unknown, @Req() request: AuthRequest) {
-    const actor = await this.sessions.required(request);
-    return this.repository.followCommunity(resourceId(id), followingInput(body), actor);
   }
 }

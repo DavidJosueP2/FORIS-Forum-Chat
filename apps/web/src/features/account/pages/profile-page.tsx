@@ -13,6 +13,7 @@ import { useAuth } from '../hooks/use-auth'
 import { accountError, accountRequest, startGoogle } from '../api/account-api'
 import { ProfilePhoto } from '../components/profile-photo'
 import { IdentityImage } from '@/features/media/components/identity-image'
+import { ForisCharacter } from '@/components/brand/foris-character'
 
 function GoogleConfirmation() {
   const [error, setError] = useState<string | null>(null)
@@ -53,7 +54,7 @@ function PersonalDetails({ user }: { user: AccountUser }) {
           </div>
           <div className="account-field"><label htmlFor="profile-bio">Algo sobre ti</label><Textarea id="profile-bio" rows={3} maxLength={280} value={bio} onChange={event => { setBio(event.target.value); setSuccess(false) }} /><p className="account-hint">Hasta 280 caracteres. Tu presentación se guarda en tu perfil.</p></div>
           {error && <p className="account-error" role="alert">{error}</p>}
-          {success && <p className="account-success" role="status">Tus datos se actualizaron.</p>}
+          {success && <p className="account-success profile-saved" role="status"><ForisCharacter scene="profileSaved" width={48} height={48} /><span>Tus datos se actualizaron.</span></p>}
           <Button type="submit" className="h-11 justify-self-start px-6">Guardar cambios</Button>
         </fieldset>
       </form>
@@ -252,7 +253,7 @@ export function ProfilePage() {
     <AccountShell>
       <main id="account-content" className="profile-main" tabIndex={-1}>
         <header className="profile-heading">
-          <IdentityImage mediaId={user.avatarId} name={user.displayName} className="profile-avatar" />
+          <IdentityImage fallbackKey={'user:' + user.id} mediaId={user.avatarId} name={user.displayName} className="profile-avatar" />
           <div><h1>Tu perfil</h1><p>Hola, {user.displayName}. Este es tu lugar en Foris.</p></div>
         </header>
         {params.get('notice') === 'google_linked' && <p className="account-notice" role="status">Google ya está vinculado a tu cuenta.</p>}

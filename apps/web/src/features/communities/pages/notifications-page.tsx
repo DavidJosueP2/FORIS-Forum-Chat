@@ -35,7 +35,7 @@ function Inbox() {
   }
   if (page.loading && !page.ready) return <ForumLoading label="Cargando tus avisos…" />
   if (page.error) return <ForumError message={page.error} retry={page.retry} />
-  if (!page.items.length) return <ForumEmpty title="Las novedades llegarán aquí"><p>Únete a una comunidad y activa sus avisos para enterarte de las nuevas publicaciones.</p><Button asChild variant="secondary" className="h-11 mt-5 px-6"><Link to="/comunidades">Explorar comunidades</Link></Button></ForumEmpty>
+  if (!page.items.length) return <ForumEmpty scene="inbox" placement="beside" title="Las novedades llegarán aquí"><p>Únete a una comunidad y activa sus avisos para enterarte de las nuevas publicaciones.</p><Button asChild variant="secondary" className="h-11 mt-5 px-6"><Link to="/comunidades">Explorar comunidades</Link></Button></ForumEmpty>
   return <>
     <div className="community-inbox-tools"><Button variant="secondary" className="h-11 px-5" disabled={busy} onClick={() => void mark(page.items[0].id, true)}><Check aria-hidden="true" />Marcar todas como leídas</Button></div>
     {error && <p className="forum-error" role="alert">{error}</p>}

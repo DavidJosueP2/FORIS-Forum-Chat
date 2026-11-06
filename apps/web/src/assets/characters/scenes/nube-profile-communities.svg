@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none" role="img" aria-labelledby="nube-profile-communities-title nube-profile-communities-desc">
+  <title id="nube-profile-communities-title">Nube espera junto a las comunidades del perfil</title>
+  <desc id="nube-profile-communities-desc">Una postura del personaje original, con color sólido y ojos recortados en transparente.</desc>
+  <defs>
+    <mask id="nube-profile-communities-eyes" maskUnits="userSpaceOnUse" x="0" y="0" width="160" height="160">
+      <rect width="160" height="160" fill="#fff"/>
+      <g fill="#000"><path d="M57 87Q67 97 77 87M94 87Q104 97 114 87" fill="none" stroke="#000" stroke-width="7" stroke-linecap="round"/></g>
+    </mask>
+  </defs>
+  <g transform="rotate(5 80 80)"><g fill="#88A97D" mask="url(#nube-profile-communities-eyes)"><path d="M44 126C27 126 16 115 16 100C16 85 27 73 42 73C44 51 60 35 80 35C100 35 116 51 118 73C133 73 144 85 144 100C144 115 133 126 116 126Z"/></g></g>
+</svg>

@@ -10,8 +10,8 @@ import { IdentityImage } from './identity-image'
 import '../media.css'
 
 interface Selection { file: File; preview: string; requestId: string; mediaId?: string }
-export function PortraitPicker({ mediaId, name, purpose, disabled = false, onChange, onBusyChange }: {
-  mediaId: string | null; name: string; purpose: Exclude<ImagePurpose, 'post'>; disabled?: boolean;
+export function PortraitPicker({ mediaId, fallbackKey, name, purpose, disabled = false, onChange, onBusyChange }: {
+  mediaId: string | null; fallbackKey?: string; name: string; purpose: Exclude<ImagePurpose, 'post'>; disabled?: boolean;
   onChange: (id: string | null) => void | Promise<void>; onBusyChange?: (busy: boolean) => void;
 }) {
   const options = useResource<MediaOptions>('media/options')
@@ -82,7 +82,7 @@ export function PortraitPicker({ mediaId, name, purpose, disabled = false, onCha
   return <div className="portrait-editor" data-purpose={purpose} aria-busy={busy}>
     <label className="portrait-select">
       <input type="file" accept="image/jpeg,image/png,image/webp" disabled={disabled || busy || !options.data} onChange={select} aria-label={purpose === 'avatar' ? 'Elegir foto de perfil' : 'Elegir imagen de comunidad'} />
-      {selection ? <span className="identity-image portrait-preview"><img src={selection.preview} alt="" /></span> : <IdentityImage mediaId={mediaId} name={name} className="portrait-preview" />}
+      {selection ? <span className="identity-image portrait-preview"><img src={selection.preview} alt="" /></span> : <IdentityImage mediaId={mediaId} fallbackKey={fallbackKey} name={name} className="portrait-preview" />}
       <span className="portrait-action"><Camera aria-hidden="true" />{mediaId ? 'Cambiar imagen' : 'Elegir imagen'}</span>
     </label>
     {busy && <progress max={100} value={progress} aria-label="Progreso de subida" />}

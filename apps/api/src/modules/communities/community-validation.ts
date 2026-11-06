@@ -18,7 +18,7 @@ export function preferencesInput(value: unknown): CommunityPreferences {
 export function communityFilters(query: Record<string, unknown>) {
   const pagination = pageInput(query);
   const scope = query.scope ?? 'all';
-  if (scope !== 'all' && scope !== 'mine' && scope !== 'favorites' && scope !== 'following') invalidInput('El filtro de comunidades no es válido.');
+  if (scope !== 'all' && scope !== 'mine' && scope !== 'favorites') invalidInput('El filtro de comunidades no es válido.');
   const search = query.search === undefined || query.search === '' ? undefined : inputText(query.search, 'La búsqueda', 120);
   return { ...pagination, scope, search };
 }

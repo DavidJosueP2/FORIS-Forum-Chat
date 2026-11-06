@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none" role="img" aria-labelledby="nube-inbox-title nube-inbox-desc">
+  <title id="nube-inbox-title">Nube descansa en la bandeja</title>
+  <desc id="nube-inbox-desc">Una postura del personaje original, con color sólido y ojos recortados en transparente.</desc>
+  <defs>
+    <mask id="nube-inbox-eyes" maskUnits="userSpaceOnUse" x="0" y="0" width="160" height="160">
+      <rect width="160" height="160" fill="#fff"/>
+      <g fill="#000"><path d="M51 89Q61 99 71 89M89 89Q99 99 109 89" fill="none" stroke="#000" stroke-width="7" stroke-linecap="round"/></g>
+    </mask>
+  </defs>
+  <g fill="#88A97D" mask="url(#nube-inbox-eyes)"><path d="M44 126C27 126 16 115 16 100C16 85 27 73 42 73C44 51 60 35 80 35C100 35 116 51 118 73C133 73 144 85 144 100C144 115 133 126 116 126Z"/></g>
+</svg>

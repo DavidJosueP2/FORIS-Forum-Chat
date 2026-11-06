@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { LockKeyhole } from 'lucide-react'
 import type { Community, InvitationPreview } from '@messages/contracts'
 import { Button } from '@/components/ui/button'
+import { ForisCharacter } from '@/components/brand/foris-character'
 import { useAuth } from '@/features/account/hooks/use-auth'
 import { accountError, accountRequest } from '@/features/account/api/account-api'
 import { loginLink } from '@/features/account/lib/return-target'
@@ -37,8 +38,7 @@ function InvitationContent({ token }: { token: string }) {
   if (error && !preview) return <ForumError message={error} retry={() => { setError(null); setAttempt(current => current + 1) }} />
   if (!preview) return <ForumLoading label="Comprobando invitación…" />
   return <section className="community-invitation-page" aria-busy={busy}>
-    <LockKeyhole aria-hidden="true" />
-    <h1>Te invitaron a {preview.community.name}.</h1>
+    <header className="community-invitation-heading"><div><LockKeyhole aria-hidden="true" /><h1>Te invitaron a {preview.community.name}.</h1></div>{!error && <ForisCharacter scene="invitation" width={72} height={72} />}</header>
     <p>Un espacio privado para compartir con su gente. Al aceptar formarás parte de la comunidad y podrás leer y participar.</p>
     {error && <p className="forum-error" role="alert">{error}</p>}
     {preview.isMember ? <Button asChild className="h-12 px-6"><Link to={'/comunidades/' + preview.community.id}>Ir a mi comunidad</Link></Button>

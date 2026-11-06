@@ -2,7 +2,7 @@
 
 Foris organiza publicaciones mediante un catálogo jerárquico de temáticas y etiquetas múltiples. Una publicación tiene UUID propio, título, texto, imágenes opcionales y respuestas; puede pertenecer a una comunidad. Sus miembros pueden publicar y responder dentro de ella. Las comunidades, favoritas y avisos se describen en [communities.md](communities.md).
 
-El inicio abre las vistas cronológicas Para ti y Siguiendo con títulos serif, texto e imágenes, búsqueda automática y Crear publicación en el navbar, y filtros por temáticas jerárquicas y etiquetas. En escritorio se exploran a un lado del contenido y en móvil desde Filtrar. La experiencia y sus límites están en [discovery.md](discovery.md); el contrato de autores y comunidades seguidos, en [following.md](following.md). La creación y edición usan el lienzo descrito en [editor.md](editor.md).
+El inicio abre las vistas cronológicas Para ti y Siguiendo con títulos serif, texto e imágenes, búsqueda automática y Crear publicación en el navbar, y filtros por temáticas jerárquicas y etiquetas. En escritorio se exploran a un lado del contenido y en móvil desde Filtrar. La experiencia y sus límites están en [discovery.md](discovery.md); el contrato de autores seguidos y comunidades incluidas por pertenencia, en [following.md](following.md). La creación y edición usan el lienzo descrito en [editor.md](editor.md).
 
 El detalle compacto incorpora votos, comentarios en hilos, edición y eliminación propias, un comentario principal anclado y enlaces directos. El contrato, los permisos, los borradores y la migración de esta participación están en [discussion.md](discussion.md). Todas sus escrituras exigen sesión verificada y pertenencia vigente si la publicación tiene comunidad.
 
@@ -24,7 +24,7 @@ El chat global se conserva con su historial y sus eventos en tiempo real. Sus pe
 | Ruta | Contenido |
 | --- | --- |
 | / | Flujo de publicaciones, búsqueda automática y filtros |
-| /?vista=siguiendo | Flujo de autores o comunidades seguidos; requiere sesión |
+| /?vista=siguiendo | Flujo de autores seguidos o comunidades de pertenencia vigente; requiere sesión |
 | /?topico=general | Publicaciones del tópico elegido |
 | /?autor=UUID | Filtro por autor conservado para enlaces anteriores |
 | /personas/:userId | Perfil de persona con publicaciones públicas; userId es un UUID |
@@ -67,6 +67,8 @@ Los enlaces para participar conservan un destino next al pasar por el acceso. El
 | GET | /api/events | Eventos del chat global |
 
 GET /api/posts admite topic (raíz por slug, compatibilidad), category (UUID, incluye descendientes), tag (UUID de una etiqueta), tags (hasta ocho UUID separados por comas), author, community, search, before y limit. Todas las etiquetas elegidas deben estar presentes. Los filtros se combinan con AND y se aplican después de comprobar acceso en SQL. La búsqueda compara texto literal sin interpretar % o _ como comodines. Las páginas se ordenan por created_at e id descendentes; before es un cursor opaco base64url con versión, fecha y UUID. El cliente debe reenviar nextCursor sin interpretarlo. Las fechas de publicaciones usan TIMESTAMPTZ(3) para conservar exactamente la precisión de milisegundos del cursor. El UUID solo desempata fechas iguales: su orden no representa antigüedad.
+
+feed=following reúne publicaciones legibles de autores seguidos o comunidades de pertenencia vigente mediante EXISTS, sin duplicados ni ampliación de permisos privados. Favoritas y avisos no controlan ese flujo. Salir de una comunidad retira la inclusión por membresía; sus publicaciones públicas pueden seguir apareciendo por un autor seguido. La migración 012-community-membership-feed elimina únicamente community_follows y conserva las demás relaciones; se aplica por el arranque habitual al reiniciar la API y no se ejecutó durante esta entrega.
 
 GET de respuestas recibe parentId opcional: sin él devuelve comentarios principales; con él, los hijos directos de ese comentario. Conserva before numérico, exclusivo de la rama consultada, y ordena el único anclado primero y después por ID descendente. En ambos casos el límite predeterminado es 20, el máximo 50 y la respuesta usa items, hasMore y nextCursor. Los IDs de publicaciones son UUID; los de respuestas, comunidades y avisos siguen siendo BIGINT representados como cadenas. Las referencias a publicaciones en respuestas, medios y notificaciones también son UUID.
 

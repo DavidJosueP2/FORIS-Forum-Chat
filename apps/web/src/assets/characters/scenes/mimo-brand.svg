@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none" role="img" aria-labelledby="mimo-brand-title mimo-brand-desc">
+  <title id="mimo-brand-title">Mimo, identidad de Foris</title>
+  <desc id="mimo-brand-desc">Una postura amigable del personaje de Foris, con color sólido y ojos transparentes.</desc>
+  <defs>
+    <mask id="mimo-brand-eyes" maskUnits="userSpaceOnUse" x="0" y="0" width="160" height="160">
+      <rect width="160" height="160" fill="#fff"/>
+      <g fill="#000"><rect x="53" y="73" width="14" height="28" rx="7"/><rect x="85" y="73" width="14" height="28" rx="7"/></g>
+    </mask>
+  </defs>
+  <g fill="#18A999" mask="url(#mimo-brand-eyes)"><path d="M121 89Q143 78 135 42" fill="none" stroke="#18A999" stroke-width="14" stroke-linecap="round"/><rect x="23" y="37" width="105" height="100" rx="36"/></g>
+</svg>

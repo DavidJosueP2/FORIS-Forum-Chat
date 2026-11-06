@@ -1,9 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none" role="img" aria-labelledby="calm-title calm-desc">
   <title id="calm-title">Nube, calma</title>
-  <desc id="calm-desc">Una figura verde salvia, ancha y mullida, con ojos relajados.</desc>
-  <path fill="#88A97D" d="M25 56C37 36 63 30 84 39C106 27 132 40 140 63C151 91 137 123 113 132C93 140 78 130 61 134C35 140 14 119 17 94C11 80 16 65 25 56Z"/>
-  <g fill="#FFFCF6">
-    <path d="M47 76C54 81 63 82 73 77L72 85C62 91 52 89 47 84Z"/>
-    <path d="M87 77C97 82 106 81 113 76L113 84C107 89 98 91 88 85Z"/>
-  </g>
+  <desc id="calm-desc">Una nube verde salvia de tres curvas suaves y dos ojos cerrados recortados en transparente.</desc>
+  <defs>
+    <mask id="calm-eyes" maskUnits="userSpaceOnUse" x="0" y="0" width="160" height="160">
+      <rect width="160" height="160" fill="#fff"/>
+      <g fill="#000"><path d="M51 88Q61 98 71 88M89 88Q99 98 109 88" fill="none" stroke="#000" stroke-width="7" stroke-linecap="round"/></g>
+    </mask>
+  </defs>
+  <g fill="#88A97D" mask="url(#calm-eyes)"><path d="M45 128C27 128 16 116 16 100C16 84 27 72 42 72C43 50 59 34 80 34C101 34 117 50 118 72C133 72 144 84 144 100C144 116 133 128 115 128Z"/></g>
 </svg>

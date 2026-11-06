@@ -47,8 +47,8 @@ function PostContent({ id }: { id: string }) {
     <article className="reading-publication">
       <header className="reading-post-header"><div className="reading-post-meta">
         <Button asChild variant="ghost" className="reading-icon"><Link to="/" aria-label="Volver a Foros" title="Volver a Foros"><ArrowLeft aria-hidden="true" /></Link></Button>
-        <Link to={publicProfileLink(item.author.id)} className="reading-post-author"><IdentityImage mediaId={item.author.avatarId} name={item.author.displayName} className="reading-avatar" /><span>{item.author.displayName}</span></Link>
-        {item.community && <Link to={'/comunidades/' + item.community.id} className="reading-community">{item.community.name}</Link>}<ForumTime value={item.createdAt} /><FollowButton kind="author" id={item.author.id} name={item.author.displayName} initial={item.author.isFollowing} compact />
+        <Link to={publicProfileLink(item.author.id)} className="reading-post-author"><IdentityImage fallbackKey={'user:' + item.author.id} mediaId={item.author.avatarId} name={item.author.displayName} className="reading-avatar" /><span>{item.author.displayName}</span></Link>
+        {item.community && <Link to={'/comunidades/' + item.community.id} className="reading-community">{item.community.name}</Link>}<ForumTime value={item.createdAt} /><FollowButton id={item.author.id} name={item.author.displayName} initial={item.author.isFollowing} compact />
         {item.updatedAt && <span title={new Date(item.updatedAt).toLocaleString('es-EC')}>editado</span>}
         {auth.session.user?.id === item.author.id && <DropdownMenu><DropdownMenuTrigger asChild><Button type="button" variant="ghost" className="reading-icon reading-post-menu" aria-label="Opciones de la publicación"><MoreHorizontal aria-hidden="true" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end" className="reading-menu"><DropdownMenuItem asChild><Link to={'/publicaciones/' + item.id + '/editar'}><PencilLine aria-hidden="true" />Editar publicación</Link></DropdownMenuItem></DropdownMenuContent></DropdownMenu>}
       </div><h1>{item.title}</h1></header>

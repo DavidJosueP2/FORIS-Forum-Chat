@@ -55,7 +55,7 @@ export function CommunityManagement({ community, onChanged }: { community: Commu
   const [open, setOpen] = useState(false)
   return <details className="community-management" onToggle={event => setOpen(event.currentTarget.open)}>
     <summary>Administrar comunidad</summary>
-    {open && <div className="community-management-content"><section><h3>Imagen de la comunidad</h3><PortraitPicker mediaId={community.imageId} name={community.name} purpose="community" onChange={async mediaId => {
+    {open && <div className="community-management-content"><section><h3>Imagen de la comunidad</h3><PortraitPicker fallbackKey={'community:' + community.id} mediaId={community.imageId} name={community.name} purpose="community" onChange={async mediaId => {
       const next = await accountRequest<Community>('communities/' + community.id + '/image', 'PATCH', { mediaId })
       onChanged(next)
     }} /></section>

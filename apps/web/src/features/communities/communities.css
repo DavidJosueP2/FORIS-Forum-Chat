@@ -1,5 +1,9 @@
 .community-list, .community-inbox { list-style: none; margin: 0; padding: 0; }
 .community-builder { max-width: 720px; }
+.community-page-title { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.community-page-title h1 { min-width: 0; overflow-wrap: anywhere; }
+.community-create-heading { margin-bottom: 24px; }
+.community-create-heading h1 { font-family: var(--font-heading); font-size: 1.25rem; font-weight: 600; line-height: 1.4; }
 .community-identity-editor { display: flex; flex-wrap: wrap; align-items: center; gap: 24px; margin-bottom: 8px; }
 .community-identity-editor > p { font-size: .875rem; line-height: 1.7; }
 .community-identity-editor > p > span { color: var(--muted-foreground); }
@@ -33,7 +37,9 @@
 .community-invitation-list strong { font-weight: 500; }
 .community-invitation-list span { color: var(--muted-foreground); }
 .community-invitation-page { max-width: 640px; margin: 32px auto; }
-.community-invitation-page > svg { width: 32px; height: 32px; color: var(--muted-foreground); margin-bottom: 24px; }
+.community-invitation-heading { display: flex; align-items: center; gap: 16px; }
+.community-invitation-heading > div { min-width: 0; flex: 1; }
+.community-invitation-heading > div > svg { width: 24px; height: 24px; color: var(--muted-foreground); margin-bottom: 12px; }
 .community-invitation-page h1 { font-size: 1.875rem; line-height: 1.4; overflow-wrap: anywhere; }
 .community-invitation-page > p { margin-block: 20px; line-height: 1.8; }
 .community-invitation-page .forum-back { margin-top: 32px; }
@@ -51,13 +57,12 @@
 .community-row h2 svg { display: inline; width: 18px; height: 18px; margin-left: 12px; vertical-align: baseline; }
 .community-description { color: var(--muted-foreground); white-space: pre-wrap; overflow-wrap: anywhere; max-width: 70ch; line-height: 1.8; }
 .community-row .community-description { margin-block: 12px 16px; }
-.community-members, .community-member-status { display: inline-flex; align-items: center; gap: 8px; }
-.community-members svg, .community-member-status svg { width: 18px; height: 18px; flex-shrink: 0; }
+.community-members { display: inline-flex; align-items: center; gap: 8px; }
+.community-members svg { width: 18px; height: 18px; flex-shrink: 0; }
 .community-saved-star { width: 18px; height: 18px; fill: currentColor; }
 .community-heading h1 { font-size: clamp(1.875rem, 4vw, 2rem); font-weight: 600; line-height: 1.4; letter-spacing: -.025em; overflow-wrap: anywhere; }
 .community-heading .community-description { margin-block: 16px 24px; }
 .community-controls { margin-block: 28px 48px; padding-block: 12px; display: flex; flex-direction: column; gap: 20px; }
-.community-member-status { min-height: 44px; font-size: .875rem; font-weight: 500; }
 .community-star[data-active="true"] svg { fill: currentColor; }
 .community-notification-setting { display: flex; align-items: flex-start; gap: 14px; padding-block: 12px; cursor: pointer; max-width: 70ch; }
 .community-notification-setting input { width: 20px; height: 20px; flex-shrink: 0; margin-top: 3px; appearance: auto; accent-color: var(--primary); }

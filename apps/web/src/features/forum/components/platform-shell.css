@@ -3,6 +3,8 @@
 .dark .forum-platform { --discovery-tag-background: #164e46; --discovery-tag-foreground: #c5eee6; --discovery-tag-hover: #21685c; }
 .forum-header.platform-header { position: sticky; top: 0; z-index: 30; max-width: none; width: 100%; min-height: 80px; padding: 12px 24px; gap: 24px; flex-wrap: nowrap; background: var(--sidebar); color: var(--sidebar-foreground); }
 .platform-brand { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.platform-header .forum-wordmark { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; flex-shrink: 0; }
+.platform-brand-mark { width: 32px; height: 32px; }
 .platform-top-navigation { flex-shrink: 0; }
 .platform-top-navigation .forum-navigation { gap: 0; }
 .platform-top-navigation .forum-navigation a { padding-inline: 12px; }
@@ -48,7 +50,8 @@
 @media (max-width: 639px) {
   .forum-platform { --platform-header-height: 124px; --platform-content-gap: 8px; --discovery-header-offset: 140px; }
   .forum-header.platform-header { padding: 8px 16px 12px; gap: 8px; flex-wrap: wrap; }
-  .platform-header .forum-wordmark { font-size: 1.5rem; }
+  .platform-header .forum-wordmark { font-size: 1.5rem; gap: 6px; }
+  .platform-brand-mark { width: 28px; height: 28px; }
   .platform-header .forum-account { margin-inline-start: auto; }
   .platform-navbar-tools { order: 3; flex-basis: 100%; max-width: none; gap: 8px; }
   .platform-navbar-tools .discovery-search { min-width: 0; max-width: none; }

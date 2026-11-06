@@ -5,14 +5,15 @@ import { Button } from '@/components/ui/button'
 import { PrivateImage } from '@/features/media/components/private-image'
 import { ForumEmpty, ForumError, ForumLoading, ForumTime } from './forum-states'
 import { useForumPage } from '../hooks/use-forum'
+import { publicProfileLink } from '@/features/account/lib/public-profile'
 
 export function PostList({ path, filtered, createTo = '/publicar', emptyTitle }: { path: string; filtered: boolean; createTo?: string; emptyTitle?: string }) {
   const page = useForumPage<ForumPostSummary>(path)
   if (page.loading && !page.ready) return <ForumLoading />
   if (page.error) return <ForumError message={page.error} retry={page.retry} />
-  if (!page.items.length) return <ForumEmpty title={emptyTitle ?? (filtered ? 'Todavía no hay publicaciones aquí' : 'Una buena idea puede empezar contigo')}>
-    <p>{filtered ? 'Prueba otro tópico o una búsqueda diferente.' : 'Comparte una pregunta, algo que aprendiste o una idea que quieras conversar.'}</p>
-    <Button asChild variant="secondary" className="h-11 mt-5 px-6"><Link to={filtered ? '/' : createTo}>{filtered ? 'Ver todos los foros' : 'Crear la primera publicación'}</Link></Button>
+  if (!page.items.length) return <ForumEmpty scene={filtered ? 'forumSearch' : 'communityStart'} title={emptyTitle ?? (filtered ? 'Sin resultados' : 'Aún no hay publicaciones')}>
+    {filtered && <p>Prueba otra búsqueda.</p>}
+    <Button asChild variant="secondary" className="h-11 mt-5 px-6"><Link to={filtered ? '/' : createTo}>{filtered ? 'Ver todos los foros' : 'Crear publicación'}</Link></Button>
   </ForumEmpty>
   return <>
     <ol className="forum-post-list" aria-label="Publicaciones más recientes">
@@ -29,4 +30,3 @@ export function PostList({ path, filtered, createTo = '/publicar', emptyTitle }:
     {page.hasMore && <Button variant="secondary" className="h-11 px-6 forum-more" disabled={page.loadingMore} onClick={() => void page.loadMore()}>{page.loadingMore ? 'Cargando…' : 'Ver más publicaciones'}</Button>}
   </>
 }
-import { publicProfileLink } from '@/features/account/lib/public-profile'
