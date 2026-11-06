@@ -7,6 +7,7 @@ export function RouteFocus() {
     const frame = requestAnimationFrame(() => {
       const main = document.querySelector<HTMLElement>('main')
       const target = hash ? document.getElementById(hash.slice(1)) : null
+      if (pathname.startsWith('/personas/') && !hash && document.activeElement instanceof HTMLElement && document.activeElement.closest('[data-profile-navigation]')) return
       if (pathname === '/' && !hash) {
         // Conservar la edición del buscador y las selecciones consecutivas de filtros.
         // Los enlaces de publicaciones desmontan su destino anterior: en ese caso,

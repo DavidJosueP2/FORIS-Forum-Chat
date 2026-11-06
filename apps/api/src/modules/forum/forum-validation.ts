@@ -55,7 +55,7 @@ export function updatePostInput(value: unknown): ValidatedPostUpdate {
   const { revision, ...content } = fields;
   return { ...createPostInput(content), revision: revision as number };
 }
-export interface ForumFilters { topic?: string; category?: string; tags: string[]; author?: string; search?: string; before?: PostCursor; community?: string; limit: number }
+export interface ForumFilters { topic?: string; category?: string; tags: string[]; author?: string; search?: string; before?: PostCursor; community?: string; feed?: 'following'; publicOnly?: boolean; limit: number }
 export function forumFilters(query: Record<string, unknown>): ForumFilters {
   const before = query.before === undefined ? undefined : decodePostCursor(query.before);
   const { limit } = pageInput({ limit: query.limit });
@@ -66,5 +66,6 @@ export function forumFilters(query: Record<string, unknown>): ForumFilters {
   const author = query.author === undefined ? undefined : requestId(query.author);
   const search = query.search === undefined || query.search === '' ? undefined : inputText(query.search, 'La búsqueda', 120);
   const community = query.community === undefined ? undefined : resourceId(query.community);
-  return { topic, category, tags, author, search, before, community, limit };
+  if (query.feed !== undefined && query.feed !== 'following') invalidInput('El flujo de publicaciones no es válido.');
+  return { topic, category, tags, author, search, before, community, feed: query.feed as 'following' | undefined, limit };
 }

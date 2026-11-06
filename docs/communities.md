@@ -23,6 +23,8 @@ La entrada directa se limita a comunidades públicas. A una privada se entra ace
 
 Al unirse se activan los avisos dentro de Foris; la interfaz lo comunica. Cada miembro puede silenciarlos en la página de la comunidad. Volver a unirse los activa de nuevo. Favoritas y avisos son preferencias independientes.
 
+El seguimiento es otra relación independiente: permite incluir la comunidad en Siguiendo sin unirse ni cambiar favoritas o avisos. Una membresía nueva lo activa y salir lo retira; repetir una membresía existente respeta un seguimiento desactivado. Las privadas exigen pertenencia para seguirlas. El contrato y la migración 11 están en [following.md](following.md).
+
 ## Creación, imagen e invitaciones
 
 El formulario reúne imagen opcional, nombre, descripción y elección de acceso. Los límites restantes están dentro de los campos, sin contadores externos `0/80` o `0/500`; las etiquetas y los límites accesibles permanecen. El borrador conserva los campos, la visibilidad y el ID de imagen por cuenta en la pestaña.
@@ -53,7 +55,7 @@ Los listados usan items, hasMore y nextCursor, con IDs como cadenas y orden desc
 
 | Método | Ruta | Acceso |
 | --- | --- | --- |
-| GET | /api/communities | Públicas y privadas propias; scope=mine o favorites requiere cuenta |
+| GET | /api/communities | Públicas y privadas propias; scope=mine, favorites o following requiere cuenta |
 | GET | /api/communities/:id | Pública o miembro de privada; preferencias propias si hay sesión |
 | POST | /api/communities | Cuenta verificada |
 | POST | /api/communities/:id/membership | Unirse directamente a una pública |
@@ -69,7 +71,7 @@ Los listados usan items, hasMore y nextCursor, con IDs como cadenas y orden desc
 | POST | /api/notifications/:id/read | Marcar aviso propio |
 | POST | /api/notifications/read-all | Marcar hasta throughId |
 
-Comunidades admite scope=all|mine|favorites, search, before y limit. Crear recibe name (3–80 caracteres), description (1–500), requestId UUID, visibility opcional (`public` por defecto o `private`) e imageId opcional o nulo. La respuesta incluye visibility e imageId. Preferencias recibe favorite y/o notifyPosts booleanos; cambiar imagen recibe mediaId UUID o nulo. Crear o revocar invitación recibe un objeto vacío y preview/accept reciben `{ token }`. Unirse, salir y marcar un aviso reciben un objeto JSON vacío; marcar todos recibe throughId. El listado de invitaciones devuelve metadatos y estados, sin recuperar el token.
+Comunidades admite scope=all|mine|favorites|following, search, before y limit. Crear recibe name (3–80 caracteres), description (1–500), requestId UUID, visibility opcional (`public` por defecto o `private`) e imageId opcional o nulo. La respuesta incluye visibility, imageId e isFollowing propio. Preferencias recibe favorite y/o notifyPosts booleanos; cambiar imagen recibe mediaId UUID o nulo. Crear o revocar invitación recibe un objeto vacío y preview/accept reciben `{ token }`. Unirse, salir y marcar un aviso reciben un objeto JSON vacío; marcar todos recibe throughId. El listado de invitaciones devuelve metadatos y estados, sin recuperar el token.
 
 GET /api/posts admite community=ID y POST /api/posts admite communityId opcional. Las respuestas identifican la comunidad; las publicaciones generales conservan community=null.
 

@@ -46,7 +46,8 @@ export function useDiscoveryState() {
   }
   function onClear() { setSearchReset(current => current + 1); apply(clearDiscoveryFilters(new URLSearchParams(serialized))) }
   function onAuthorClear() { const next = new URLSearchParams(serialized); next.delete('autor'); apply(next) }
-  return { query, categories, tags, selectedTags, resourceScope, searchReset, onSearch, onCategory, onTag, onClear, onSearchClear: () => onSearch(''), onAuthorClear }
+  function onFeed(following: boolean) { const next = new URLSearchParams(serialized); if (following) next.set('vista', 'siguiendo'); else next.delete('vista'); apply(next) }
+  return { query, categories, tags, selectedTags, resourceScope, searchReset, onSearch, onCategory, onTag, onClear, onSearchClear: () => onSearch(''), onAuthorClear, onFeed }
 }
 export const DiscoveryContext = createContext<ReturnType<typeof useDiscoveryState> | null>(null)
 export function useDiscovery() {

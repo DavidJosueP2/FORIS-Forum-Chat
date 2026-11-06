@@ -69,3 +69,21 @@
   .reading-discussion { margin-top: 20px; }
   .reading-comment { padding-top: 12px; }
 }
+.reading-publication { padding-bottom: 12px; }
+.reading-publication h1 { margin-block: 8px 16px; }
+.reading-post-actions { padding: 4px 8px; border-radius: 10px; background: var(--card); margin-top: 12px; }
+.reading-post-meta .follow-control { margin-inline-start: auto; }
+.reading-discussion { margin-top: 16px; }
+.reading-discussion-heading { margin-bottom: 4px; }
+.reading-sign-in { padding-block: 4px; }
+.reading-comment { padding-block: 10px 4px; }
+.reading-comment-meta { min-height: 28px; }
+.reading-comment-body { margin-top: 4px; line-height: 1.65; }
+.reading-comment-list > li + li::before { content: ''; display: block; height: 1px; background: var(--secondary); margin-top: 8px; }
+.reading-thread .reading-comment-list > li + li::before { display: none; }
+@media (max-width: 767px) {
+ .reading-post-meta .follow-compact { width: 44px; padding-inline: 0; }
+ .reading-post-meta .follow-compact span { display: none; }
+ .reading-discussion { margin-top: 16px; }
+ .reading-comment { padding-top: 10px; }
+}

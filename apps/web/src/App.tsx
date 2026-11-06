@@ -3,6 +3,7 @@ import { ChatHome } from '@/features/chat/components/chat-home'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { LoginPage } from '@/features/account/pages/login-page'
 import { ProfilePage } from '@/features/account/pages/profile-page'
+import { PublicProfilePage } from '@/features/account/pages/public-profile-page'
 import { ForumPage } from '@/features/forum/pages/forum-page'
 import { CreatePostPage } from '@/features/forum/pages/create-post-page'
 import { EditPostPage } from '@/features/forum/pages/edit-post-page'
@@ -32,6 +33,7 @@ function App() {
           <Route path="/invitaciones/:token" element={<InvitationPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/personas/:userId" element={<PublicProfilePage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

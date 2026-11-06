@@ -17,7 +17,7 @@ export function PostList({ path, filtered, createTo = '/publicar', emptyTitle }:
   return <>
     <ol className="forum-post-list" aria-label="Publicaciones más recientes">
       {page.items.map(post => <li key={post.id}><article className="forum-post-row">
-        <div className="forum-meta"><Link to={'/?topico=' + post.topic.id} className="forum-topic-label">{post.topic.name}</Link>{post.community && <Link to={'/comunidades/' + post.community.id}>{post.community.name}</Link>}<span>{post.author.displayName}</span><ForumTime value={post.createdAt} /></div>
+        <div className="forum-meta"><Link to={'/?topico=' + post.topic.id} className="forum-topic-label">{post.topic.name}</Link>{post.community && <Link to={'/comunidades/' + post.community.id}>{post.community.name}</Link>}<Link to={publicProfileLink(post.author.id)} aria-label={'Ver perfil de ' + post.author.displayName}>{post.author.displayName}</Link><ForumTime value={post.createdAt} /></div>
         <h2><Link to={'/publicaciones/' + post.id}>{post.title}<ArrowUpRight aria-hidden="true" /></Link></h2>
         <p className="forum-excerpt">{post.excerpt}</p>
         {post.images[0] && <PrivateImage image={post.images[0]} thumbnail />}
@@ -29,3 +29,4 @@ export function PostList({ path, filtered, createTo = '/publicar', emptyTitle }:
     {page.hasMore && <Button variant="secondary" className="h-11 px-6 forum-more" disabled={page.loadingMore} onClick={() => void page.loadMore()}>{page.loadingMore ? 'Cargando…' : 'Ver más publicaciones'}</Button>}
   </>
 }
+import { publicProfileLink } from '@/features/account/lib/public-profile'

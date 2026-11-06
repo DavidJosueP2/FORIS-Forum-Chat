@@ -2,9 +2,11 @@
 
 Foris organiza publicaciones mediante un catálogo jerárquico de temáticas y etiquetas múltiples. Una publicación tiene UUID propio, título, texto, imágenes opcionales y respuestas; puede pertenecer a una comunidad. Sus miembros pueden publicar y responder dentro de ella. Las comunidades, favoritas y avisos se describen en [communities.md](communities.md).
 
-El inicio abre un flujo de publicaciones con títulos serif, texto e imágenes, búsqueda automática y Crear publicación en el navbar, y filtros por temáticas jerárquicas y etiquetas. En escritorio se exploran a un lado del contenido y en móvil desde Filtrar. La experiencia y sus límites están en [discovery.md](discovery.md). La creación y edición usan el lienzo descrito en [editor.md](editor.md).
+El inicio abre las vistas cronológicas Para ti y Siguiendo con títulos serif, texto e imágenes, búsqueda automática y Crear publicación en el navbar, y filtros por temáticas jerárquicas y etiquetas. En escritorio se exploran a un lado del contenido y en móvil desde Filtrar. La experiencia y sus límites están en [discovery.md](discovery.md); el contrato de autores y comunidades seguidos, en [following.md](following.md). La creación y edición usan el lienzo descrito en [editor.md](editor.md).
 
 El detalle compacto incorpora votos, comentarios en hilos, edición y eliminación propias, un comentario principal anclado y enlaces directos. El contrato, los permisos, los borradores y la migración de esta participación están en [discussion.md](discussion.md). Todas sus escrituras exigen sesión verificada y pertenencia vigente si la publicación tiene comunidad.
+
+Pulsar un nombre de persona abre su perfil público con presentación, publicaciones y comunidades públicas, en lugar de activar un filtro de autor. Se aplica a autores, comentaristas, creadores de comunidades y mensajes de chat vinculados a una cuenta; los invitados del chat no tienen enlace de perfil. Los recuentos y listados excluyen contenido privado incluso para el propio usuario. La disponibilidad de la ficha, el seguimiento y sus contratos están en [following.md](following.md).
 
 | Acción | Invitado | Cuenta verificada con sesión vigente |
 | --- | --- | --- |
@@ -22,8 +24,11 @@ El chat global se conserva con su historial y sus eventos en tiempo real. Sus pe
 | Ruta | Contenido |
 | --- | --- |
 | / | Flujo de publicaciones, búsqueda automática y filtros |
+| /?vista=siguiendo | Flujo de autores o comunidades seguidos; requiere sesión |
 | /?topico=general | Publicaciones del tópico elegido |
-| /?autor=UUID | Publicaciones de un perfil; el perfil propio ofrece «Mis publicaciones» |
+| /?autor=UUID | Filtro por autor conservado para enlaces anteriores |
+| /personas/:userId | Perfil de persona con publicaciones públicas; userId es un UUID |
+| /personas/:userId?vista=comunidades | Comunidades públicas creadas o a las que pertenece |
 | /?categoria=UUID&etiqueta=UUID | Exploración por temática y etiqueta; etiqueta puede repetirse |
 | /publicar | Lienzo de publicación o acceso a una cuenta |
 | /publicar?topico=proyectos | Lienzo con esa raíz preseleccionada si no existe un borrador |
@@ -32,7 +37,7 @@ El chat global se conserva con su historial y sus eventos en tiempo real. Sus pe
 | /publicaciones/:postId/editar | Lienzo de edición reservado al autor |
 | /chat | Chat global; invitados pueden escribir |
 | /login | Acceso, registro, verificación y recuperación |
-| /profile | Perfil y métodos de acceso |
+| /profile | Configuración privada y métodos de acceso; enlace al perfil público propio |
 
 Los enlaces para participar conservan un destino next al pasar por el acceso. El acceso nativo, la verificación de correo y Google regresan al formulario o publicación de origen. Solo se aceptan rutas internas conocidas; el servidor guarda el destino de Google en su flujo OAuth, sin cambiar el callback configurado.
 
@@ -44,7 +49,10 @@ Los enlaces para participar conservan un destino next al pasar por el acceso. El
 | GET | /api/taxonomy/categories | Público; catálogo completo |
 | GET | /api/taxonomy/categories/:id | Público; temática por UUID |
 | GET | /api/taxonomy/tags | Etiquetas iniciales y etiquetas de contenido accesible |
-| GET | /api/posts | Público |
+| GET | /api/posts | Contenido accesible; feed=following requiere sesión |
+| GET | /api/authors/:id | Ficha de persona disponible según el contexto de lectura o acceso propio |
+| GET | /api/authors/:id/posts | Solo publicaciones públicas de esa persona |
+| GET | /api/authors/:id/communities | Solo sus membresías en comunidades públicas |
 | GET | /api/posts/:id | Público |
 | GET | /api/posts/:id/replies | Público |
 | POST | /api/posts | Sesión verificada |

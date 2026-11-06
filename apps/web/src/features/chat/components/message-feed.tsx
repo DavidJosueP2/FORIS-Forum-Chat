@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+import { publicProfileLink } from '@/features/account/lib/public-profile'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { Message } from '@messages/contracts'
 import { ArrowDown, LoaderCircle } from 'lucide-react'
@@ -165,7 +167,7 @@ export function MessageFeed({
                     <IdentityImage userId={message.accountId} name={message.author} className="message-avatar" />
                     <div className="message-text">
                       <header className="message-meta">
-                        <span className="message-author">{message.author}</span>
+                        {message.accountId ? <Link to={publicProfileLink(message.accountId)} className="message-author">{message.author}</Link> : <span className="message-author">{message.author}</span>}
                         <span className="message-kind">{own ? 'Tú, ' : ''}{message.accountId ? 'Miembro' : 'Invitado'}</span>
                         <time dateTime={message.createdAt} title={new Date(message.createdAt).toLocaleString('es')}>
                           {messageTime(message)}

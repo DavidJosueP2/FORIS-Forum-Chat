@@ -81,6 +81,7 @@ export class CommunityInvitationsRepository {
       if (row.used_at && (row.used_by !== actor.user.id || !member)) unavailable();
       if (!member) {
         await client.query('INSERT INTO community_memberships(community_id,user_id) VALUES($1,$2)', [id, actor.user.id]);
+        await client.query('INSERT INTO community_follows(user_id,community_id) VALUES($1,$2) ON CONFLICT DO NOTHING', [actor.user.id, id]);
         await client.query('UPDATE communities SET member_count=member_count+1 WHERE id=$1', [id]);
         await client.query('INSERT INTO community_preferences(community_id,user_id,notify_posts) VALUES($1,$2,TRUE) ON CONFLICT(community_id,user_id) DO UPDATE SET notify_posts=TRUE', [id, actor.user.id]);
         await client.query('UPDATE community_invitations SET used_by=$2,used_at=CURRENT_TIMESTAMP WHERE id=$1', [row.id, actor.user.id]);

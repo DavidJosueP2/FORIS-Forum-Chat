@@ -1,3 +1,4 @@
+import { publicProfileLink } from '@/features/account/lib/public-profile'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import type { ChangedForumReply, CreatedForumReply, ForumPost, ForumReply } from '@messages/contracts'
@@ -15,7 +16,7 @@ import type { Participation } from './reading-actions'
 
 export function ReaderIdentity({ reply, authorId }: { reply: ForumReply; authorId: string }) {
   return <header className="reading-comment-meta">{!reply.deleted && <IdentityImage mediaId={reply.author.avatarId} name={reply.author.displayName} className="reading-avatar" />}
-    {reply.deleted ? <span>Comentario eliminado</span> : <><Link to={'/?autor=' + reply.author.id} className="reading-name">{reply.author.displayName}</Link>{reply.author.id === authorId && <abbr className="reading-author-mark" title="Autor de la publicación">AU</abbr>}</>}
+    {reply.deleted ? <span>Comentario eliminado</span> : <><Link to={publicProfileLink(reply.author.id)} className="reading-name">{reply.author.displayName}</Link>{reply.author.id === authorId && <abbr className="reading-author-mark" title="Autor de la publicación">AU</abbr>}</>}
     <ForumTime value={reply.createdAt} />{!reply.deleted && reply.updatedAt && <span title={new Date(reply.updatedAt).toLocaleString('es-EC')}>editado</span>}
     {reply.pinned && <span className="reading-pinned"><Pin aria-hidden="true" />Anclado</span>}
   </header>

@@ -11,7 +11,7 @@ import { HttpError } from '../../common/errors/http-error.js';
 import type { ForumFilters, ValidatedPost, ValidatedPostUpdate } from './forum-validation.js';
 import { CommunityRepository } from '../communities/community.repository.js';
 import { MediaRepository } from '../media/media.repository.js';
-import { readablePost } from '../communities/community-access.js';
+import { publicPost, readablePost } from '../communities/community-access.js';
 import { TaxonomyRepository } from './taxonomy.repository.js';
 import { encodePostCursor } from './forum-cursor.js';
 
@@ -22,6 +22,7 @@ interface PostSummaryRow extends QueryResultRow {
   author_id: string; display_name: string; reply_count: number; created_at: Date; last_activity_at: Date;
   community_id: string | null; community_name: string | null;
   author_avatar_id: string | null;
+  author_following?: boolean;
 }
 interface PostRow extends PostSummaryRow {
   request_id: string; media_request_ids: string[]; tag_request_names: string[];
@@ -37,7 +38,7 @@ const POST_CONTEXT = `COALESCE(t.slug,g.slug) AS topic_id,COALESCE(t.name,g.name
   LEFT JOIN forum_categories k ON k.id=p.category_id LEFT JOIN forum_categories t ON t.id=k.root_id
   LEFT JOIN communities c ON c.id=p.community_id`;
 const POSTS = 'SELECT p.*,' + POST_CONTEXT;
-const POST_SUMMARIES = 'SELECT p.id,p.title,p.body,p.category_id,p.author_id,p.reply_count,p.created_at,p.last_activity_at,p.community_id,' + POST_CONTEXT;
+const POST_SUMMARIES = 'SELECT p.id,p.title,p.body,p.category_id,p.author_id,p.reply_count,p.created_at,p.last_activity_at,p.community_id,EXISTS(SELECT 1 FROM author_follows af WHERE af.follower_id=$1 AND af.author_id=p.author_id) AS author_following,' + POST_CONTEXT;
 function summary(row: PostSummaryRow): ForumPostSummary {
   return {
     id: String(row.id), title: row.title, excerpt: row.body.replace(/\s+/gu, ' ').slice(0, 420),
@@ -45,7 +46,7 @@ function summary(row: PostSummaryRow): ForumPostSummary {
     category: row.category_id ? { id: row.category_id, slug: row.category_slug, name: row.category_name, description: row.category_description,
       parentId: row.category_parent_id, rootId: row.category_root_id, depth: row.category_depth, path: row.category_path, position: row.category_position } : null,
     tags: [],
-    author: { id: row.author_id, displayName: row.display_name, ...(row.author_avatar_id ? { avatarId: row.author_avatar_id } : {}) }, replyCount: row.reply_count,
+    author: { id: row.author_id, displayName: row.display_name, ...(row.author_avatar_id ? { avatarId: row.author_avatar_id } : {}), ...(row.author_following === undefined ? {} : { isFollowing: row.author_following }) }, replyCount: row.reply_count,
     community: row.community_id ? { id: String(row.community_id), name: row.community_name! } : null, images: [],
     createdAt: new Date(row.created_at).toISOString(), lastActivityAt: new Date(row.last_activity_at).toISOString(),
   };
@@ -64,8 +65,11 @@ export class ForumRepository {
     return this.taxonomy.topics();
   }
   async list(filters: ForumFilters, userId: string | null = null): Promise<ForumPage<ForumPostSummary>> {
+    if (filters.feed === 'following' && !userId) throw new HttpError(401, 'SESSION_REQUIRED', 'Entra para ver a quienes sigues.');
     const where: string[] = [readablePost('$1')];
+    if (filters.publicOnly) where.push(publicPost());
     const values: unknown[] = [userId];
+    if (filters.feed === 'following') where.push('(EXISTS(SELECT 1 FROM author_follows af WHERE af.follower_id=$1 AND af.author_id=p.author_id) OR EXISTS(SELECT 1 FROM community_follows cf WHERE cf.user_id=$1 AND cf.community_id=p.community_id))');
     if (filters.community) {
       await this.communities.get(filters.community, userId);
       values.push(filters.community); where.push('p.community_id=$' + values.length);
@@ -106,7 +110,9 @@ export class ForumRepository {
     if (!row) throw new HttpError(404, 'POST_NOT_FOUND', 'Esta publicación no existe.');
     const images = await this.media.images([id], client);
     const tags = await this.taxonomy.postTags([id], client);
-    return { ...detail(row), votes: await postVotes(client, id, userId), images: images.get(id) ?? [], tags: tags.get(id) ?? [] };
+    const followed = userId ? (await client.query('SELECT 1 FROM author_follows WHERE follower_id=$1 AND author_id=$2', [userId, row.author_id])).rows.length > 0 : false;
+    const post = detail(row);
+    return { ...post, author: { ...post.author, isFollowing: followed }, votes: await postVotes(client, id, userId), images: images.get(id) ?? [], tags: tags.get(id) ?? [] };
   }
   private async rate(client: SqlClient, userId: string, type: 'posts' | 'replies', maximum: number): Promise<void> {
     const table = type === 'posts' ? 'forum_posts' : 'forum_replies';

@@ -8,6 +8,7 @@ export interface Community extends CommunityRef {
   postCount: number;
   createdAt: string;
   isFavorite: boolean;
+  isFollowing: boolean;
   membership: { role: 'owner' | 'member'; notifyPosts: boolean } | null;
 }
 export interface CreateCommunity { name: string; description: string; requestId: string; visibility?: 'public' | 'private'; imageId?: string | null }

@@ -1,3 +1,4 @@
+import { publicProfileLink } from '../lib/public-profile'
 import { useLayoutEffect, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import type { AccountUser, AuthSession, OtpChallenge } from '@messages/contracts'
@@ -265,7 +266,7 @@ export function ProfilePage() {
         <footer className="profile-footer">
           <Link to="/" className="auth-guest-link">Volver a los foros</Link>
           <Link to="/comunidades?vista=mias" className="auth-guest-link">Mis comunidades</Link>
-          <Link to={'/?autor=' + user.id} className="auth-guest-link">Mis publicaciones</Link>
+          <Link to={publicProfileLink(user.id)} className="auth-guest-link">Ver mi perfil público</Link>
           <Button variant="secondary" className="h-11 px-6" disabled={busy} onClick={() => {
             if (busy) return
             setBusy(true); setError(null)

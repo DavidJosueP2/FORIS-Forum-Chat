@@ -3,7 +3,7 @@ import type { TestContext } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import request from 'supertest';
-import type { ForumCategory, ForumPage, ForumPostSummary, ForumReply } from '@messages/contracts';
+import type { Community, ForumAuthorProfile, ForumCategory, ForumPage, ForumPostSummary, ForumReply } from '@messages/contracts';
 import { randomToken, tokenHash } from '../../src/modules/auth/auth-crypto.js';
 import { createTestApplication } from '../support/application.js';
 
@@ -52,7 +52,7 @@ test('solo una sesión vigente y verificada acredita autoría; el cliente no pue
   const user = await member();
   await api.post('/api/posts').set('Origin', origin).set('Cookie', user.cookie).send({ ...postInput(), authorId: randomUUID() }).expect(400);
   const created = await api.post('/api/posts').set('Origin', origin).set('Cookie', user.cookie).send(postInput()).expect(201);
-  assert.deepEqual(created.body.post.author, { id: user.id, displayName: 'Ana' });
+  assert.deepEqual(created.body.post.author, { id: user.id, displayName: 'Ana', isFollowing: false });
   await database.query('DELETE FROM auth_sessions WHERE user_id=$1', [user.id]);
   await api.post('/api/posts/' + created.body.post.id + '/replies').set('Origin', origin).set('Cookie', user.cookie).send({ body: 'Otra idea', requestId: randomUUID() }).expect(401);
 });
@@ -370,4 +370,147 @@ test('los hilos privados y sus votos quedan ocultos a invitados, ajenos y exmiem
   await api.patch(path).set('Origin', origin).set('Cookie', user.cookie).send({ body: 'Cambio', revision: 1 }).expect(404);
   await api.delete(path).set('Origin', origin).set('Cookie', user.cookie).send({ revision: 1 }).expect(404);
   await api.put(path + '/vote').set('Origin', origin).set('Cookie', user.cookie).send({ value: -1 }).expect(404);
+});
+
+
+test('seguir autores es propio de cada cuenta, idempotente y no revela datos personales', async t => {
+  const { api, member, database } = await fixture(t); const author = await member(); const viewer = await member(); const other = await member();
+  const id = (await api.post('/api/posts').set('Origin', origin).set('Cookie', author.cookie).send(postInput()).expect(201)).body.post.id as string;
+  const path = '/api/authors/' + author.id;
+  await api.get('/api/posts?feed=following').expect(401);
+  await api.put(path + '/follow').set('Origin', origin).send({ following: true }).expect(401);
+  await api.put(path + '/follow').set('Origin', 'https://otro.test').set('Cookie', viewer.cookie).send({ following: true }).expect(403);
+  await api.put(path + '/follow').set('Origin', origin).set('Cookie', viewer.cookie).send({ following: 'yes' }).expect(400);
+  await api.put('/api/authors/' + viewer.id + '/follow').set('Origin', origin).set('Cookie', viewer.cookie).send({ following: true }).expect(400);
+  for (let retry = 0; retry < 2; retry++) assert.equal((await api.put(path + '/follow').set('Origin', origin).set('Cookie', viewer.cookie).send({ following: true }).expect(200)).body.isFollowing, true);
+  const profile = (await api.get(path).set('Cookie', viewer.cookie).expect(200)).body as Record<string, unknown>;
+  assert.equal(profile.isFollowing, true); assert.equal(profile.email, undefined); assert.equal(profile.givenName, undefined);
+  assert.equal((await api.get(path).set('Cookie', other.cookie).expect(200)).body.isFollowing, false);
+  assert.equal((await api.get('/api/posts/' + id).set('Cookie', viewer.cookie).expect(200)).body.author.isFollowing, true);
+  assert.equal((await api.get('/api/posts?feed=following').set('Cookie', viewer.cookie).expect(200)).body.items.length, 1);
+  await api.put(path + '/follow').set('Origin', origin).set('Cookie', viewer.cookie).send({ following: false }).expect(200);
+  assert.equal((await api.get('/api/posts?feed=following').set('Cookie', viewer.cookie).expect(200)).body.items.length, 0);
+  await database.query('DELETE FROM auth_sessions WHERE user_id=$1', [viewer.id]);
+  await api.put(path + '/follow').set('Origin', origin).set('Cookie', viewer.cookie).send({ following: true }).expect(401);
+});
+
+test('Siguiendo combina autores y comunidades, sin duplicar publicaciones y con cursor', async t => {
+  const { api, member } = await fixture(t); const author = await member(); const viewer = await member(); const other = await member();
+  const community = (await api.post('/api/communities').set('Origin', origin).set('Cookie', author.cookie).send({ name: 'Comunidad seguida', description: 'Lecturas compartidas.', requestId: randomUUID() }).expect(201)).body.community.id as string;
+  const ids: string[] = [];
+  for (const [cookie, communityId] of [[author.cookie, undefined], [author.cookie, community], [other.cookie, undefined]] as const) ids.push((await api.post('/api/posts').set('Origin', origin).set('Cookie', cookie).send({ ...postInput(), communityId }).expect(201)).body.post.id as string);
+  await api.put('/api/authors/' + author.id + '/follow').set('Origin', origin).set('Cookie', viewer.cookie).send({ following: true }).expect(200);
+  await api.put('/api/communities/' + community + '/follow').set('Origin', origin).set('Cookie', viewer.cookie).send({ following: true }).expect(200);
+  const first = (await api.get('/api/posts?feed=following&limit=1').set('Cookie', viewer.cookie).expect(200)).body;
+  const next = (await api.get('/api/posts?feed=following&before=' + encodeURIComponent(first.nextCursor as string)).set('Cookie', viewer.cookie).expect(200)).body;
+  assert.deepEqual(new Set([...first.items, ...next.items].map((item: ForumPostSummary) => item.id)), new Set(ids.slice(0, 2)));
+  assert.equal(first.items.length + next.items.length, 2);
+  assert.equal((await api.get('/api/communities/' + community).set('Cookie', viewer.cookie).expect(200)).body.membership, null);
+  assert.equal((await api.get('/api/communities?scope=following').set('Cookie', viewer.cookie).expect(200)).body.items.length, 1);
+  await api.get('/api/posts?feed=unknown').set('Cookie', viewer.cookie).expect(400);
+});
+
+test('seguir no concede acceso privado y salir oculta publicaciones incluso de autores seguidos', async t => {
+  const { api, member, database } = await fixture(t); const author = await member(); const viewer = await member();
+  await api.post('/api/posts').set('Origin', origin).set('Cookie', author.cookie).send(postInput('Pública')).expect(201);
+  const community = (await api.post('/api/communities').set('Origin', origin).set('Cookie', author.cookie).send({ name: 'Lecturas solo invitadas', description: 'Contenido reservado.', visibility: 'private', requestId: randomUUID() }).expect(201)).body.community.id as string;
+  const privatePost = (await api.post('/api/posts').set('Origin', origin).set('Cookie', author.cookie).send({ ...postInput('Privada'), communityId: community }).expect(201)).body.post.id as string;
+  await api.put('/api/authors/' + author.id + '/follow').set('Origin', origin).set('Cookie', viewer.cookie).send({ following: true }).expect(200);
+  await api.put('/api/communities/' + community + '/follow').set('Origin', origin).set('Cookie', viewer.cookie).send({ following: true }).expect(404);
+  assert.equal((await api.get('/api/posts?feed=following').set('Cookie', viewer.cookie).expect(200)).body.items.some((item: ForumPostSummary) => item.id === privatePost), false);
+  await database.query('INSERT INTO community_memberships(community_id,user_id) VALUES($1,$2)', [community, viewer.id]);
+  await database.query('UPDATE communities SET member_count=member_count+1 WHERE id=$1', [community]);
+  await api.put('/api/communities/' + community + '/follow').set('Origin', origin).set('Cookie', viewer.cookie).send({ following: true }).expect(200);
+  assert.equal((await api.get('/api/posts?feed=following').set('Cookie', viewer.cookie).expect(200)).body.items.length, 2);
+  await api.delete('/api/communities/' + community + '/membership').set('Origin', origin).set('Cookie', viewer.cookie).send({}).expect(200);
+  assert.equal((await api.get('/api/posts?feed=following').set('Cookie', viewer.cookie).expect(200)).body.items.length, 1);
+  assert.equal((await api.get('/api/communities?scope=following').set('Cookie', viewer.cookie).expect(200)).body.items.length, 0);
+});
+
+test('crear y unirse siguen una comunidad; dejar de seguir no abandona ni cambia avisos', async t => {
+  const { api, member } = await fixture(t); const owner = await member(); const viewer = await member();
+  const created = await api.post('/api/communities').set('Origin', origin).set('Cookie', owner.cookie).send({ name: 'Para seguir aprendiendo', description: 'Un espacio público.', requestId: randomUUID() }).expect(201);
+  assert.equal(created.body.community.isFollowing, true);
+  const base = '/api/communities/' + created.body.community.id;
+  const joined = await api.post(base + '/membership').set('Origin', origin).set('Cookie', viewer.cookie).send({}).expect(201);
+  assert.equal(joined.body.isFollowing, true);
+  await api.put(base + '/follow').set('Origin', origin).set('Cookie', viewer.cookie).send({ following: false }).expect(200);
+  const current = (await api.get(base).set('Cookie', viewer.cookie).expect(200)).body;
+  assert.equal(current.isFollowing, false); assert.equal(current.membership.notifyPosts, true);
+  assert.equal((await api.post(base + '/membership').set('Origin', origin).set('Cookie', viewer.cookie).send({}).expect(201)).body.isFollowing, false);
+});
+
+test('el perfil público pagina solo las publicaciones y membresías públicas de esa persona, también para su dueño', async t => {
+  const { api, member, database } = await fixture(t);
+  const author = await member(); const other = await member(); const viewer = await member();
+  const createCommunity = async (cookie: string, name: string, visibility: 'public' | 'private' = 'public') =>
+    (await api.post('/api/communities').set('Origin', origin).set('Cookie', cookie).send({ name, description: 'Un espacio compartido.', visibility, requestId: randomUUID() }).expect(201)).body.community.id as string;
+  const owned = await createCommunity(author.cookie, 'Creada por la autora');
+  const joined = await createCommunity(other.cookie, 'Comunidad a la que pertenece');
+  const hidden = await createCommunity(author.cookie, 'Comunidad privada de la autora', 'private');
+  await api.post('/api/communities/' + joined + '/membership').set('Origin', origin).set('Cookie', author.cookie).send({}).expect(201);
+  await database.query('INSERT INTO community_memberships(community_id,user_id) VALUES($1,$2)', [hidden, viewer.id]);
+  await database.query('UPDATE communities SET member_count=member_count+1 WHERE id=$1', [hidden]);
+  await database.query('UPDATE users SET bio=$2 WHERE id=$1', [author.id, 'Leo y comparto lo que aprendo.']);
+  const ids: string[] = [];
+  for (const communityId of [undefined, owned]) ids.push((await api.post('/api/posts').set('Origin', origin).set('Cookie', author.cookie).send({ ...postInput(), communityId }).expect(201)).body.post.id as string);
+  await api.post('/api/posts').set('Origin', origin).set('Cookie', author.cookie).send({ ...postInput('Solo para miembros'), communityId: hidden }).expect(201);
+  await api.post('/api/posts').set('Origin', origin).set('Cookie', other.cookie).send(postInput('Otro autor')).expect(201);
+  const path = '/api/authors/' + author.id;
+  for (const cookie of ['', author.cookie, viewer.cookie]) {
+    const profile = (await api.get(path).set('Cookie', cookie).expect(200)).body as ForumAuthorProfile;
+    assert.equal(profile.displayName, 'Ana'); assert.equal(profile.bio, 'Leo y comparto lo que aprendo.');
+    assert.equal(profile.publicPostCount, 2); assert.equal(profile.publicCommunityCount, 2);
+    assert.equal(Number.isNaN(Date.parse(profile.createdAt)), false);
+    assert.deepEqual(Object.keys(profile).sort(), ['bio', 'createdAt', 'displayName', 'id', 'isFollowing', 'publicCommunityCount', 'publicPostCount']);
+    const first = (await api.get(path + '/posts?limit=1&author=' + other.id + '&publicOnly=false&community=' + hidden).set('Cookie', cookie).expect(200)).body as ForumPage<ForumPostSummary>;
+    const last = (await api.get(path + '/posts').query({ limit: '1', before: first.nextCursor }).set('Cookie', cookie).expect(200)).body as ForumPage<ForumPostSummary>;
+    assert.equal(first.hasMore, true); assert.equal(last.hasMore, false);
+    assert.deepEqual([...first.items, ...last.items].map(item => item.id).sort(), [...ids].sort());
+    const communities = (await api.get(path + '/communities?limit=1').set('Cookie', cookie).expect(200)).body as ForumPage<Community>;
+    const next = (await api.get(path + '/communities').query({ limit: '1', before: communities.nextCursor }).set('Cookie', cookie).expect(200)).body as ForumPage<Community>;
+    assert.equal(communities.hasMore, true); assert.equal(next.hasMore, false);
+    assert.deepEqual([...communities.items, ...next.items].map(item => item.id).sort(), [owned, joined].sort());
+    if (!cookie) assert.equal(communities.items.every(item => item.membership === null && !item.isFavorite && !item.isFollowing), true);
+  }
+});
+
+test('abre perfiles de comentaristas, miembros y participantes registrados del chat sin atribuir invitados a una cuenta', async t => {
+  const { api, member } = await fixture(t);
+  const author = await member(); const commenter = await member(); const participant = await member(); const guest = await member(); const owner = await member();
+  const post = (await api.post('/api/posts').set('Origin', origin).set('Cookie', author.cookie).send(postInput()).expect(201)).body.post.id as string;
+  await api.post('/api/posts/' + post + '/replies').set('Origin', origin).set('Cookie', commenter.cookie).send({ body: 'Una respuesta pública.', requestId: randomUUID() }).expect(201);
+  await api.post('/api/communities').set('Origin', origin).set('Cookie', owner.cookie).send({ name: 'Comunidad sin publicaciones', description: 'Abierta para conversar.', requestId: randomUUID() }).expect(201);
+  await api.post('/api/messages').set('Origin', origin).set('Cookie', participant.cookie).send({ author: 'Invitado', body: 'Un saludo como miembro.', senderId: randomUUID(), requestId: randomUUID() }).expect(201);
+  await api.post('/api/messages').set('Origin', origin).send({ author: 'Ana', body: 'Un saludo como invitado.', senderId: guest.id, requestId: randomUUID() }).expect(201);
+  await api.post('/api/messages').set('Origin', origin).send({ author: 'Ana', body: 'Intento atribuir otra cuenta.', senderId: randomUUID(), requestId: randomUUID(), accountId: guest.id }).expect(400);
+  for (const person of [commenter, participant, owner]) {
+    const path = '/api/authors/' + person.id;
+    assert.equal((await api.get(path).expect(200)).body.publicPostCount, 0);
+    assert.equal((await api.get(path + '/posts').expect(200)).body.items.length, 0);
+  }
+  await api.get('/api/authors/' + guest.id).expect(404);
+  await api.get('/api/authors/' + commenter.id + '/posts?before=no-es-un-cursor').expect(400);
+  await api.get('/api/authors/' + owner.id + '/communities?limit=101').expect(400);
+});
+
+test('un perfil de actividad exclusivamente privada no se revela fuera de sus miembros ni revela contenido privado a ellos', async t => {
+  const { api, member, database } = await fixture(t);
+  const author = await member(); const peer = await member(); const outsider = await member();
+  const community = (await api.post('/api/communities').set('Origin', origin).set('Cookie', author.cookie).send({ name: 'Solo por invitación', description: 'Espacio privado.', visibility: 'private', requestId: randomUUID() }).expect(201)).body.community.id as string;
+  await database.query('INSERT INTO community_memberships(community_id,user_id) VALUES($1,$2)', [community, peer.id]);
+  await database.query('UPDATE communities SET member_count=member_count+1 WHERE id=$1', [community]);
+  await api.post('/api/posts').set('Origin', origin).set('Cookie', author.cookie).send({ ...postInput(), communityId: community }).expect(201);
+  const path = '/api/authors/' + author.id;
+  for (const suffix of ['', '/posts', '/communities']) {
+    await api.get(path + suffix).expect(404);
+    await api.get(path + suffix).set('Cookie', outsider.cookie).expect(404);
+    await api.get('/api/authors/' + randomUUID() + suffix).expect(404);
+    await api.get('/api/authors/no-es-uuid' + suffix).expect(400);
+  }
+  for (const cookie of [author.cookie, peer.cookie]) {
+    const profile = (await api.get(path).set('Cookie', cookie).expect(200)).body as ForumAuthorProfile;
+    assert.equal(profile.publicPostCount, 0); assert.equal(profile.publicCommunityCount, 0);
+    for (const suffix of ['/posts', '/communities']) assert.deepEqual((await api.get(path + suffix).set('Cookie', cookie).expect(200)).body, { items: [], hasMore: false, nextCursor: null });
+  }
 });

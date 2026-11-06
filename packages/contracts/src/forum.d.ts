@@ -4,7 +4,11 @@ import type { ForumCategory, ForumTag } from './taxonomy.js';
 import type { ForumDocument } from './forum-content.js';
 
 export interface ForumTopic { id: string; name: string; description: string }
-export interface ForumAuthor { id: string; displayName: string; avatarId?: string }
+export interface ForumAuthor { id: string; displayName: string; avatarId?: string; isFollowing?: boolean }
+export interface ForumAuthorProfile extends ForumAuthor {
+  bio: string; isFollowing: boolean; createdAt: string; publicPostCount: number; publicCommunityCount: number;
+}
+export interface FollowState { isFollowing: boolean }
 export interface ForumPostSummary {
   id: string; title: string; excerpt: string; topic: ForumTopic; author: ForumAuthor;
   replyCount: number; createdAt: string; lastActivityAt: string; community: CommunityRef | null; images: MediaImage[];

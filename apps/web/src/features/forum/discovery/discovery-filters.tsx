@@ -2,7 +2,8 @@ import { useEffect, useId, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useLocation } from 'react-router-dom'
 import type { ForumCategory, ForumTag } from '@messages/contracts'
-import { Check, ChevronLeft, ChevronRight, PanelLeft, Search, X } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, Compass, Cpu, FolderTree, GraduationCap, LayoutGrid, MessagesSquare, Palette, PanelLeft, Search, Tags, Wrench, X } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { useResource } from '../hooks/use-forum'
@@ -15,6 +16,12 @@ interface Props {
   resourceScope: string;
 }
 const searchable = (value: string) => value.normalize('NFD').replace(/\p{M}/gu, '').toLocaleLowerCase('es')
+const categoryIcons: Record<string, LucideIcon> = { general: MessagesSquare, tecnologia: Cpu, aprendizaje: GraduationCap, creatividad: Palette, proyectos: Wrench }
+function CategoryIcon({ category, categories }: { category: ForumCategory; categories: ForumCategory[] }) {
+  const root = categories.find(item => item.id === category.rootId) ?? category
+  const Icon = categoryIcons[root.slug] ?? FolderTree
+  return <Icon aria-hidden="true" />
+}
 function ResourceIssue({ resource }: { resource: FilterResource<unknown> }) {
   return <div className="discovery-filter-error"><p role="alert">{resource.error}</p><Button type="button" variant="ghost" className="h-11" onClick={resource.retry}>Reintentar</Button></div>
 }
@@ -26,12 +33,12 @@ function CategoryFilter({ query, categories, onCategory }: Pick<Props, 'query' |
   const selected = query.category || items.find(item => !item.parentId && item.slug === query.topic)?.id
   const parent = items.find(item => item.id === branch)
   const visible = search.trim() ? items.filter(item => searchable(item.name).includes(searchable(search.trim()))) : items.filter(item => item.parentId === branch).sort((a, b) => a.position - b.position)
-  return <section className="discovery-filter-section" aria-labelledby={id + '-heading'}><h3 id={id + '-heading'}>Temáticas</h3>
+  return <section className="discovery-filter-section" aria-labelledby={id + '-heading'}><h3 id={id + '-heading'}><FolderTree aria-hidden="true" />Temáticas</h3>
     <label className="discovery-filter-search"><Search aria-hidden="true" /><input type="search" aria-label="Buscar temáticas" placeholder="Buscar temática" value={search} onChange={event => setSearch(event.target.value)} maxLength={80} /></label>
-    <button type="button" className="discovery-filter-all" aria-pressed={!selected} onClick={() => { setBranch(null); setSearch(''); onCategory(null) }}>Todas las temáticas{!selected && <Check aria-hidden="true" />}</button>
+    <button type="button" className="discovery-filter-all" aria-pressed={!selected} onClick={() => { setBranch(null); setSearch(''); onCategory(null) }}><LayoutGrid aria-hidden="true" /><span>Todas las temáticas</span>{!selected && <Check aria-hidden="true" />}</button>
     {parent && !search && <div className="discovery-filter-branch"><button type="button" className="discovery-branch-back" onClick={() => setBranch(parent.parentId)}><ChevronLeft aria-hidden="true" />{parent.parentId ? 'Volver un nivel' : 'Ver temáticas'}</button><span>{parent.name}</span></div>}
     {categories.loading ? <p className="forum-hint" role="status">Cargando temáticas…</p> : categories.error ? <ResourceIssue resource={categories} /> : <div className="discovery-category-list">{visible.slice(0, 30).map(item => <div className="discovery-category-row" key={item.id}>
-      <button type="button" className="discovery-category-select" aria-pressed={selected === item.id} onClick={() => onCategory(item.id)}><span>{item.name}{search && item.parentId && <small>{item.path.slice(0, -1).map(id => items.find(category => category.id === id)?.name).join(' / ')}</small>}</span>{selected === item.id && <Check aria-hidden="true" />}</button>
+      <button type="button" className="discovery-category-select" aria-pressed={selected === item.id} onClick={() => onCategory(item.id)}><CategoryIcon category={item} categories={items} /><span>{item.name}{search && item.parentId && <small>{item.path.slice(0, -1).map(id => items.find(category => category.id === id)?.name).join(' / ')}</small>}</span>{selected === item.id && <Check aria-hidden="true" />}</button>
       {items.some(child => child.parentId === item.id) && <button type="button" className="discovery-category-expand" title={'Explorar ' + item.name} aria-label={'Explorar subtemáticas de ' + item.name} onClick={() => { setBranch(item.id); setSearch('') }}><ChevronRight aria-hidden="true" /></button>}
     </div>)}{!visible.length && <p className="forum-hint">No encontramos esa temática.</p>}{visible.length > 30 && <p className="forum-hint">Afina la búsqueda para ver más coincidencias.</p>}</div>}
     {selected && <p className="discovery-filter-note">Incluye las subtemáticas de tu selección.</p>}
@@ -46,7 +53,7 @@ function TagFilter({ query, tags, selectedTags, onTag, resourceScope }: Pick<Pro
   const searched = useResource<ForumTag[]>(search ? 'taxonomy/tags?limit=30&search=' + encodeURIComponent(search) : null, resourceScope)
   const resource = search ? searched : tags
   const choices = [...(selectedTags.data ?? []), ...(resource.data ?? [])].filter((item, index, all) => all.findIndex(other => other.id === item.id) === index)
-  return <section className="discovery-filter-section" aria-labelledby={id + '-heading'}><h3 id={id + '-heading'}>Etiquetas</h3><label className="discovery-filter-search"><Search aria-hidden="true" /><input type="search" aria-label="Buscar etiquetas" value={draft} onChange={event => setDraft(event.target.value)} placeholder="Buscar etiqueta" maxLength={64} /></label>
+  return <section className="discovery-filter-section" aria-labelledby={id + '-heading'}><h3 id={id + '-heading'}><Tags aria-hidden="true" />Etiquetas</h3><label className="discovery-filter-search"><Search aria-hidden="true" /><input type="search" aria-label="Buscar etiquetas" value={draft} onChange={event => setDraft(event.target.value)} placeholder="Buscar etiqueta" maxLength={64} /></label>
     {resource.loading && <p className="forum-hint" role="status">Cargando etiquetas…</p>}{resource.error && <ResourceIssue resource={resource} />}
     <div className="discovery-tag-options">{choices.map(tag => <button type="button" key={tag.id} aria-pressed={query.tags.includes(tag.id)} onClick={() => {
       if (!query.tags.includes(tag.id) && query.tags.length >= 8) { setError('Puedes combinar hasta ocho etiquetas. Quita una para elegir otra.'); return }
@@ -61,7 +68,7 @@ function FilterPanel(props: Props) {
   return <div className="discovery-filter-panel" data-discovery-control><CategoryFilter {...props} /><TagFilter {...props} /></div>
 }
 export function DiscoveryFilters({ navigation, ...props }: Props & { navigation?: ReactNode }) {
-  return <aside className="discovery-sidebar" aria-label="Explorar y filtrar publicaciones"><div className="discovery-sidebar-inner">{navigation}<h2>Explorar</h2><FilterPanel {...props} /></div></aside>
+  return <aside className="discovery-sidebar" aria-label="Explorar y filtrar publicaciones"><div className="discovery-sidebar-inner">{navigation}<h2 className="discovery-explore-title"><Compass aria-hidden="true" />Explorar</h2><FilterPanel {...props} /></div></aside>
 }
 export function MobileDiscoveryFilters({ navigation, ...props }: Props & { navigation?: (close: () => void) => ReactNode }) {
   const location = useLocation()
@@ -79,7 +86,7 @@ export function MobileDiscoveryFilters({ navigation, ...props }: Props & { navig
   return <Sheet open={open} onOpenChange={next => { if (next) { setOpenedQuery(props.query.path); setOpenedLocation(currentLocation) } setOpen(next) }}><SheetTrigger asChild><Button type="button" variant="ghost" className="platform-explore-trigger h-11 w-11" aria-label={count ? 'Abrir explorador, ' + count + ' filtros seleccionados' : 'Abrir explorador'} title="Explorar"><PanelLeft aria-hidden="true" /></Button></SheetTrigger><SheetContent className="discovery-filter-sheet platform-filter-sheet" side="left" onCloseAutoFocus={event => {
     if (openedQuery !== props.query.path || openedLocation !== currentLocation) { event.preventDefault(); const results = document.getElementById('discovery-heading') ?? document.querySelector<HTMLElement>('main'); results?.focus({ preventScroll: true }); results?.scrollIntoView({ block: 'start' }) }
     else if (window.matchMedia('(min-width: 1024px)').matches) { event.preventDefault(); document.querySelector<HTMLElement>('.discovery-sidebar [aria-pressed="true"]')?.focus({ preventScroll: true }) }
-  }}><SheetHeader><SheetTitle>Explorar</SheetTitle><SheetDescription className="sr-only">Navega por Foris y encuentra publicaciones por temática y etiquetas.</SheetDescription></SheetHeader><div className="discovery-filter-sheet-body">{navigation?.(() => setOpen(false))}<FilterPanel {...props} /></div><SheetFooter><SheetClose asChild><Button type="button" className="h-11">Continuar</Button></SheetClose>{props.query.filtered && <Button type="button" variant="ghost" className="h-11" onClick={props.onClear}>Quitar filtros</Button>}</SheetFooter></SheetContent></Sheet>
+  }}><SheetHeader><SheetTitle className="discovery-explore-title"><Compass aria-hidden="true" />Explorar</SheetTitle><SheetDescription className="sr-only">Navega por Foris y encuentra publicaciones por temática y etiquetas.</SheetDescription></SheetHeader><div className="discovery-filter-sheet-body">{navigation?.(() => setOpen(false))}<FilterPanel {...props} /></div><SheetFooter><SheetClose asChild><Button type="button" className="h-11">Continuar</Button></SheetClose>{props.query.filtered && <Button type="button" variant="ghost" className="h-11" onClick={props.onClear}>Quitar filtros</Button>}</SheetFooter></SheetContent></Sheet>
 }
 export function ActiveDiscoveryFilters(props: Props) {
   const { query } = props
