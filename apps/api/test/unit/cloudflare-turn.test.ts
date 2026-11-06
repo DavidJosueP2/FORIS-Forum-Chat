@@ -32,7 +32,7 @@ test('solo se entregan credenciales temporales y URLs relay utilizables por el n
     assert.equal(new Headers(options?.headers).get('Authorization'), `Bearer ${turn.apiToken}`);
     assert.deepEqual(JSON.parse(String(options?.body)), { ttl: 3600 });
     assert.equal(options?.redirect, 'error');
-    assert.equal(options?.cache, 'no-store');
+    assert.equal(new Headers(options?.headers).get('Cache-Control'), 'no-store');
     assert.ok(options?.signal);
     return Response.json({ iceServers: [
       { urls: ['stun:stun.cloudflare.com:3478'] },

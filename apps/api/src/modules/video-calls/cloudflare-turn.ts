@@ -34,11 +34,10 @@ export async function cloudflareTurnServers(config: CloudflareTurnConfig, reques
   try {
     const response = await request(`https://rtc.live.cloudflare.com/v1/turn/keys/${config.keyId}/credentials/generate-ice-servers`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${config.apiToken}`, 'Content-Type': 'application/json' },
+      headers: { Authorization: `Bearer ${config.apiToken}`, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
       body: JSON.stringify({ ttl: 3600 }),
       signal: AbortSignal.timeout(8000),
       redirect: 'error',
-      cache: 'no-store',
     });
     if (!response.ok) {
       await response.body?.cancel();
