@@ -25,6 +25,14 @@ export function readMediaConfig(env: NodeJS.ProcessEnv, root: string): MediaConf
   const secretAccessKey = env.S3_SECRET_ACCESS_KEY || '';
   if (driver === 's3') {
     if (!bucket || !endpoint || !accessKeyId || !secretAccessKey) throw new Error('Completa S3_BUCKET, S3_ENDPOINT, S3_ACCESS_KEY_ID y S3_SECRET_ACCESS_KEY en el entorno privado.');
+    if (provider === 'r2') {
+      if (!/^[a-f0-9]{32}$/iu.test(accessKeyId)) {
+        throw new Error('S3_ACCESS_KEY_ID no tiene formato de R2: copia el Access Key ID de 32 caracteres hexadecimales desde R2 > Manage API tokens.');
+      }
+      if (!/^[a-f0-9]{64}$/iu.test(secretAccessKey)) {
+        throw new Error('S3_SECRET_ACCESS_KEY no tiene formato de R2: copia el Secret Access Key de 64 caracteres hexadecimales generado para la API S3.');
+      }
+    }
     if (!/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/u.test(bucket) || !/^[a-z0-9-]{1,40}$/u.test(region)) throw new Error('El bucket o la región S3 no son válidos.');
     const url = new URL(endpoint);
     if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash || url.pathname !== '/') throw new Error('S3_ENDPOINT debe ser un origen HTTPS.');

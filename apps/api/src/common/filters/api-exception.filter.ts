@@ -1,23 +1,34 @@
 import { Catch, Inject } from '@nestjs/common';
 import type { ArgumentsHost, ExceptionFilter } from '@nestjs/common';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
+import { randomUUID } from 'node:crypto';
 import { APP_LOGGER } from '../../config/app-config.js';
 import type { AppLogger } from '../../config/app-config.js';
 import { publicError } from '../errors/http-error.js';
+import { errorDiagnostics } from '../errors/error-diagnostics.js';
 
 @Catch()
 export class ApiExceptionFilter implements ExceptionFilter {
   constructor(@Inject(APP_LOGGER) private readonly logger: AppLogger) {}
 
   catch(error: unknown, host: ArgumentsHost): void {
-    const response = host.switchToHttp().getResponse<Response>();
-    if (response.headersSent) { response.end(); return; }
+    const http = host.switchToHttp();
+    const request = http.getRequest<Request>();
+    const response = http.getResponse<Response>();
     const safe = publicError(error);
-    if (safe.status === 503) {
-      const code = typeof error === 'object' && error !== null && 'code' in error && typeof error.code === 'string' && /^[A-Z0-9]{5}$/u.test(error.code) ? error.code : undefined;
-      // Solo SQLSTATE: omitir mensajes, consultas y valores que puedan contener datos privados.
-      this.logger.error('request_failed', { type: error instanceof Error ? error.name : 'UnknownError', ...(code ? { code } : {}) });
-    }
+    const requestId = randomUUID();
+    // El path de Express excluye la consulta: códigos OAuth y tickets no entran al log.
+    const route: unknown = request.route?.path;
+    const details = {
+      requestId, method: request.method,
+      path: typeof route === 'string' ? request.baseUrl + route : request.path,
+      status: safe.status, code: safe.code, message: safe.message,
+      error: errorDiagnostics(error),
+    };
+    if (safe.status >= 500) this.logger.error('request_failed', details);
+    else this.logger.info('request_rejected', details);
+    if (response.headersSent) { response.end(); return; }
+    response.set('X-Request-Id', requestId);
     response.status(safe.status).json({ error: { code: safe.code, message: safe.message } });
   }
 }
