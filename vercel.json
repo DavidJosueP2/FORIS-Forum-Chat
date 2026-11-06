@@ -6,7 +6,8 @@
       "root": "apps/api",
       "framework": "nestjs",
       "entrypoint": "src/main.ts",
-      "outputDirectory": "."
+      "buildCommand": "npm run build:vercel",
+      "outputDirectory": "dist/vercel"
     },
     "web": {
       "root": "apps/web",
