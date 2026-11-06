@@ -1,7 +1,18 @@
 import type { DatabasePool, Migration } from '../database.types.js';
 import { createMessages } from './001-create-messages.js';
+import { createAuth } from './002-create-auth.js';
+import { createForum } from './003-create-forum.js';
+import { createCommunities } from './004-create-communities.js';
+import { createMedia } from './005-create-media.js';
+import { createVideoCalls } from './006-create-video-calls.js';
+import { communityPrivacyAndPortraits } from './007-community-privacy-and-portraits.js';
+import { postDocuments } from './008-post-documents.js';
+import { postEditing } from './009-post-editing.js';
+import { forumDiscussion } from './010-forum-discussion.js';
+import { following } from './011-following.js';
+import { communityMembershipFeed } from './012-community-membership-feed.js';
 
-const migrations: readonly Migration[] = [createMessages];
+const migrations: readonly Migration[] = [createMessages, createAuth, createForum, createCommunities, createMedia, createVideoCalls, communityPrivacyAndPortraits, postDocuments, postEditing, forumDiscussion, following, communityMembershipFeed];
 
 export async function runMigrations(pool: DatabasePool): Promise<void> {
   const client = await pool.connect();

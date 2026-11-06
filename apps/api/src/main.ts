@@ -9,7 +9,7 @@ async function bootstrap() {
 try {
   await bootstrap();
 } catch (error) {
-  console.error('No se pudo iniciar Mensajes. Comprueba PostgreSQL y la configuración de .env.');
+  console.error('No se pudo iniciar Foris. Comprueba PostgreSQL y la configuración de .env.');
   console.error(error instanceof Error ? ('code' in error ? error.code : error.message) : 'Error desconocido');
   process.exitCode = 1;
 }

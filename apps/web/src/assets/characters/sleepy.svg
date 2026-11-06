@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none" role="img" aria-labelledby="sleepy-title sleepy-desc">
+  <title id="sleepy-title">Lento, sueño</title>
+  <desc id="sleepy-desc">Una almohadita color cacao que descansa inclinada, con dos ojos casi cerrados y transparentes.</desc>
+  <defs>
+    <mask id="sleepy-eyes" maskUnits="userSpaceOnUse" x="0" y="0" width="160" height="160">
+      <rect width="160" height="160" fill="#fff"/>
+      <g fill="#000"><path d="M48 84Q59 88 70 84M90 84Q101 88 112 84" fill="none" stroke="#000" stroke-width="7" stroke-linecap="round"/></g>
+    </mask>
+  </defs>
+  <g transform="rotate(-5 80 80)"><g fill="#A67858" mask="url(#sleepy-eyes)"><rect x="20" y="35" width="120" height="96" rx="43"/></g></g>
+</svg>

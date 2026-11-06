@@ -8,6 +8,7 @@ export interface MessageRow {
   sender_id: string;
   request_id: string;
   created_at: Date | string;
+  user_id?: string | null;
 }
 
 export interface SaveResult {
@@ -17,5 +18,7 @@ export interface SaveResult {
 
 export interface MessageRepositoryPort {
   list(page: Pagination): Promise<MessagePage>;
-  save(input: MessageInput): Promise<SaveResult>;
+  save(input: StoredMessageInput): Promise<SaveResult>;
 }
+
+export interface StoredMessageInput extends MessageInput { accountId?: string | null }

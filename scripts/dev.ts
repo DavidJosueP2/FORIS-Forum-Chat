@@ -3,9 +3,12 @@ import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
+const target = process.argv[2] ?? 'all';
+if (!['all', 'api', 'web'].includes(target)) throw new Error('Elige all, api o web para iniciar el desarrollo.');
+const environment = { ...process.env, NODE_ENV: 'development' };
 const children = [
-  spawn(process.execPath, [resolve(root, 'node_modules/@nestjs/cli/bin/nest.js'), 'start', '--builder', 'tsc', '--watch'], { cwd: resolve(root, 'apps/api'), stdio: 'inherit', windowsHide: true }),
-  spawn(process.execPath, [resolve(root, 'node_modules/vite/bin/vite.js')], { cwd: resolve(root, 'apps/web'), stdio: 'inherit', windowsHide: true }),
+  ...(target !== 'web' ? [spawn(process.execPath, [resolve(root, 'node_modules/@nestjs/cli/bin/nest.js'), 'start', '--builder', 'tsc', '--watch'], { cwd: resolve(root, 'apps/api'), env: environment, stdio: 'inherit', windowsHide: true })] : []),
+  ...(target !== 'api' ? [spawn(process.execPath, [resolve(root, 'node_modules/vite/bin/vite.js'), '--mode', 'development'], { cwd: resolve(root, 'apps/web'), env: environment, stdio: 'inherit', windowsHide: true })] : []),
 ];
 
 let stopping = false;

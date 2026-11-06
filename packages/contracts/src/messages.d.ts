@@ -7,6 +7,8 @@ export interface MessageInput {
 }
 
 export interface Message extends MessageInput {
+  /** Asignado únicamente por el servidor cuando el envío tiene una sesión válida. */
+  accountId?: string | null;
   // PostgreSQL BIGINT se transporta como texto para conservar su precisión.
   id: string;
   createdAt: string;

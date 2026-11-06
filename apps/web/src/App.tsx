@@ -1,121 +1,43 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { ForumShell } from '@/features/forum/components/forum-shell'
+import { ChatHome } from '@/features/chat/components/chat-home'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { LoginPage } from '@/features/account/pages/login-page'
+import { ProfilePage } from '@/features/account/pages/profile-page'
+import { PublicProfilePage } from '@/features/account/pages/public-profile-page'
+import { ForumPage } from '@/features/forum/pages/forum-page'
+import { CreatePostPage } from '@/features/forum/pages/create-post-page'
+import { EditPostPage } from '@/features/forum/pages/edit-post-page'
+import { PostPage } from '@/features/forum/pages/post-page'
+import { RouteFocus } from '@/components/route-focus'
+import { CommunitiesPage } from '@/features/communities/pages/communities-page'
+import { CommunityPage } from '@/features/communities/pages/community-page'
+import { CreateCommunityPage } from '@/features/communities/pages/create-community-page'
+import { NotificationsPage } from '@/features/communities/pages/notifications-page'
+import { InvitationPage } from '@/features/communities/pages/invitation-page'
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+    <BrowserRouter>
+      <RouteFocus />
+      <Routes>
+        <Route element={<ForumShell />}>
+          <Route path="/" element={<ForumPage />} />
+          <Route path="/chat" element={<ChatHome />} />
+          <Route path="/publicar" element={<CreatePostPage />} />
+          <Route path="/publicaciones/:postId" element={<PostPage />} />
+          <Route path="/publicaciones/:postId/editar" element={<EditPostPage />} />
+          <Route path="/comunidades" element={<CommunitiesPage />} />
+          <Route path="/comunidades/crear" element={<CreateCommunityPage />} />
+          <Route path="/comunidades/:communityId" element={<CommunityPage />} />
+          <Route path="/notificaciones" element={<NotificationsPage />} />
+          <Route path="/invitaciones/:token" element={<InvitationPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/personas/:userId" element={<PublicProfilePage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   )
 }
 

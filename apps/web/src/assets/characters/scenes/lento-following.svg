@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none" role="img" aria-labelledby="lento-following-title lento-following-desc">
+  <title id="lento-following-title">Lento espera las próximas publicaciones</title>
+  <desc id="lento-following-desc">Una postura del personaje original, con color sólido y ojos recortados en transparente.</desc>
+  <defs>
+    <mask id="lento-following-eyes" maskUnits="userSpaceOnUse" x="0" y="0" width="160" height="160">
+      <rect width="160" height="160" fill="#fff"/>
+      <g fill="#000"><path d="M48 89Q59 92 70 89M90 89Q101 92 112 89" fill="none" stroke="#000" stroke-width="7" stroke-linecap="round"/></g>
+    </mask>
+  </defs>
+  <g transform="rotate(-8 80 80)"><g fill="#A67858" mask="url(#lento-following-eyes)"><rect x="20" y="42" width="120" height="90" rx="42"/></g></g>
+</svg>

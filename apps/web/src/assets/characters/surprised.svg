@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none" role="img" aria-labelledby="surprised-title surprised-desc">
+  <title id="surprised-title">Oh, sorpresa</title>
+  <desc id="surprised-desc">Una cápsula lavanda erguida, con dos grandes ojos ovalados recortados en transparente.</desc>
+  <defs>
+    <mask id="surprised-eyes" maskUnits="userSpaceOnUse" x="0" y="0" width="160" height="160">
+      <rect width="160" height="160" fill="#fff"/>
+      <g fill="#000"><ellipse cx="61" cy="77" rx="11" ry="16"/><ellipse cx="99" cy="77" rx="11" ry="16"/></g>
+    </mask>
+  </defs>
+  <g fill="#A488D5" mask="url(#surprised-eyes)"><rect x="30" y="18" width="100" height="124" rx="48"/></g>
+</svg>

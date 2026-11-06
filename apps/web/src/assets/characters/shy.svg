@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none" role="img" aria-labelledby="shy-title shy-desc">
+  <title id="shy-title">Pipa, timidez</title>
+  <desc id="shy-desc">Un corazón rosa de lóbulos equilibrados, con dos pequeños ojos transparentes y tímidos.</desc>
+  <defs>
+    <mask id="shy-eyes" maskUnits="userSpaceOnUse" x="0" y="0" width="160" height="160">
+      <rect width="160" height="160" fill="#fff"/>
+      <g fill="#000"><rect x="60" y="80" width="12" height="18" rx="6"/><rect x="88" y="80" width="12" height="18" rx="6"/></g>
+    </mask>
+  </defs>
+  <g fill="#E989AA" mask="url(#shy-eyes)"><path d="M76 135C65 127 24 98 24 63C24 46 36 34 51 34C65 34 74 42 80 51C86 42 95 34 109 34C124 34 136 46 136 63C136 98 95 127 84 135Q80 138 76 135Z"/></g>
+</svg>

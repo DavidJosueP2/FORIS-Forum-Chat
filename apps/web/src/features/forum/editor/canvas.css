@@ -1,0 +1,89 @@
+.forum-main.canvas-main { max-width: 1040px; padding-block: 20px 48px; }
+.post-canvas { width: 100%; min-width: 0; --canvas-tag-background: #c5eee6; --canvas-tag-foreground: #134e46; --canvas-tag-hover: #afe4da; }
+.dark .post-canvas { --canvas-tag-background: #164e46; --canvas-tag-foreground: #c5eee6; --canvas-tag-hover: #21685c; }
+.canvas-workspace { min-width: 0; margin: 0; padding: 0; border: 0; }
+.canvas-header, .canvas-heading, .canvas-header-actions { display: flex; align-items: center; gap: 12px; }
+.canvas-header { justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.canvas-heading { gap: 8px; min-width: 0; }
+.canvas-companion { width: 48px; height: 48px; }
+.canvas-heading h1 { min-width: 0; overflow-wrap: anywhere; font-family: var(--font-heading); font-size: 1.25rem; line-height: 1.4; font-weight: 600; }
+.canvas-header-actions { gap: 4px; flex-wrap: wrap; }
+.canvas-draft-status { min-height: 32px; display: flex; align-items: center; gap: 6px; color: var(--muted-foreground); font-size: .75rem; line-height: 1.5; margin: 4px 0 16px; }
+.canvas-draft-status svg { width: 14px; height: 14px; flex-shrink: 0; }
+.canvas-publish-error { margin-block: 0 16px; }
+.post-canvas .canvas-title { display: block; width: 100%; min-height: 52px; field-sizing: content; background: transparent; color: var(--foreground); border: 0; border-radius: 0; box-shadow: none; padding: 8px 0; margin-block: 0 16px; resize: vertical; font-family: var(--font-heading); font-size: 2rem; line-height: 1.4; font-weight: 600; letter-spacing: -.025em; overflow-wrap: anywhere; }
+.canvas-title::placeholder { color: var(--muted-foreground); opacity: 1; }
+.canvas-toolbar-fieldset { position: sticky; top: 0; z-index: 20; padding-block: 8px; background: var(--background); min-width: 0; }
+.canvas-toolbar { display: flex; align-items: center; flex-wrap: wrap; padding: 4px; gap: 2px; border-radius: 14px; background: var(--secondary); }
+.canvas-toolbar .canvas-tool { width: 44px; height: 44px; flex-shrink: 0; color: var(--foreground); }
+.canvas-toolbar [aria-pressed="true"], .canvas-menu [data-active="true"] { background: var(--primary); color: var(--primary-foreground); }
+.canvas-toolbar .canvas-tool:hover:not(:disabled), .canvas-toolbar .canvas-text-tool:hover:not(:disabled) { background: var(--accent); color: var(--foreground); }
+.canvas-text-tool { min-height: 44px; padding-inline: 14px; }
+.canvas-toolbar svg, .canvas-setting svg { width: 18px; height: 18px; flex-shrink: 0; }
+.canvas-toolbar-row { display: flex; align-items: center; flex-wrap: wrap; width: 100%; gap: 2px; }
+.canvas-toolbar-space { flex: 1; }
+.canvas-menu [role="menuitem"] { min-height: 44px; cursor: pointer; }
+.canvas-editor-content { min-width: 0; }
+.canvas-writing, .canvas-preview { min-height: 360px; padding-block: 20px 32px; }
+.canvas-writing:focus-visible { outline-offset: 6px; }
+.canvas-writing p.is-editor-empty:first-child::before { content: attr(data-placeholder); color: var(--muted-foreground); float: left; height: 0; pointer-events: none; }
+.canvas-writing .ProseMirror-gapcursor::after { border-color: var(--foreground); }
+.canvas-image-node { white-space: normal; }
+.canvas-image-actions { display: flex; align-items: flex-start; gap: 8px; margin-top: 8px; font-size: .875rem; line-height: 1.6; }
+.canvas-image-actions [data-drag-handle] { display: flex; align-items: center; min-height: 44px; cursor: grab; }
+.canvas-image-actions [data-drag-handle] svg { width: 18px; height: 18px; }
+.canvas-image-actions details { flex: 1; min-width: 0; }
+.canvas-image-actions summary { cursor: pointer; min-height: 44px; padding-block: 10px; }
+.canvas-image-actions label { display: grid; gap: 6px; margin-block: 12px; }
+.canvas-image-actions input, .canvas-popover input:not([type="checkbox"]) { width: 100%; min-height: 44px; border-radius: 10px; background: var(--secondary); color: var(--foreground); padding: 10px 12px; font-size: 1rem; }
+.canvas-footer { padding-block: 20px 8px; }
+.canvas-settings { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0; }
+.canvas-settings .canvas-setting { min-height: 44px; max-width: 100%; padding-inline: 16px; white-space: normal; text-align: left; line-height: 1.5; }
+.canvas-footer-notes { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; margin-block: 16px; color: var(--muted-foreground); font-size: .875rem; line-height: 1.8; }
+.canvas-popover { width: min(360px, calc(100vw - 32px)); padding: 16px; gap: 12px; background: var(--popover); color: var(--foreground); }
+.canvas-popover label { font-size: .875rem; line-height: 1.6; font-weight: 600; }
+.canvas-link-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.canvas-link-heading label { min-width: 0; }
+.canvas-search { display: flex; align-items: center; gap: 8px; }
+.canvas-search svg { width: 18px; height: 18px; flex-shrink: 0; }
+.canvas-breadcrumbs { display: flex; flex-wrap: wrap; align-items: center; font-size: .75rem; line-height: 1.5; }
+.canvas-breadcrumbs span { display: inline-flex; align-items: center; }
+.canvas-breadcrumbs svg { width: 12px; height: 12px; flex-shrink: 0; }
+.canvas-breadcrumbs button { padding: 10px 6px; min-height: 44px; text-align: left; cursor: pointer; }
+.canvas-breadcrumbs [aria-current] { font-weight: 600; }
+.canvas-choice-list { max-height: min(360px, 45dvh); overflow-y: auto; overscroll-behavior: contain; scrollbar-color: var(--muted-foreground) var(--secondary); }
+.canvas-choice-list p { padding: 12px 4px; line-height: 1.7; }
+.canvas-choice-list > button, .canvas-category-row > button { display: flex; align-items: center; gap: 10px; min-height: 44px; width: 100%; padding: 10px 12px; text-align: left; border-radius: 10px; cursor: pointer; overflow-wrap: anywhere; line-height: 1.6; }
+.canvas-choice-list button:hover { background: var(--secondary); }
+.canvas-choice-list button[aria-pressed="true"] { background: var(--accent); }
+.canvas-choice-list button > span { flex: 1; min-width: 0; }
+.canvas-choice-list small { display: block; font-size: .75rem; color: var(--muted-foreground); line-height: 1.6; }
+.canvas-choice-list svg { width: 18px; height: 18px; flex-shrink: 0; }
+.canvas-category-row { display: flex; align-items: stretch; gap: 4px; }
+.canvas-category-row > button:last-child:not(:first-child) { flex: 0 0 44px; width: 44px; justify-content: center; padding: 10px; }
+.canvas-tag { display: inline-flex; align-items: center; min-height: 44px; max-width: 100%; background: var(--canvas-tag-background); color: var(--canvas-tag-foreground); border-radius: 999px; padding-left: 16px; font-size: .875rem; line-height: 1.5; overflow-wrap: anywhere; }
+.canvas-tag button { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 44px; height: 44px; border-radius: 999px; cursor: pointer; }
+.canvas-tag button:hover { background: var(--canvas-tag-hover); }
+.canvas-tag svg { width: 14px; height: 14px; }
+.canvas-new-tag { height: auto; min-height: 44px; white-space: normal; overflow-wrap: anywhere; }
+.canvas-inline-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.canvas-uploads { padding-block: 8px 12px; font-size: .875rem; line-height: 1.8; }
+.canvas-uploads > div { padding: 12px 0; }
+.canvas-uploads p { overflow-wrap: anywhere; }
+.canvas-uploads p > span { display: block; }
+.canvas-fixed-community { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; max-width: 100%; padding: 10px 16px; border-radius: 999px; background: var(--secondary); font-size: .875rem; overflow-wrap: anywhere; }
+.canvas-fixed-community svg { width: 18px; height: 18px; flex-shrink: 0; }
+.canvas-version-conflict { display: grid; justify-items: start; gap: 12px; padding-block: 12px 20px; font-size: .875rem; line-height: 1.8; }
+@media (max-width: 767px) {
+  .forum-main.canvas-main { padding-block: 16px 32px; }
+  .canvas-header { gap: 8px; }
+  .canvas-heading h1 { font-size: 1.25rem; }
+  .canvas-header-actions { width: 100%; justify-content: flex-end; }
+  .canvas-draft-status { margin-bottom: 12px; }
+  .post-canvas .canvas-title { font-size: 1.5rem; min-height: 48px; margin-bottom: 8px; }
+  .canvas-toolbar { padding: 2px; }
+  .canvas-text-tool { padding-inline: 10px; }
+  .canvas-toolbar-space { display: none; }
+  .canvas-writing, .canvas-preview { min-height: 280px; padding-top: 16px; }
+  .canvas-footer-notes { display: grid; }
+}

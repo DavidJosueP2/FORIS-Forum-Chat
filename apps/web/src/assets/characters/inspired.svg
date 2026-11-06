@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none" role="img" aria-labelledby="inspired-title inspired-desc">
+  <title id="inspired-title">Chispa, inspiración</title>
+  <desc id="inspired-desc">Una estrella dorada de cinco puntas redondeadas, con dos ojos transparentes llenos de atención.</desc>
+  <defs>
+    <mask id="inspired-eyes" maskUnits="userSpaceOnUse" x="0" y="0" width="160" height="160">
+      <rect width="160" height="160" fill="#fff"/>
+      <g fill="#000"><rect x="61" y="68" width="12" height="24" rx="6"/><rect x="87" y="68" width="12" height="24" rx="6"/></g>
+    </mask>
+  </defs>
+  <g fill="#ECAF38" mask="url(#inspired-eyes)"><path d="M80 24Q84 24 88 34L101 58L129 62Q143 64 132 74L112 94L117 122Q120 136 108 130L80 116L52 130Q40 136 43 122L48 94L28 74Q17 64 31 62L59 58L72 34Q76 24 80 24Z"/></g>
+</svg>

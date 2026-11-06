@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none" role="img" aria-labelledby="thoughtful-title thoughtful-desc">
+  <title id="thoughtful-title">Hilo, reflexión</title>
+  <desc id="thoughtful-desc">Un triángulo color tinta de esquinas suaves, con los ojos transparentes mirando hacia arriba.</desc>
+  <defs>
+    <mask id="thoughtful-eyes" maskUnits="userSpaceOnUse" x="0" y="0" width="160" height="160">
+      <rect width="160" height="160" fill="#fff"/>
+      <g fill="#000"><rect x="57" y="66" width="13" height="25" rx="6.5"/><rect x="88" y="58" width="13" height="27" rx="6.5"/></g>
+    </mask>
+  </defs>
+  <g fill="#555D72" mask="url(#thoughtful-eyes)"><path d="M67 28C73 18 87 18 93 28L139 108C146 120 138 134 124 134H36C22 134 14 120 21 108Z"/></g>
+</svg>

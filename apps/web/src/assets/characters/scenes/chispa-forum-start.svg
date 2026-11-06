@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none" role="img" aria-labelledby="chispa-forum-start-title chispa-forum-start-desc">
+  <title id="chispa-forum-start-title">Chispa abre espacio a la primera publicación</title>
+  <desc id="chispa-forum-start-desc">Una postura del personaje original, con color sólido y ojos recortados en transparente.</desc>
+  <defs>
+    <mask id="chispa-forum-start-eyes" maskUnits="userSpaceOnUse" x="0" y="0" width="160" height="160">
+      <rect width="160" height="160" fill="#fff"/>
+      <g fill="#000"><rect x="62" y="67" width="12" height="25" rx="6"/><rect x="89" y="72" width="12" height="23" rx="6"/></g>
+    </mask>
+  </defs>
+  <g transform="rotate(8 80 80)"><g fill="#ECAF38" mask="url(#chispa-forum-start-eyes)"><path d="M80 24Q84 24 88 34L101 58L129 62Q143 64 132 74L112 94L117 122Q120 136 108 130L80 116L52 130Q40 136 43 122L48 94L28 74Q17 64 31 62L59 58L72 34Q76 24 80 24Z"/></g></g>
+</svg>

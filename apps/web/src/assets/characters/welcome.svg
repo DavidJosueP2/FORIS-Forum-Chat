@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none" role="img" aria-labelledby="welcome-title welcome-desc">
+  <title id="welcome-title">Mimo, bienvenida y saludo</title>
+  <desc id="welcome-desc">Una postura amigable del personaje de Foris, con color sólido y ojos transparentes.</desc>
+  <defs>
+    <mask id="welcome-eyes" maskUnits="userSpaceOnUse" x="0" y="0" width="160" height="160">
+      <rect width="160" height="160" fill="#fff"/>
+      <g fill="#000"><rect x="53" y="73" width="14" height="28" rx="7"/><rect x="85" y="69" width="14" height="29" rx="7"/></g>
+    </mask>
+  </defs>
+  <g transform="rotate(-3 80 80)"><g fill="#18A999" mask="url(#welcome-eyes)"><path d="M121 89Q143 78 135 42" fill="none" stroke="#18A999" stroke-width="14" stroke-linecap="round"/><rect x="22" y="36" width="108" height="102" rx="38"/></g></g>
+</svg>

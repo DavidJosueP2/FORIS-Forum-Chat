@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none" role="img" aria-labelledby="happy-title happy-desc">
+  <title id="happy-title">Brío, alegría</title>
+  <desc id="happy-desc">Un círculo naranja con dos ojos curvos recortados que sonríen con alegría.</desc>
+  <defs>
+    <mask id="happy-eyes" maskUnits="userSpaceOnUse" x="0" y="0" width="160" height="160">
+      <rect width="160" height="160" fill="#fff"/>
+      <g fill="#000"><path d="M48 82Q59 64 70 82M90 82Q101 64 112 82" fill="none" stroke="#000" stroke-width="8" stroke-linecap="round"/></g>
+    </mask>
+  </defs>
+  <g fill="#F47B45" mask="url(#happy-eyes)"><circle cx="80" cy="81" r="58"/></g>
+</svg>

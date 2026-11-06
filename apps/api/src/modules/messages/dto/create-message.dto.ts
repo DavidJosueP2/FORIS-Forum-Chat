@@ -5,4 +5,5 @@ export class CreateMessageDto implements MessageInput {
   declare body: string;
   declare senderId: string;
   declare requestId: string;
+  declare accountId?: string | null;
 }

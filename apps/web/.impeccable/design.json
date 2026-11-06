@@ -1,0 +1,288 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-06T04:25:37Z",
+  "title": "Design System: Foris",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Carbón vegetal",
+        "canonical": "#30362e",
+        "tonalRamp": [
+          "#181b16",
+          "#232820",
+          "#30362e",
+          "#5f6659",
+          "#adb5a4",
+          "#e0e6d8",
+          "#eef0e8",
+          "#fcfcf8"
+        ]
+      },
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Papel cálido",
+        "canonical": "#f7f7f2"
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Superficie suave",
+        "canonical": "#eef0e8"
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Tinta",
+        "canonical": "#272b25"
+      },
+      "canvas-tag-background": {
+        "role": "secondary",
+        "displayName": "Turquesa suave · fondo de etiqueta del lienzo e inicio"
+      },
+      "canvas-tag-foreground": {
+        "role": "secondary",
+        "displayName": "Turquesa profundo · texto de etiqueta del lienzo e inicio"
+      },
+      "canvas-tag-hover": {
+        "role": "secondary",
+        "displayName": "Turquesa suave · interacción de etiqueta del lienzo e inicio"
+      },
+      "dark-canvas-tag-background": {
+        "role": "secondary",
+        "displayName": "Turquesa oscuro · fondo de etiqueta del lienzo e inicio"
+      },
+      "dark-canvas-tag-foreground": {
+        "role": "secondary",
+        "displayName": "Turquesa claro · texto de etiqueta del lienzo e inicio oscuros"
+      },
+      "dark-canvas-tag-hover": {
+        "role": "secondary",
+        "displayName": "Turquesa oscuro · interacción de etiqueta del lienzo e inicio"
+      }
+    },
+    "typographyMeta": {
+      "title": {
+        "displayName": "Título",
+        "purpose": "Axiforma: nombre Foris y títulos principales."
+      },
+      "body": {
+        "displayName": "Texto",
+        "purpose": "Plus Jakarta Sans: publicaciones, comunidades, conversación, formularios y explicaciones."
+      },
+      "label": {
+        "displayName": "Etiqueta",
+        "purpose": "Plus Jakarta Sans: controles y navegación habituales."
+      },
+      "caption": {
+        "displayName": "Ayuda y metadatos",
+        "purpose": "Plus Jakarta Sans: horas, fechas, estado de conexión y ayudas del chat y los formularios de cuenta; el inicio usa caption para la fecha y label para autor, comunidad y controles."
+      },
+      "heading": {
+        "displayName": "Encabezado",
+        "purpose": "Axiforma: títulos de publicaciones dentro de comunidades, comunidades y avisos en las listas, título General en escritorio y títulos de cuenta en móvil."
+      },
+      "heading-compact": {
+        "displayName": "Encabezado compacto",
+        "purpose": "Axiforma: secciones del foro y títulos de publicaciones dentro de comunidades, comunidades y avisos en móvil, título de la sala en móvil, títulos de los diálogos y secciones del perfil."
+      },
+      "serif": {
+        "displayName": "Acento serif",
+        "purpose": "Fraunces: frases editoriales y bienvenida puntual."
+      },
+      "discovery-title": {
+        "displayName": "Título del inicio",
+        "purpose": "Fraunces: título de publicación en el flujo abierto del inicio, con peso 500; reutiliza la fuente local existente."
+      },
+      "discovery-title-compact": {
+        "displayName": "Título del inicio en móvil",
+        "purpose": "Fraunces: variante del título del inicio por debajo de 768px, con peso 500."
+      },
+      "ui": {
+        "displayName": "Alternativa de interfaz",
+        "purpose": "SF Pro Display: variante explícita para controles."
+      }
+    },
+    "shadows": [
+      {
+        "name": "flat",
+        "value": "none",
+        "purpose": "Separar superficies por tono y espacio."
+      }
+    ],
+    "motion": [
+      {
+        "name": "standard",
+        "value": "150ms cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "Cambios de estado breves; respetar movimiento reducido."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "community-aside",
+        "value": "1360px"
+      },
+      {
+        "name": "discovery-navbar-wrap",
+        "value": "1180px"
+      },
+      {
+        "name": "discovery-filter-sheet",
+        "value": "900px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Botón principal",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Acción principal, con relleno sólido, forma de píldora y foco de teclado. Todos los tamaños de Button comparten esta forma predeterminada.",
+      "html": "<button class=\"ds-primary\">Enviar</button>",
+      "css": ".ds-primary{background:var(--primary);color:var(--primary-foreground);font:500 .875rem \"Plus Jakarta Sans\",sans-serif;border:0;border-radius:999px;padding:.375rem .625rem;min-height:2rem;cursor:pointer;transition:background-color 150ms ease}.ds-primary:hover{background:var(--primary-hover)}.ds-primary:focus-visible{outline:2px solid var(--ring);outline-offset:3px}.ds-primary:active{transform:translateY(1px)}.ds-primary:disabled{opacity:.5;cursor:not-allowed}"
+    },
+    {
+      "name": "Botón secundario",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Acción secundaria con relleno tonal, forma de píldora y sin contorno.",
+      "html": "<button class=\"ds-secondary\">Cancelar</button>",
+      "css": ".ds-secondary{background:var(--secondary);color:var(--secondary-foreground);font:500 .875rem \"Plus Jakarta Sans\",sans-serif;border:0;border-radius:999px;padding:.375rem .625rem;min-height:2rem;cursor:pointer;transition:background-color 150ms ease}.ds-secondary:hover{background:var(--secondary-hover)}.ds-secondary:focus-visible{outline:2px solid var(--ring);outline-offset:3px}.ds-secondary:active{transform:translateY(1px)}.ds-secondary:disabled{opacity:.5;cursor:not-allowed}"
+    },
+    {
+      "name": "Etiquetas del lienzo",
+      "kind": "chip",
+      "refersTo": "canvas-tag",
+      "description": "Acento turquesa para etiquetas seleccionadas al crear o editar; el inicio reutiliza los mismos colores para etiquetas de lectura y filtros seleccionados. Variantes clara y oscura con acción de quitar de 44 × 44px; conserva secondary para los demás controles.",
+      "html": "<div class=\"ds-canvas-tags\" role=\"group\" aria-label=\"Etiquetas, tema claro\"><span class=\"ds-canvas-tag\">proyecto<button type=\"button\" aria-label=\"Quitar etiqueta proyecto\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"m18 6-12 12M6 6l12 12\"/></svg></button></span></div><div class=\"ds-canvas-tags\" data-theme=\"dark\" role=\"group\" aria-label=\"Etiquetas, tema oscuro\"><span class=\"ds-canvas-tag\">proyecto<button type=\"button\" aria-label=\"Quitar etiqueta proyecto\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"m18 6-12 12M6 6l12 12\"/></svg></button></span></div>",
+      "css": ".ds-canvas-tags{--canvas-tag-background:#c5eee6;--canvas-tag-foreground:#134e46;--canvas-tag-hover:#afe4da;display:flex;flex-wrap:wrap;gap:8px;margin-block:8px}.ds-canvas-tags[data-theme=dark]{--canvas-tag-background:#164e46;--canvas-tag-foreground:#c5eee6;--canvas-tag-hover:#21685c}.ds-canvas-tag{display:inline-flex;align-items:center;min-height:44px;max-width:100%;padding-left:16px;border-radius:999px;background:var(--canvas-tag-background);color:var(--canvas-tag-foreground);font:400 .875rem/1.5 \"Plus Jakarta Sans\",sans-serif;overflow-wrap:anywhere}.ds-canvas-tag button{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:44px;height:44px;padding:0;border:0;border-radius:999px;background:transparent;color:inherit;cursor:pointer}.ds-canvas-tag button:hover{background:var(--canvas-tag-hover)}.ds-canvas-tag button:focus-visible{outline:2px solid var(--ring,currentColor);outline-offset:3px}.ds-canvas-tag svg{width:14px;height:14px}"
+    },
+    {
+      "name": "Campo",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Campo relleno, con etiqueta visible y foco funcional. Los formularios de cuenta, foro y comunidades amplían su altura sin cambiar los tokens de color o forma.",
+      "html": "<label class=\"ds-field\"><span>Nombre visible</span><input placeholder=\"Invitado\" autocomplete=\"nickname\"></label>",
+      "css": ".ds-field{display:grid;gap:.5rem;font:400 1rem/1.5 \"Plus Jakarta Sans\",sans-serif;color:var(--foreground)}.ds-field input{font:inherit;color:var(--foreground);background:var(--input);border:0;border-radius:.625rem;padding:.25rem .625rem;caret-color:var(--primary)}.ds-field input::placeholder{color:var(--muted-foreground)}.ds-field input:focus-visible{outline:2px solid var(--ring);outline-offset:3px}.ds-field input[aria-invalid=true]{background:var(--destructive-surface)}"
+    },
+    {
+      "name": "Navegación",
+      "kind": "nav",
+      "description": "Cabecera compartida entre foro, comunidades y cuenta: Foros, Comunidades y Chat global, en ese orden, con superficie tonal activa y extremos redondos. Solo el inicio incorpora búsqueda automática y Crear publicación mediante el espacio discovery de ForumShell, cabecera sticky y menú móvil por debajo de 768px. NotificationEntry añade la bandeja privada para la cuenta activa; el chat conserva su navegación propia.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Navegación principal\"><a href=\"/\" aria-current=\"page\"><span>Foros</span></a><a href=\"/comunidades\"><span>Comunidades</span></a><a href=\"/chat\"><span>Chat global</span></a></nav>",
+      "css": ".ds-nav{display:flex;font:600 .875rem \"Plus Jakarta Sans\",sans-serif}.ds-nav a{display:flex;min-height:3rem;align-items:center;gap:.75rem;padding:.75rem 1rem;border-radius:999px;color:var(--foreground);text-decoration:none;transition:background-color 150ms ease}.ds-nav svg{width:18px;height:18px;flex-shrink:0}.ds-nav a[aria-current=page]{background:var(--accent);color:var(--accent-foreground)}.ds-nav a:hover{background:var(--secondary-hover)}.ds-nav a:focus-visible{outline:2px solid var(--ring);outline-offset:3px}"
+    },
+    {
+      "name": "Buscador del inicio",
+      "kind": "input",
+      "refersTo": "discovery-search",
+      "description": "DiscoverySearch vive en la cabecera junto a Crear publicación. Búsqueda automática tras 350ms, composición IME y hasta 120 caracteres; conserva foco al actualizar la URL con replace y ofrece limpieza explícita.",
+      "html": "<form class=\"ds-discovery-search\" role=\"search\"><label class=\"ds-discovery-search-label\" for=\"ds-discovery-query\">Buscar publicaciones en Foris</label><div class=\"ds-discovery-search-field\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/></svg><input id=\"ds-discovery-query\" type=\"search\" autocomplete=\"off\" placeholder=\"Buscar publicaciones\"><button type=\"button\" aria-label=\"Limpiar búsqueda\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"m18 6-12 12M6 6l12 12\"/></svg></button></div></form>",
+      "css": ".ds-discovery-search{font:400 .875rem/1.5 \"Plus Jakarta Sans\",sans-serif;color:var(--foreground)}.ds-discovery-search-label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}.ds-discovery-search-field{display:flex;align-items:center;gap:10px;min-height:44px;padding-inline:14px 4px;border-radius:999px;background:var(--secondary)}.ds-discovery-search-field:focus-within{outline:2px solid var(--ring);outline-offset:3px}.ds-discovery-search svg{width:18px;height:18px;flex-shrink:0}.ds-discovery-search input{width:100%;min-width:0;height:44px;border:0;outline:none;background:transparent;color:inherit;font:inherit}.ds-discovery-search input::placeholder{color:var(--muted-foreground);opacity:1}.ds-discovery-search input::-webkit-search-cancel-button{appearance:none}.ds-discovery-search button{display:flex;align-items:center;justify-content:center;width:44px;height:44px;flex-shrink:0;border:0;border-radius:999px;background:transparent;color:inherit;cursor:pointer}.ds-discovery-search button:hover{background:var(--accent)}.ds-discovery-search button:focus-visible{outline:2px solid var(--ring);outline-offset:3px}"
+    },
+    {
+      "name": "Artículo del inicio",
+      "kind": "custom",
+      "refersTo": "discovery-post-title",
+      "description": "DiscoveryFeed presenta publicaciones como artículos abiertos. Avatar, comunidad e imagen aparecen solo cuando existen; el extracto tiene hasta 420 caracteres. Los títulos usan Fraunces 500. Responder, Leer publicación y Copiar enlace usan datos y destinos reales; la copia ofrece alternativa manual.",
+      "html": "<article class=\"ds-discovery-post\"><header class=\"ds-discovery-post-meta\"><a href=\"#autor\">Autor de la publicación</a><time>Fecha</time></header><h3><a href=\"#publicacion\">Título de la publicación</a></h3><p class=\"ds-discovery-post-excerpt\">Extracto del contenido de la publicación.</p><div class=\"ds-discovery-post-taxonomy\"><a href=\"#tematica\">Temática</a><a href=\"#etiqueta\" class=\"ds-discovery-post-tag\">Etiqueta</a></div><footer><a href=\"#responder\">Responder</a><button type=\"button\">Copiar enlace</button><a href=\"#publicacion\" class=\"ds-discovery-post-read\">Leer publicación<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M5 12h14m-6-6 6 6-6 6\"/></svg></a></footer></article>",
+      "css": ".ds-discovery-post{--ds-discovery-tag-background:#c5eee6;--ds-discovery-tag-foreground:#134e46;--ds-discovery-tag-hover:#afe4da;max-width:760px;padding:20px 0 36px;background:transparent;color:var(--foreground);font:400 1rem/1.8 \"Plus Jakarta Sans\",sans-serif}.ds-discovery-post[data-theme=dark]{--ds-discovery-tag-background:#164e46;--ds-discovery-tag-foreground:#c5eee6;--ds-discovery-tag-hover:#21685c}.ds-discovery-post a{color:inherit;text-decoration:none}.ds-discovery-post a:hover,.ds-discovery-post button:hover{text-decoration:underline;text-underline-offset:4px}.ds-discovery-post a:focus-visible,.ds-discovery-post button:focus-visible{outline:2px solid var(--ring);outline-offset:3px}.ds-discovery-post-meta{display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px;font-size:.875rem;line-height:1.6;color:var(--muted-foreground)}.ds-discovery-post-meta>a{min-height:44px;display:inline-flex;align-items:center;color:var(--foreground);font-weight:500}.ds-discovery-post-meta time{margin-left:auto;font-size:.75rem}.ds-discovery-post h3{margin:12px 0;font:500 1.875rem/1.3 \"Fraunces\",Georgia,serif;letter-spacing:-.02em;overflow-wrap:anywhere}.ds-discovery-post h3 a:hover{text-decoration-thickness:1px;text-underline-offset:.15em}.ds-discovery-post-excerpt{margin:0;max-width:70ch;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:5;overflow:hidden}.ds-discovery-post-taxonomy{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;margin-top:16px;font-size:.875rem;line-height:1.6;color:var(--muted-foreground)}.ds-discovery-post-taxonomy>a{min-height:44px;display:inline-flex;align-items:center}.ds-discovery-post-taxonomy>.ds-discovery-post-tag{padding:8px 14px;border-radius:999px;background:var(--ds-discovery-tag-background);color:var(--ds-discovery-tag-foreground)}.ds-discovery-post-taxonomy>.ds-discovery-post-tag:hover{background:var(--ds-discovery-tag-hover)}.ds-discovery-post footer{display:flex;align-items:center;flex-wrap:wrap;gap:6px 16px;margin-top:12px;font-size:.875rem;line-height:1.6;color:var(--muted-foreground)}.ds-discovery-post footer>a,.ds-discovery-post footer>button{display:inline-flex;align-items:center;gap:8px;min-height:44px}.ds-discovery-post footer>button{padding:0;border:0;background:transparent;color:inherit;font:inherit;cursor:pointer}.ds-discovery-post footer>.ds-discovery-post-read{margin-left:auto;color:var(--foreground);font-weight:500}.ds-discovery-post-read svg{width:18px;height:18px}@media(max-width:767px){.ds-discovery-post{padding:12px 0 28px}.ds-discovery-post h3{font-size:1.5rem;line-height:1.35}.ds-discovery-post-excerpt{-webkit-line-clamp:4}.ds-discovery-post-meta time{margin-left:0}.ds-discovery-post footer>.ds-discovery-post-read{margin-left:0}}"
+    },
+    {
+      "name": "Filtros de descubrimiento",
+      "kind": "custom",
+      "refersTo": "discovery-tag",
+      "description": "DiscoveryFilters permite seleccionar una temática con sus descendientes y combinar hasta ocho etiquetas con condición de coincidencia de todas. Explorar y seleccionar usan controles distintos. La columna mide 220px en escritorio y 200px entre 900px y 1179px; MobileDiscoveryFilters usa Sheet por debajo de 900px. ActiveDiscoveryFilters conserva la eliminación individual y conjunta.",
+      "html": "<section class=\"ds-discovery-filters\" aria-label=\"Filtros de publicaciones\"><h3>Temáticas</h3><div class=\"ds-discovery-category-row\"><button type=\"button\" aria-pressed=\"true\">Temática seleccionada<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"m20 6-11 11-5-5\"/></svg></button><button type=\"button\" aria-label=\"Explorar subtemáticas\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"m9 18 6-6-6-6\"/></svg></button></div><p>Incluye las subtemáticas de tu selección.</p><h3>Etiquetas</h3><div class=\"ds-discovery-filter-tags\"><button type=\"button\" aria-pressed=\"true\">Etiqueta seleccionada</button><button type=\"button\" aria-pressed=\"false\">Otra etiqueta</button></div><p>Las publicaciones incluyen todas las etiquetas seleccionadas.</p></section>",
+      "css": ".ds-discovery-filters{--ds-discovery-tag-background:#c5eee6;--ds-discovery-tag-foreground:#134e46;max-width:280px;color:var(--foreground);font:400 .875rem/1.6 \"Plus Jakarta Sans\",sans-serif}.ds-discovery-filters[data-theme=dark]{--ds-discovery-tag-background:#164e46;--ds-discovery-tag-foreground:#c5eee6}.ds-discovery-filters h3{margin:0 0 12px;font-size:.875rem;font-weight:600;line-height:1.5}.ds-discovery-filters h3:not(:first-child){margin-top:32px}.ds-discovery-filters p{margin:12px 0 0;color:var(--muted-foreground);font-size:.75rem;line-height:1.7}.ds-discovery-filters button{min-height:44px;border:0;color:inherit;font:inherit;cursor:pointer}.ds-discovery-filters button:focus-visible{outline:2px solid var(--ring);outline-offset:3px}.ds-discovery-category-row{display:flex;gap:2px}.ds-discovery-category-row button{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border-radius:10px;background:transparent;text-align:left}.ds-discovery-category-row button:first-child{flex:1;min-width:0}.ds-discovery-category-row button:last-child{width:44px;flex-shrink:0;justify-content:center;padding:8px}.ds-discovery-category-row button:hover{background:var(--secondary)}.ds-discovery-category-row button[aria-pressed=true]{background:var(--accent);color:var(--accent-foreground);font-weight:600}.ds-discovery-category-row svg{width:16px;height:16px;flex-shrink:0}.ds-discovery-filter-tags{display:flex;align-items:center;flex-wrap:wrap;gap:6px}.ds-discovery-filter-tags button{padding:10px 12px;border-radius:999px;background:var(--secondary);line-height:1.5}.ds-discovery-filter-tags button[aria-pressed=true]{background:var(--ds-discovery-tag-background);color:var(--ds-discovery-tag-foreground)}.ds-discovery-filter-tags button:hover{background:var(--accent)}"
+    },
+    {
+      "name": "Contenedor excepcional",
+      "kind": "card",
+      "refersTo": "surface",
+      "description": "Superficie plana para un grupo que necesite contención; evitar repetirla como estructura de página.",
+      "html": "<section class=\"ds-surface\"><h3>Tu voz también tiene lugar</h3><p>Lee el foro sin cuenta; entra para publicar o responder.</p></section>",
+      "css": ".ds-surface{padding:1rem;background:var(--card);color:var(--card-foreground);border:0;border-radius:.875rem;box-shadow:none;font:400 1rem/1.5 \"Plus Jakarta Sans\",sans-serif}.ds-surface h3{margin:0 0 .5rem;font-family:Axiforma,\"Plus Jakarta Sans\",sans-serif;font-size:1rem;font-weight:600}.ds-surface p{margin:0;color:var(--muted-foreground)}"
+    },
+    {
+      "name": "Compositor del chat global",
+      "kind": "custom",
+      "refersTo": "message-composer",
+      "description": "Control compuesto del chat General en /chat, disponible para invitados y miembros, con área interior y acción de envío en píldora; conserva radios propios frente a tarjetas y campos generales.",
+      "html": "<div class=\"ds-composer\"><label class=\"ds-composer-label\" for=\"ds-message\">Mensaje para General</label><textarea id=\"ds-message\" class=\"ds-composer-input\" rows=\"2\" maxlength=\"2000\" placeholder=\"Comparte algo con General…\"></textarea><div class=\"ds-composer-actions\"><span>Solo texto, muchas ideas</span><button type=\"button\">Enviar</button></div></div>",
+      "css": ".ds-composer{padding:14px 16px 12px;border:0;border-radius:24px;background:var(--secondary);color:var(--foreground);font:400 1rem/1.6 \"Plus Jakarta Sans\",sans-serif}.ds-composer-label{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}.ds-composer-input{display:block;width:100%;min-height:64px;max-height:150px;resize:none;padding:2px 2px 8px;border:0;border-radius:4px;background:transparent;color:var(--foreground);font:inherit;caret-color:var(--primary)}.ds-composer-input::placeholder{color:var(--muted-foreground)}.ds-composer-input:focus-visible{outline:2px solid var(--ring);outline-offset:5px}.ds-composer-input[aria-invalid=true]{background:var(--destructive-surface)}.ds-composer-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px}.ds-composer-actions>span{color:var(--muted-foreground);font-size:.75rem}.ds-composer-actions button{min-width:106px;min-height:44px;padding:6px 20px;border:0;border-radius:999px;background:var(--primary);color:var(--primary-foreground);font:500 .875rem \"Plus Jakarta Sans\",sans-serif;cursor:pointer;transition:background-color 150ms ease}.ds-composer-actions button:hover{background:var(--primary-hover)}.ds-composer-actions button:focus-visible{outline:2px solid var(--ring);outline-offset:3px}.ds-composer-actions button:disabled{opacity:.5;cursor:not-allowed}@media(max-width:639px){.ds-composer{padding:12px 14px;border-radius:20px}.ds-composer-input{min-height:54px;max-height:110px}}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Humano, sencillo y conversacional",
+    "overview": "Base visual de Foris para conversar en comunidades públicas o privadas. La lectura manda; las formas suaves y los personajes aportan cercanía en momentos concretos. El contenido se organiza por tipografía, espacio y superficies sólidas. El inicio abre directamente un flujo de publicaciones con títulos Fraunces, imágenes disponibles y exploración por temáticas jerárquicas y etiquetas; Comunidades permite explorar espacios públicos y acceder a los privados de los que se forma parte. El chat global conserva la conversación inmediata y la escritura como invitado en /chat.\n\nEl nombre, las cuatro familias tipográficas y el lenguaje de personajes forman la identidad actual. La dirección del inicio se recoge en .impeccable/surfaces/src-features-forum-pages-forum-page-tsx.md; sustituye la composición inicial descrita en .impeccable/forum-direction.md y conserva sus pautas para las demás páginas del foro. La dirección de comunidades está en .impeccable/communities-direction.md y su extensión de privacidad y fotos en .impeccable/communities-privacy-direction.md, la del chat global en .impeccable/surfaces/apps-web-src-app-tsx.md, la de acceso y perfil en .impeccable/surfaces/apps-web-src-features-account-pages-login-page-tsx.md y la del lienzo en .impeccable/surfaces/src-features-forum-pages-create-post-page-tsx.md; las restricciones de estilo del usuario se conservan en el PRODUCT.md de la raíz.",
+    "keyCharacteristics": [
+      "Colores sólidos.",
+      "Jerarquía por espacio y tipografía.",
+      "Pocas tarjetas.",
+      "Sin bordes decorativos.",
+      "Botones con extremos completamente redondos.",
+      "Foco de teclado visible.",
+      "Personajes de formas suaves con posturas contextuales y gestos breves."
+    ],
+    "rules": [
+      {
+        "name": "Superficies",
+        "body": "Separar grupos mediante tono y espacio; evitar contornos y sombras.",
+        "section": "elevation"
+      },
+      {
+        "name": "Interacción",
+        "body": "Conservar foco, selección y estados funcionales aunque el aspecto sea plano.",
+        "section": "components"
+      },
+      {
+        "name": "Seguimiento de comunidades",
+        "body": "Usar las listas y formularios abiertos de features/communities con los tokens existentes. Crear reúne imagen opcional, nombre, descripción y selector Pública/Privada, con caracteres restantes dentro de los campos. Las privadas exigen invitación y pertenencia; el creador administra imagen y enlaces de un uso y siete días desde una sección plegable. Las fotos de comunidad y perfil son contenido de usuarios, sin señales de verificación personal. Distinguir pertenencia, favorita y avisos mediante texto y controles propios: guardar no implica unirse, silenciar no implica salir. La bandeja privada muestra avisos dentro de Foris según el acceso vigente y acciones explícitas de lectura y actualización; sus permisos y contrato se describen en docs/communities.md.",
+        "section": "components"
+      },
+      {
+        "name": "Etiquetas del lienzo y del inicio",
+        "body": "Los chips seleccionados del lienzo usan los tokens turquesa canvas-tag en ambos temas, con forma de píldora, texto de 0.875rem e interlineado 1.5, altura mínima de 44px y 16px de espacio a la izquierda. La acción de quitar conserva un área de 44 × 44px, nombre accesible con la etiqueta y foco del sistema; solo su fondo cambia a canvas-tag-hover al pasar el cursor. El inicio reutiliza esos colores en las etiquetas de lectura, las opciones seleccionadas y los filtros activos: las etiquetas enlazadas tienen 14px de relleno horizontal y los filtros activos una acción de quitar de 44 × 44px. Las opciones sin seleccionar y los demás filtros usan los tonos neutrales existentes. Este uso compartido no cambia los botones secundarios ni la presentación de etiquetas de las otras páginas.",
+        "section": "components"
+      },
+      {
+        "name": "Descubrimiento en el inicio",
+        "body": "El inicio entra directamente a las publicaciones, con búsqueda y Crear publicación en la cabecera. Fraunces 500 distingue los títulos del flujo; Jakarta conserva texto y controles. La búsqueda automática espera 350ms, respeta IME, admite 120 caracteres y conserva foco mediante URL replace. Temáticas con descendientes y hasta ocho etiquetas se combinan con búsqueda y autor. Los enlaces de descubrimiento enfocan el encabezado del flujo; el Sheet móvil conserva el foco y vuelve a los resultados tras cambiar filtros. Quitar filtros cancela el borrador pendiente. Los artículos son abiertos y las imágenes disponibles reservan proporción durante su carga diferida y sus estados reales. La lista de comunidades conserva su componente post-list y su presentación. La verificación de esta incorporación es estática; no se ejecutaron compilación, typecheck, pruebas, servidores ni validación visual.",
+        "section": "components"
+      },
+      {
+        "name": "Edición de publicaciones",
+        "body": "El detalle ofrece Editar publicación a su autor y muestra Editado con fecha cuando corresponde. El mismo lienzo permite cambiar título, documento, imágenes, temática y etiquetas; Guardar cambios mantiene la comunidad y su acceso. La autorización exige autoría, cuenta verificada y pertenencia vigente a la comunidad. Una revisión incompatible conserva el borrador y ofrece Ver versión publicada en otra pestaña o Cargar versión publicada; reemplazarlo requiere confirmar el descarte, con texto para copiar antes los cambios que se quieran conservar. La carga vuelve a consultar el servidor y bloquea temporalmente el lienzo. Guardar mantiene la fecha de creación, los contadores y el orden cronológico, sin avisos de publicación nueva.",
+        "section": "components"
+      },
+      {
+        "name": "Personajes de Foris",
+        "body": "Nueve SVG originales en src/assets/characters y veinte posturas contextuales en src/assets/characters/scenes, 29 recursos en total, con fondo transparente, colores sólidos y formas suaves y regulares. Comparten un lienzo de 160 × 160 y márgenes internos consistentes; las variantes conservan los nombres, colores y emociones de los mismos personajes. Todos sus ojos neutros son recortes transparentes que dejan ver el fondo real, sin relleno claro u oscuro simulado. Un color propio de ojos requerirá definición expresa. No llevan contornos, sombras ni degradados. Mimo mantiene un brazo levantado en el original y las variantes de marca, acceso y chat. Lupa usa una silueta ovalada azul con ojos alineados y una lupa dorada, con orientaciones distintas en sus dos búsquedas.\n\nForisCharacter recibe mood para un original o scene para una postura contextual, sin combinar ambas opciones. forisScenes relaciona cada contexto con su SVG, personaje y gesto; las importaciones ?no-inline conservan los recursos como archivos compatibles con la CSP. Su alt vacío predeterminado evita repetir información al lector de pantalla; si el personaje comunica algo que no está escrito al lado, darle un alt contextual. Mimo acompaña a Foris dentro del mismo enlace de inicio de 44px, a 32px o 28px en móvil, sin un control separado. La familia completa constituye una sola composición decorativa en login, registro, recuperación y OTP: hasta 360px en escritorio y 240px bajo 768px, donde se muestra sobre el formulario y se ocultan el texto editorial y su CTA. Solo Mimo saluda una vez; los otros ocho permanecen quietos. En el lienzo, una postura positiva de Mimo, Brío o Chispa acompaña el título a 48px: canvasCompanion parte del requestId inicial y PostCanvas conserva la elección con useState durante ese montaje, aunque el identificador cambie al editar. Al volver a montar puede elegir otra; no invade la escritura ni modifica el foco. Las demás escenas acompañan estados resueltos, ayudas o confirmaciones reales; ForumEmpty solo muestra una ilustración si recibe scene. No asignar Lupa automáticamente a errores o recursos inexistentes.\n\nIdentityImage reutiliza los nueve originales estáticos como avatares automáticos de personas y comunidades sin foto disponible: una selección determinista por identificador, sin asignaciones aleatorias por render ni guardar una foto ficticia. La foto disponible tiene prioridad; mientras carga o si falla se conserva la misma alternativa. El fondo es transparente y la imagen conserva su proporción con contain. Las fotos tampoco se animan. La emoción pertenece al personaje, nunca al ánimo, la presencia o la verificación de quien aparece junto a él; el nombre accesible sigue identificando a la persona o comunidad. Los avatares pueden repetirse donde ya se muestra una identidad. Usar una ilustración contextual por estado, sin contar la marca ni los avatares y sin sustituir instrucciones ni iconos funcionales; la familia del acceso se trata como una sola composición de los nueve personajes.\n\nLos cinco gestos centrales de foris-character.css se ejecutan una vez: saludo (950ms), asomarse (700ms), asentarse (650ms), giro (800ms) y asentimiento (600ms). Solo se habilitan con prefers-reduced-motion: no-preference; con reduce las posturas permanecen quietas. La marca permanece estática salvo un saludo de 700ms al pasar el puntero o enfocar su enlace. Las escenas son visibles desde el inicio, sin ciclos, sonido ni bloqueo de la tarea. El catálogo está en docs/brand.md; las ubicaciones implementadas y los límites de su revisión estática están en docs/mascot-placement-plan.md, en la raíz del repositorio.",
+        "section": "components"
+      }
+    ],
+    "dos": [
+      "Do usar colores semánticos y superficies sólidas.",
+      "Do conservar foco visible y estados accesibles.",
+      "Do priorizar la lectura de publicaciones y conversaciones, con permisos claros para cada superficie.",
+      "Do usar un personaje cuando aporte cercanía o contexto."
+    ],
+    "donts": [
+      "Don't usar degradados, vidrio ni puntos decorativos.",
+      "Don't construir la página como una cuadrícula de tarjetas.",
+      "Don't añadir bordes de colores ni contornos decorativos.",
+      "Don't usar personajes como identidades verificadas ni como señales de conexión real."
+    ]
+  }
+}

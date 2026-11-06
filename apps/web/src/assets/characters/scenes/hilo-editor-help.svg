@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none" role="img" aria-labelledby="hilo-editor-help-title hilo-editor-help-desc">
+  <title id="hilo-editor-help-title">Hilo piensa en un enlace</title>
+  <desc id="hilo-editor-help-desc">Una postura del personaje original, con color sólido y ojos recortados en transparente.</desc>
+  <defs>
+    <mask id="hilo-editor-help-eyes" maskUnits="userSpaceOnUse" x="0" y="0" width="160" height="160">
+      <rect width="160" height="160" fill="#fff"/>
+      <g fill="#000"><rect x="61" y="67" width="13" height="25" rx="6.5"/><rect x="92" y="62" width="13" height="27" rx="6.5"/></g>
+    </mask>
+  </defs>
+  <g transform="rotate(3 80 80)"><g fill="#555D72" mask="url(#hilo-editor-help-eyes)"><path d="M67 28C73 18 87 18 93 28L139 108C146 120 138 134 124 134H36C22 134 14 120 21 108Z"/></g></g>
+</svg>

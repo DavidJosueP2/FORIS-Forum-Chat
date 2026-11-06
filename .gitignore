@@ -5,11 +5,13 @@ dist-test/
 dist-ssr/
 *.tsbuildinfo
 .vite/
+.data/
 
 # Variables locales y credenciales
 .env
 .env.*
 !.env.example
+!/.env.development
 *.local
 
 # Informes y archivos temporales
@@ -18,7 +20,9 @@ coverage/
 test-results/
 playwright-report/
 .scannerwork/
-.impeccable/
+**/.impeccable/*
+!**/.impeccable/config.json
+!**/.impeccable/design.json
 artifacts/
 .eslintcache
 *.log
