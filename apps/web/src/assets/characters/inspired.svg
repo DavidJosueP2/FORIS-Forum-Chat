@@ -1,9 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none" role="img" aria-labelledby="inspired-title inspired-desc">
   <title id="inspired-title">Chispa, inspiración</title>
-  <desc id="inspired-desc">Una estrella dorada de puntas blandas, con los ojos levantados con entusiasmo.</desc>
-  <path fill="#ECAF38" d="M78 18C91 16 97 40 108 46C120 52 142 49 145 64C148 78 127 89 122 102C117 115 125 137 110 142C95 148 83 128 70 124C57 120 36 132 28 118C20 104 38 90 40 77C42 63 27 43 39 34C51 25 66 36 78 18Z"/>
-  <g fill="#FFFCF6">
-    <rect x="58" y="63" width="13" height="27" rx="6.5" transform="rotate(-12 64.5 76.5)"/>
-    <rect x="87" y="60" width="13" height="28" rx="6.5" transform="rotate(9 93.5 74)"/>
-  </g>
+  <desc id="inspired-desc">Una estrella dorada de cinco puntas redondeadas, con dos ojos transparentes llenos de atención.</desc>
+  <defs>
+    <mask id="inspired-eyes" maskUnits="userSpaceOnUse" x="0" y="0" width="160" height="160">
+      <rect width="160" height="160" fill="#fff"/>
+      <g fill="#000"><rect x="61" y="68" width="12" height="24" rx="6"/><rect x="87" y="68" width="12" height="24" rx="6"/></g>
+    </mask>
+  </defs>
+  <g fill="#ECAF38" mask="url(#inspired-eyes)"><path d="M80 24Q84 24 88 34L101 58L129 62Q143 64 132 74L112 94L117 122Q120 136 108 130L80 116L52 130Q40 136 43 122L48 94L28 74Q17 64 31 62L59 58L72 34Q76 24 80 24Z"/></g>
 </svg>

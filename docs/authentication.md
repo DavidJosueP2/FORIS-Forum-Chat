@@ -1,8 +1,8 @@
 # Cuentas y autenticación de Foris
 
-El acceso invitado continúa disponible en el chat global (/chat). El foro se puede leer sin cuenta; crear publicaciones o respuestas requiere una sesión de cuenta verificada. La ruta /login concentra inicio de sesión, registro y recuperación; /profile permite editar datos, correo, contraseña y la vinculación con Google.
+El acceso invitado continúa disponible en el chat global (/chat). El contenido público del foro se puede leer sin cuenta; las comunidades privadas requieren membresía; crear publicaciones o respuestas requiere una sesión de cuenta verificada. La ruta /login concentra inicio de sesión, registro y recuperación; /profile permite editar datos, correo, contraseña y la vinculación con Google.
 
-Comunidades también permite lectura pública. Crear una, unirse, guardar favoritas, modificar preferencias y consultar la bandeja de notificaciones requiere una cuenta; escribir dentro de una comunidad exige pertenecer a ella. Los destinos de regreso tras acceso nativo, OTP o Google admiten las rutas conocidas de comunidades y notificaciones, y el parámetro comunidad al publicar. No se aceptan destinos externos. Los detalles están en [communities.md](communities.md).
+Las comunidades públicas permiten lectura sin cuenta; las privadas solo muestran contenido a sus miembros. Crear una, unirse, guardar favoritas, modificar preferencias y consultar la bandeja de notificaciones requiere una cuenta; escribir dentro de una comunidad exige pertenecer a ella. Los destinos de regreso tras acceso nativo, OTP o Google admiten las rutas conocidas de comunidades, invitaciones y notificaciones, y el parámetro comunidad al publicar. No se aceptan destinos externos. Los detalles están en [communities.md](communities.md).
 
 La cabecera ofrece Tu perfil como menú para una sesión activa: Ver tu perfil, una fila Tema con tres iconos para oscuro, claro y sistema, y Cerrar sesión. El tema seleccionado se resalta y cada icono conserva un nombre accesible y una ayuda al pasar el puntero. El tema se guarda localmente; si no hay una elección previa, sigue al sistema. Cerrar sesión usa el endpoint existente, espera su confirmación y muestra un error recuperable si falla. Los invitados conservan Entrar y el mismo selector compacto de temas.
 
@@ -146,3 +146,8 @@ Configura APP_URL con el origen HTTPS real y registra el retorno equivalente en 
 La migración 002 se aplica al iniciar Nest y conserva los mensajes existentes, añadiendo su asociación opcional al usuario. No se aplicó a tu base durante esta tarea. Guarda copia de seguridad de los datos antes de una actualización de producción.
 
 La revisión realizada fue estática, con ESLint y lectura de contratos y flujos. Quedan pendientes la compilación, migración real, pruebas, entrega SMTP, consentimiento y retorno OAuth, accesibilidad en navegador y presentación en escritorio/móvil. No se afirma que Google o los correos estén activos antes de completar las credenciales y comprobarlos en tu entorno.
+
+
+## Foto de perfil
+
+Tu foto permite subir, cambiar o quitar una imagen JPEG, PNG o WebP mediante el módulo de medios y sus límites actuales. PATCH /api/account/avatar solo vincula una imagen READY propia de finalidad avatar, o la retira con null. La foto de perfil es pública; no se utiliza como prueba de identidad. El cliente actualiza únicamente avatarId, conserva los demás datos del perfil y avisa a otras pestañas. El cambio no requiere OTP ni modifica contraseñas, sesiones o la vinculación de Google. Las fotos aparecen en el perfil, la entrada de cuenta y los mensajes del chat; otros lectores pueden necesitar recargar los mensajes ya mostrados para ver cambios recientes.

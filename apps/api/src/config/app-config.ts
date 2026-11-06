@@ -3,6 +3,10 @@ import { fileURLToPath } from 'node:url';
 import type { PoolConfig } from 'pg';
 import { readAuthConfig } from './auth-config.js';
 import type { AuthConfig } from './auth-config.js';
+import { readMediaConfig } from './media-config.js';
+import type { MediaConfig } from './media-config.js';
+import { readVideoCallConfig } from './video-call-config.js';
+import type { VideoCallConfig } from './video-call-config.js';
 
 export const APP_CONFIG = Symbol('APP_CONFIG');
 export const APP_LOGGER = Symbol('APP_LOGGER');
@@ -17,6 +21,8 @@ export function readApplicationEnvironment(value: string | undefined): Applicati
 
 export interface AppConfig {
   environment: ApplicationEnvironment;
+  media: MediaConfig;
+  videoCalls: VideoCallConfig;
   auth?: AuthConfig;
   trustProxy?: number;
   host: string;
@@ -53,6 +59,8 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   if (!env.PGPASSWORD) throw new Error('Falta PGPASSWORD. Configura la base de datos en .env.');
   return {
     environment: readApplicationEnvironment(env.NODE_ENV),
+    media: readMediaConfig(env, fileURLToPath(root)),
+    videoCalls: readVideoCallConfig(env),
     auth: readAuthConfig(env),
     trustProxy: env.TRUST_PROXY === '1' ? 1 : 0,
     host: env.HOST || '127.0.0.1',

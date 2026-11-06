@@ -33,12 +33,12 @@ export const createCommunities: Migration = {
     );
     CREATE INDEX community_preferences_user ON community_preferences(user_id,community_id DESC);
     ALTER TABLE forum_posts ADD COLUMN community_id BIGINT REFERENCES communities(id);
-    CREATE INDEX forum_posts_community ON forum_posts(community_id,id DESC);
+    CREATE INDEX forum_posts_community ON forum_posts(community_id,created_at DESC,id DESC);
     CREATE TABLE community_notifications (
       id BIGSERIAL PRIMARY KEY,
       recipient_id UUID NOT NULL REFERENCES users(id),
       community_id BIGINT NOT NULL REFERENCES communities(id),
-      post_id BIGINT NOT NULL REFERENCES forum_posts(id),
+      post_id UUID NOT NULL REFERENCES forum_posts(id),
       created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
       read_at TIMESTAMPTZ,
       UNIQUE(recipient_id,post_id)

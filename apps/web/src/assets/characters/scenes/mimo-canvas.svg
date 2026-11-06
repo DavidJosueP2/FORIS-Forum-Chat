@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none" role="img" aria-labelledby="mimo-canvas-title mimo-canvas-desc">
+  <title id="mimo-canvas-title">Mimo acompaña una idea nueva</title>
+  <desc id="mimo-canvas-desc">Una postura amigable del personaje de Foris, con color sólido y ojos transparentes.</desc>
+  <defs>
+    <mask id="mimo-canvas-eyes" maskUnits="userSpaceOnUse" x="0" y="0" width="160" height="160">
+      <rect width="160" height="160" fill="#fff"/>
+      <g fill="#000"><rect x="55" y="72" width="14" height="28" rx="7"/><rect x="87" y="76" width="14" height="26" rx="7"/></g>
+    </mask>
+  </defs>
+  <g transform="rotate(3 80 80)"><g fill="#18A999" mask="url(#mimo-canvas-eyes)"><path d="M121 89Q143 78 135 42" fill="none" stroke="#18A999" stroke-width="14" stroke-linecap="round"/><rect x="24" y="37" width="106" height="100" rx="36"/></g></g>
+</svg>

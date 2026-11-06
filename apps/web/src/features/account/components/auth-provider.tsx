@@ -74,12 +74,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } : current)
     notifyOtherTabs()
   }, [])
+  const updateAvatar = useCallback((userId: string, avatarId: string | null) => {
+    sequence.current++
+    setSession(current => current.user?.id === userId ? { ...current, user: { ...current.user, avatarId } } : current)
+    notifyOtherTabs()
+  }, [])
   const logout = useCallback(async () => {
     await accountRequest('auth/logout', 'POST', {})
     applySession(emptySession)
   }, [applySession])
   const value = useMemo(() => ({
-    session, options, status, error, refresh, applySession, updateUser, logout,
-  }), [session, options, status, error, refresh, applySession, updateUser, logout])
+    session, options, status, error, refresh, applySession, updateUser, updateAvatar, logout,
+  }), [session, options, status, error, refresh, applySession, updateUser, updateAvatar, logout])
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

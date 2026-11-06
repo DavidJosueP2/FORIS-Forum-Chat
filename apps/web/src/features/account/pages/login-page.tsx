@@ -4,7 +4,7 @@ import type { AuthSession, OtpChallenge } from '@messages/contracts'
 import { LoaderCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { ForisCharacter } from '@/components/brand/foris-character'
+import { ForisFamily } from '@/components/brand/foris-family'
 import { AccountShell } from '../components/account-shell'
 import { PasswordField } from '../components/password-field'
 import { OtpForm } from '../components/otp-form'
@@ -89,7 +89,7 @@ export function LoginPage() {
     <AccountShell>
       <main id="account-content" className="login-layout" tabIndex={-1}>
         <aside className="auth-story">
-          <ForisCharacter mood="welcome" width={128} height={128} />
+          <ForisFamily />
           <h2>Aquí hay lugar<br />para tu voz.</h2>
           <p>Una cuenta para publicar y responder con tu propio perfil. Como invitado puedes leer el foro y conversar en el chat global.</p>
           <Button asChild variant="secondary" className="h-12 px-6"><Link to="/">Explorar foros</Link></Button>

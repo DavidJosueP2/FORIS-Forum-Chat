@@ -1,0 +1,11 @@
+.foris-family { position: relative; isolation: isolate; width: 100%; max-width: 360px; aspect-ratio: 20 / 11; flex-shrink: 0; }
+.foris-family-member { position: absolute; height: auto; }
+.foris-family-member[data-mood="thoughtful"] { left: 17.5%; top: 2.27%; width: 18%; }
+.foris-family-member[data-mood="surprised"] { left: 57.5%; top: 0; width: 18.5%; }
+.foris-family-member[data-mood="sleepy"] { left: 78.75%; top: 8.18%; width: 19%; }
+.foris-family-member[data-mood="inspired"] { left: 1.25%; top: 36.36%; width: 19%; }
+.foris-family-member[data-mood="happy"] { left: 33.25%; top: 7.27%; width: 21%; }
+.foris-family-member[data-mood="curious"] { left: 68.75%; top: 36.36%; width: 20%; }
+.foris-family-member[data-mood="shy"] { left: 16%; top: 55.45%; width: 20%; }
+.foris-family-member[data-mood="calm"] { left: 70.75%; top: 60%; width: 22%; }
+.foris-family-member[data-mood="welcome"] { left: 37%; top: 38.64%; width: 27.5%; }

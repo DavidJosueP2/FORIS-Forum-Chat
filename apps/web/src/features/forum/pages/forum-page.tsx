@@ -1,81 +1,42 @@
-import { useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
-import { ArrowUpRight, MessageSquare, Plus, Search } from 'lucide-react'
-import type { ForumPostSummary, ForumTopic } from '@messages/contracts'
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { ForumShell } from '../components/forum-shell'
-import { ForumEmpty, ForumError, ForumLoading, ForumTime } from '../components/forum-states'
-import { useForumPage, useResource } from '../hooks/use-forum'
+import { useAuth } from '@/features/account/hooks/use-auth'
+import { loginLink } from '@/features/account/lib/return-target'
+import { useDiscovery } from '../discovery/use-discovery'
+import { ActiveDiscoveryFilters } from '../discovery/discovery-filters'
+import { DiscoveryFeed } from '../discovery/discovery-feed'
+import { HomeContext } from '../components/context-rail'
+import { FOLLOWING_CHANGED, followingChange } from '../following/following-events'
 
-export function PostList({ path, filtered, createTo = '/publicar', emptyTitle }: { path: string; filtered: boolean; createTo?: string; emptyTitle?: string }) {
-  const page = useForumPage<ForumPostSummary>(path)
-  if (page.loading && !page.ready) return <ForumLoading />
-  if (page.error) return <ForumError message={page.error} retry={page.retry} />
-  if (!page.items.length) return <ForumEmpty title={emptyTitle ?? (filtered ? 'Todavía no hay publicaciones aquí' : 'Una buena idea puede empezar contigo')}>
-    <p>{filtered ? 'Prueba otro tópico o una búsqueda diferente.' : 'Comparte una pregunta, algo que aprendiste o una idea que quieras conversar.'}</p>
-    <Button asChild variant="secondary" className="h-11 mt-5 px-6"><Link to={filtered ? '/' : createTo}>{filtered ? 'Ver todos los foros' : 'Crear la primera publicación'}</Link></Button>
-  </ForumEmpty>
-  return <>
-    <ol className="forum-post-list" aria-label="Publicaciones más recientes">
-      {page.items.map(post => <li key={post.id}><article className="forum-post-row">
-        <div className="forum-meta"><Link to={'/?topico=' + post.topic.id} className="forum-topic-label">{post.topic.name}</Link>{post.community && <Link to={'/comunidades/' + post.community.id}>{post.community.name}</Link>}<span>{post.author.displayName}</span><ForumTime value={post.createdAt} /></div>
-        <h2><Link to={'/publicaciones/' + post.id}>{post.title}<ArrowUpRight aria-hidden="true" /></Link></h2>
-        <p className="forum-excerpt">{post.excerpt}</p>
-        <Link to={'/publicaciones/' + post.id + '#respuestas'} className="forum-response-link"><MessageSquare aria-hidden="true" />{post.replyCount} {post.replyCount === 1 ? 'respuesta' : 'respuestas'}</Link>
-      </article></li>)}
-    </ol>
-    {page.moreError && <p className="forum-error" role="alert">{page.moreError}</p>}
-    {page.hasMore && <Button variant="secondary" className="h-11 px-6 forum-more" disabled={page.loadingMore} onClick={() => void page.loadMore()}>{page.loadingMore ? 'Cargando…' : 'Ver más publicaciones'}</Button>}
-  </>
-}
 function ForumIndex() {
-  const [params, setParams] = useSearchParams()
-  const topic = params.get('topico') ?? ''
-  const search = params.get('q') ?? ''
-  const author = params.get('autor') ?? ''
-  const [draftSearch, setDraftSearch] = useState(search)
-  const topics = useResource<ForumTopic[]>('topics')
-  const filters = new URLSearchParams()
-  if (topic) filters.set('topic', topic)
-  if (search) filters.set('search', search)
-  if (author) filters.set('author', author)
-  const path = 'posts?' + filters.toString()
-  const selectedTopic = topics.data?.find(item => item.id === topic)
-  function filterTopic(value: string) {
-    const next = new URLSearchParams(params)
-    if (value) next.set('topico', value); else next.delete('topico')
-    setParams(next)
-  }
-  return <ForumShell><main id="forum-content" className="forum-main" tabIndex={-1}>
-    <header className="forum-intro">
-      <div><h1>Las ideas se encuentran aquí.</h1><p>Preguntas que abren caminos. Historias que merecen una respuesta.</p></div>
-      <Button asChild className="h-12 px-6"><Link to={'/publicar' + (topic ? '?topico=' + encodeURIComponent(topic) : '')}><Plus aria-hidden="true" />Nueva publicación</Link></Button>
-    </header>
-    <form className="forum-search" role="search" onSubmit={event => {
-      event.preventDefault()
-      const next = new URLSearchParams(params)
-      if (draftSearch.trim()) next.set('q', draftSearch.trim()); else next.delete('q')
-      setParams(next)
-    }}>
-      <label htmlFor="forum-search">Busca una idea o una pregunta</label>
-      <div><Input id="forum-search" type="search" name="q" maxLength={120} value={draftSearch} onChange={event => setDraftSearch(event.target.value)} placeholder="¿Qué te gustaría leer?" /><Button type="submit" variant="secondary" className="h-12 px-5"><Search aria-hidden="true" />Buscar</Button></div>
-    </form>
-    <nav className="forum-topics" aria-label="Filtrar publicaciones por tópico">
-      <Button variant={topic ? 'ghost' : 'secondary'} className="h-11 px-5" aria-pressed={!topic} onClick={() => filterTopic('')}>Todos</Button>
-      {topics.data?.map(item => <Button key={item.id} variant={topic === item.id ? 'secondary' : 'ghost'} className="h-11 px-5" aria-pressed={topic === item.id} onClick={() => filterTopic(item.id)}>{item.name}</Button>)}
-    </nav>
-    {topics.loading && <ForumLoading label="Cargando tópicos…" />}
-    {topics.error && <ForumError message={topics.error} retry={topics.retry} />}
-    <section aria-labelledby="publications-heading">
-      <div className="forum-list-heading"><div><h2 id="publications-heading">{search ? 'Resultados de la búsqueda' : author ? 'Publicaciones de este perfil' : selectedTopic?.name ?? 'Foros recientes'}</h2>{selectedTopic && <p>{selectedTopic.description}</p>}</div><span>Más recientes primero</span></div>
-      {(search || author) && <p className="forum-active-filter">{search && <span>Buscando «{search}»</span>}<Link to={topic ? '/?topico=' + encodeURIComponent(topic) : '/'}>Quitar filtros</Link></p>}
-      <PostList key={path} path={path} filtered={Boolean(topic || search || author)} />
-    </section>
-    <footer className="forum-footer"><p>El foro guarda las ideas. El chat abre la conversación.</p><Link to="/chat">Entrar al chat global <ArrowUpRight aria-hidden="true" /></Link></footer>
-  </main></ForumShell>
+  const discovery = useDiscovery()
+  const auth = useAuth()
+  const { query, onClear, onFeed } = discovery
+  const [revision, setRevision] = useState(0)
+  const viewer = auth.session.user?.id ?? null
+  const following = query.feed === 'following'
+  useEffect(() => {
+    if (!following) return
+    const changed = (event: Event) => {
+      if (!followingChange(event, viewer)) return
+      const focusFeed = document.activeElement instanceof Element && Boolean(document.activeElement.closest('.discovery-feed-list'))
+      setRevision(current => current + 1)
+      if (focusFeed) { const heading = document.getElementById('discovery-heading'); heading?.focus({ preventScroll: true }); heading?.scrollIntoView({ block: 'start' }) }
+    }
+    window.addEventListener(FOLLOWING_CHANGED, changed)
+    return () => window.removeEventListener(FOLLOWING_CHANGED, changed)
+  }, [following, viewer])
+  return <main id="forum-content" className="forum-main discovery-layout content-layout" tabIndex={-1}>
+    <h1 className="sr-only">Publicaciones de Foris</h1>
+    <div className="content-columns"><section className="discovery-stream content-primary" aria-label="Publicaciones">
+      <header className="discovery-stream-heading"><div id="discovery-heading" tabIndex={-1} role="group" aria-label="Flujo de publicaciones" className="discovery-feed-tabs" data-discovery-control><Button type="button" variant={following ? 'ghost' : 'secondary'} className="h-11" aria-pressed={!following} onClick={() => onFeed(false)}>Para ti</Button><Button type="button" variant={following ? 'secondary' : 'ghost'} className="h-11" aria-pressed={following} onClick={() => onFeed(true)}>Siguiendo</Button></div><span className="discovery-sort-note">Recientes</span></header>
+      <ActiveDiscoveryFilters {...discovery} />
+      {query.issue ? <div className="discovery-invalid" role="alert"><p>{query.issue}</p><Button type="button" variant="secondary" className="h-11" onClick={onClear}>Restablecer filtros</Button></div> : following && !viewer ? <div className="discovery-follow-empty"><h2>Tu espacio para seguir conversaciones</h2><p>Entra para ver las publicaciones de autores que sigues y tus comunidades.</p><Button asChild className="h-11"><Link to={loginLink('/?vista=siguiendo')}>Entrar a Foris</Link></Button></div> : <DiscoveryFeed key={query.path + '.' + revision} path={query.path} following={following} filtered={query.filtered} onClear={onClear} onDiscover={() => onFeed(false)} />}
+    </section><HomeContext /></div>
+  </main>
 }
 export function ForumPage() {
-  const [params] = useSearchParams()
-  return <ForumIndex key={params.toString()} />
+  const auth = useAuth()
+  return <ForumIndex key={(auth.session.user?.id ?? 'guest') + '.' + auth.status} />
 }

@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import type { Express } from 'express';
+import type { Express, Request, Response, NextFunction } from 'express';
 import type { Server } from 'node:http';
 import helmet from 'helmet';
 import { AppModule } from './app.module.js';
@@ -14,18 +14,25 @@ export function configureApplication(app: NestExpressApplication): void {
   express.disable('x-powered-by');
   express.set('query parser', 'simple');
   if (config.trustProxy) express.set('trust proxy', config.trustProxy);
+  const storageOrigins = config.media.driver === 's3' ? [new URL(config.media.s3.endpoint).origin] : [];
   app.setGlobalPrefix('api');
+  app.use((_request: Request, response: Response, next: NextFunction) => {
+    response.set('Permissions-Policy', 'camera=(self), microphone=(self), display-capture=()');
+    next();
+  });
   app.use(helmet({
     contentSecurityPolicy: {
       directives: {
-        defaultSrc: ["'self'"], scriptSrc: ["'self'"], styleSrc: ["'self'"], connectSrc: ["'self'"],
+        defaultSrc: ["'self'"], scriptSrc: ["'self'"], styleSrc: ["'self'"], connectSrc: ["'self'", ...storageOrigins],
+        imgSrc: ["'self'", 'blob:', ...storageOrigins],
+        mediaSrc: ["'self'", 'blob:'],
         objectSrc: ["'none'"], frameAncestors: ["'none'"], upgradeInsecureRequests: null,
       },
     },
     strictTransportSecurity: false,
   }));
   app.useStaticAssets(config.publicDirectory, { etag: true, maxAge: 0 });
-  for (const path of ['/login', '/profile', '/chat', '/publicar', '/publicaciones/:id', '/comunidades', '/comunidades/crear', '/comunidades/:id', '/notificaciones']) {
+  for (const path of ['/login', '/profile', '/personas/:id', '/chat', '/publicar', '/publicaciones/:id', '/comunidades', '/comunidades/crear', '/comunidades/:id', '/invitaciones/:token', '/notificaciones']) {
     express.get(path, (_request, response) => {
       response.set('Cache-Control', 'no-store');
       response.sendFile('index.html', { root: config.publicDirectory });

@@ -5,7 +5,6 @@ import type { CommunityNotification } from '@messages/contracts'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/features/account/hooks/use-auth'
 import { accountError, accountRequest } from '@/features/account/api/account-api'
-import { ForumShell } from '@/features/forum/components/forum-shell'
 import { ForumEmpty, ForumError, ForumLoading, ForumTime, ParticipationGate } from '@/features/forum/components/forum-states'
 import { useForumPage } from '@/features/forum/hooks/use-forum'
 import { notifyInboxChanged } from '../lib/notifications'
@@ -36,7 +35,7 @@ function Inbox() {
   }
   if (page.loading && !page.ready) return <ForumLoading label="Cargando tus avisos…" />
   if (page.error) return <ForumError message={page.error} retry={page.retry} />
-  if (!page.items.length) return <ForumEmpty title="Las novedades llegarán aquí"><p>Únete a una comunidad y activa sus avisos para enterarte de las nuevas publicaciones.</p><Button asChild variant="secondary" className="h-11 mt-5 px-6"><Link to="/comunidades">Explorar comunidades</Link></Button></ForumEmpty>
+  if (!page.items.length) return <ForumEmpty scene="inbox" placement="beside" title="Las novedades llegarán aquí"><p>Únete a una comunidad y activa sus avisos para enterarte de las nuevas publicaciones.</p><Button asChild variant="secondary" className="h-11 mt-5 px-6"><Link to="/comunidades">Explorar comunidades</Link></Button></ForumEmpty>
   return <>
     <div className="community-inbox-tools"><Button variant="secondary" className="h-11 px-5" disabled={busy} onClick={() => void mark(page.items[0].id, true)}><Check aria-hidden="true" />Marcar todas como leídas</Button></div>
     {error && <p className="forum-error" role="alert">{error}</p>}
@@ -55,9 +54,9 @@ function Inbox() {
 export function NotificationsPage() {
   const auth = useAuth()
   const [version, setVersion] = useState(0)
-  return <ForumShell><main id="forum-content" className="forum-main forum-reading" tabIndex={-1}>
+  return <main id="forum-content" className="forum-main forum-reading" tabIndex={-1}>
     <header className="forum-intro"><div><h1>Tus notificaciones</h1><p>Las nuevas publicaciones de las comunidades que elegiste seguir.</p></div><Button variant="secondary" className="h-11 px-5" onClick={() => { setVersion(current => current + 1); notifyInboxChanged() }}><RefreshCw aria-hidden="true" />Actualizar</Button></header>
     <ParticipationGate next="/notificaciones" description="Entra con tu cuenta para ver los avisos de tus comunidades. Son privados y solo tú puedes consultarlos.">{auth.session.user && <Inbox key={auth.session.user.id + '.' + version} />}</ParticipationGate>
     <p className="forum-hint community-inbox-note">Puedes activar o silenciar los avisos en cada comunidad. Aquí solo recibes notificaciones dentro de Foris.</p>
-  </main></ForumShell>
+  </main>
 }

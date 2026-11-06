@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none" role="img" aria-labelledby="chispa-canvas-title chispa-canvas-desc">
+  <title id="chispa-canvas-title">Chispa inspira una publicación</title>
+  <desc id="chispa-canvas-desc">Una postura amigable del personaje de Foris, con color sólido y ojos transparentes.</desc>
+  <defs>
+    <mask id="chispa-canvas-eyes" maskUnits="userSpaceOnUse" x="0" y="0" width="160" height="160">
+      <rect width="160" height="160" fill="#fff"/>
+      <g fill="#000"><rect x="61" y="65" width="12" height="28" rx="6"/><rect x="88" y="69" width="12" height="25" rx="6"/></g>
+    </mask>
+  </defs>
+  <g transform="rotate(-11 80 80)"><g fill="#ECAF38" mask="url(#chispa-canvas-eyes)"><path d="M80 24Q84 24 88 34L101 58L129 62Q143 64 132 74L112 94L117 122Q120 136 108 130L80 116L52 130Q40 136 43 122L48 94L28 74Q17 64 31 62L59 58L72 34Q76 24 80 24Z"/></g></g>
+</svg>

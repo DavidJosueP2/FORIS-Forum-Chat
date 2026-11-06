@@ -1,9 +1,12 @@
+import { Link } from 'react-router-dom'
+import { publicProfileLink } from '@/features/account/lib/public-profile'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { Message } from '@messages/contracts'
 import { ArrowDown, LoaderCircle } from 'lucide-react'
 
 import { ForisCharacter } from '@/components/brand/foris-character'
 import { Button } from '@/components/ui/button'
+import { IdentityImage } from '@/features/media/components/identity-image'
 import { Skeleton } from '@/components/ui/skeleton'
 import { isSameDay, messageDay, messageTime } from '../lib/messages'
 
@@ -122,7 +125,7 @@ export function MessageFeed({
           )}
           {historyStatus === 'ready' && !hasMessages && (
             <div className="chat-empty">
-              <ForisCharacter mood="welcome" width={116} height={116} />
+              <ForisCharacter scene="chat" width={116} height={116} />
               <h2>Rompe el hielo.</h2>
               <p>El chat global es un espacio abierto. Comparte una idea, una pregunta o simplemente saluda.</p>
               <div className="empty-suggestions">
@@ -161,12 +164,10 @@ export function MessageFeed({
                 <li key={message.id}>
                   {startDay && <p className="message-day">{messageDay(message)}</p>}
                   <article data-message-id={message.id} className={'message-row' + (own ? ' message-own' : '')}>
-                    <span className="message-avatar" aria-hidden="true">
-                      {Array.from(message.author)[0].toLocaleUpperCase('es')}
-                    </span>
+                    <IdentityImage fallbackKey={message.accountId ? 'user:' + message.accountId : 'guest:' + message.senderId} userId={message.accountId} name={message.author} className="message-avatar" />
                     <div className="message-text">
                       <header className="message-meta">
-                        <span className="message-author">{message.author}</span>
+                        {message.accountId ? <Link to={publicProfileLink(message.accountId)} className="message-author">{message.author}</Link> : <span className="message-author">{message.author}</span>}
                         <span className="message-kind">{own ? 'Tú, ' : ''}{message.accountId ? 'Miembro' : 'Invitado'}</span>
                         <time dateTime={message.createdAt} title={new Date(message.createdAt).toLocaleString('es')}>
                           {messageTime(message)}

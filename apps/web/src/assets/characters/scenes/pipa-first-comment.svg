@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none" role="img" aria-labelledby="pipa-first-comment-title pipa-first-comment-desc">
+  <title id="pipa-first-comment-title">Pipa se asoma a la primera respuesta</title>
+  <desc id="pipa-first-comment-desc">Una postura del personaje original, con color sólido y ojos recortados en transparente.</desc>
+  <defs>
+    <mask id="pipa-first-comment-eyes" maskUnits="userSpaceOnUse" x="0" y="0" width="160" height="160">
+      <rect width="160" height="160" fill="#fff"/>
+      <g fill="#000"><rect x="64" y="82" width="12" height="17" rx="6"/><rect x="92" y="79" width="12" height="19" rx="6"/></g>
+    </mask>
+  </defs>
+  <g transform="rotate(-6 80 80)"><g fill="#E989AA" mask="url(#pipa-first-comment-eyes)"><path d="M76 135C65 127 24 98 24 63C24 46 36 34 51 34C65 34 74 42 80 51C86 42 95 34 109 34C124 34 136 46 136 63C136 98 95 127 84 135Q80 138 76 135Z"/></g></g>
+</svg>

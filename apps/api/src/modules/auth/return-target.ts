@@ -1,8 +1,11 @@
 /** Solo rutas de Foris conocidas; nunca redirecciones externas. */
 export function returnTarget(value: unknown): string {
   if (typeof value !== 'string' || value.length > 256) return '/';
+  if (value === '/?vista=siguiendo') return value;
+  if (/^\/personas\/[\da-fA-F]{8}-(?:[\da-fA-F]{4}-){3}[\da-fA-F]{12}(?:\?vista=comunidades)?$/u.test(value)) return value;
   if (/^\/(?:profile|chat|comunidades(?:\/crear)?|notificaciones)?$/u.test(value)) return value;
   if (/^\/comunidades\/[1-9]\d{0,18}$/u.test(value)) return value;
+  if (/^\/invitaciones\/[A-Za-z0-9_-]{43}$/u.test(value)) return value;
   const publication = /^\/publicar(?:\?([^#]*))?$/u.exec(value);
   if (publication) {
     const params = new URLSearchParams(publication[1]);
@@ -14,6 +17,6 @@ export function returnTarget(value: unknown): string {
     }
     return '/publicar' + (params.size ? '?' + params.toString() : '');
   }
-  if (/^\/publicaciones\/[1-9]\d{0,18}(?:#responder)?$/u.test(value)) return value;
+  if (/^\/publicaciones\/[\da-fA-F]{8}-(?:[\da-fA-F]{4}-){3}[\da-fA-F]{12}(?:\/editar|#responder)?$/u.test(value)) return value;
   return '/';
 }

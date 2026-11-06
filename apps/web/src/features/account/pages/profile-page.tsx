@@ -1,3 +1,4 @@
+import { publicProfileLink } from '../lib/public-profile'
 import { useLayoutEffect, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import type { AccountUser, AuthSession, OtpChallenge } from '@messages/contracts'
@@ -10,6 +11,9 @@ import { PasswordField } from '../components/password-field'
 import { OtpForm } from '../components/otp-form'
 import { useAuth } from '../hooks/use-auth'
 import { accountError, accountRequest, startGoogle } from '../api/account-api'
+import { ProfilePhoto } from '../components/profile-photo'
+import { IdentityImage } from '@/features/media/components/identity-image'
+import { ForisCharacter } from '@/components/brand/foris-character'
 
 function GoogleConfirmation() {
   const [error, setError] = useState<string | null>(null)
@@ -50,7 +54,7 @@ function PersonalDetails({ user }: { user: AccountUser }) {
           </div>
           <div className="account-field"><label htmlFor="profile-bio">Algo sobre ti</label><Textarea id="profile-bio" rows={3} maxLength={280} value={bio} onChange={event => { setBio(event.target.value); setSuccess(false) }} /><p className="account-hint">Hasta 280 caracteres. Tu presentación se guarda en tu perfil.</p></div>
           {error && <p className="account-error" role="alert">{error}</p>}
-          {success && <p className="account-success" role="status">Tus datos se actualizaron.</p>}
+          {success && <p className="account-success profile-saved" role="status"><ForisCharacter scene="profileSaved" width={48} height={48} /><span>Tus datos se actualizaron.</span></p>}
           <Button type="submit" className="h-11 justify-self-start px-6">Guardar cambios</Button>
         </fieldset>
       </form>
@@ -249,12 +253,13 @@ export function ProfilePage() {
     <AccountShell>
       <main id="account-content" className="profile-main" tabIndex={-1}>
         <header className="profile-heading">
-          <span className="profile-avatar" aria-hidden="true">{Array.from(user.displayName)[0]?.toLocaleUpperCase('es')}</span>
+          <IdentityImage fallbackKey={'user:' + user.id} mediaId={user.avatarId} name={user.displayName} className="profile-avatar" />
           <div><h1>Tu perfil</h1><p>Hola, {user.displayName}. Este es tu lugar en Foris.</p></div>
         </header>
         {params.get('notice') === 'google_linked' && <p className="account-notice" role="status">Google ya está vinculado a tu cuenta.</p>}
         {params.get('notice') === 'reauthenticated' && <p className="account-notice" role="status">Identidad confirmada. Ya puedes continuar con el cambio.</p>}
         {auth.error && <p className="account-error" role="alert">{auth.error}</p>}
+        <ProfilePhoto key={'photo-' + user.id} user={user} />
         <PersonalDetails key={user.id} user={user} />
         <EmailSettings key={'email-' + user.id} user={user} />
         <PasswordSettings key={'password-' + user.id} user={user} creationRequest={passwordCreationRequest} onCreatePassword={createPassword} />
@@ -262,7 +267,7 @@ export function ProfilePage() {
         <footer className="profile-footer">
           <Link to="/" className="auth-guest-link">Volver a los foros</Link>
           <Link to="/comunidades?vista=mias" className="auth-guest-link">Mis comunidades</Link>
-          <Link to={'/?autor=' + user.id} className="auth-guest-link">Mis publicaciones</Link>
+          <Link to={publicProfileLink(user.id)} className="auth-guest-link">Ver mi perfil público</Link>
           <Button variant="secondary" className="h-11 px-6" disabled={busy} onClick={() => {
             if (busy) return
             setBusy(true); setError(null)
