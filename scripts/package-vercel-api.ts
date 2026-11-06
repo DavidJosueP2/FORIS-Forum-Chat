@@ -21,4 +21,12 @@ await writeFile(
   join(outputRoot, 'package.json'),
   JSON.stringify({ private: true, type: 'module', main: 'index.mjs' }, null, 2) + '\n',
 );
-await writeFile(join(outputRoot, 'index.mjs'), "import './apps/api/dist/main.js';\n");
+// La importación dinámica permite registrar fallos de carga antes de crear Nest.
+await writeFile(join(outputRoot, 'index.mjs'), [
+  "console.info('foris_starting', { phase: 'entrypoint', node: process.version });",
+  "void import('./apps/api/dist/main.js').catch((error) => {",
+  "  console.error('foris_startup_failed', { phase: 'import', type: error instanceof Error ? error.name : 'unknown', code: error?.code });",
+  '  process.exitCode = 1;',
+  '});',
+  '',
+].join('\n'));
