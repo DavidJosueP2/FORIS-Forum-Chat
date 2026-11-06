@@ -74,6 +74,9 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
       database: env.PGDATABASE || 'messages',
       user: env.PGUSER || 'messages',
       password: env.PGPASSWORD,
+      ssl: env.PGSSL === '1'
+        ? { rejectUnauthorized: true }
+        : undefined,
       max: 10,
       connectionTimeoutMillis: 5000,
       idleTimeoutMillis: 30000,
