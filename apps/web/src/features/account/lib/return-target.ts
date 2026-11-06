@@ -2,6 +2,7 @@ export function returnTarget(value: unknown): string {
   if (typeof value !== 'string' || value.length > 256) return '/'
   if (/^\/(?:profile|chat|comunidades(?:\/crear)?|notificaciones)?$/u.test(value)) return value
   if (/^\/comunidades\/[1-9]\d{0,18}$/u.test(value)) return value
+  if (/^\/invitaciones\/[A-Za-z0-9_-]{43}$/u.test(value)) return value
   const publication = /^\/publicar(?:\?([^#]*))?$/u.exec(value)
   if (publication) {
     const params = new URLSearchParams(publication[1])

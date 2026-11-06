@@ -9,11 +9,11 @@ import { createPostInput, createReplyInput, forumFilters, forumId } from './foru
 export class ForumController {
   constructor(@Inject(ForumRepository) private readonly repository: ForumRepository, @Inject(SessionService) private readonly sessions: SessionService) {}
   @Get('topics') @Header('Cache-Control', 'no-store') topics() { return this.repository.topics(); }
-  @Get('posts') @Header('Cache-Control', 'no-store') list(@Query() query: Record<string, unknown>) { return this.repository.list(forumFilters(query)); }
-  @Get('posts/:id') @Header('Cache-Control', 'no-store') post(@Param('id') id: string) { return this.repository.getPost(forumId(id)); }
-  @Get('posts/:id/replies') @Header('Cache-Control', 'no-store') replies(@Param('id') id: string, @Query() query: Record<string, unknown>) {
+  @Get('posts') @Header('Cache-Control', 'no-store') async list(@Query() query: Record<string, unknown>, @Req() request: AuthRequest) { return this.repository.list(forumFilters(query), (await this.sessions.optional(request))?.user.id ?? null); }
+  @Get('posts/:id') @Header('Cache-Control', 'no-store') async post(@Param('id') id: string, @Req() request: AuthRequest) { return this.repository.getPost(forumId(id), undefined, (await this.sessions.optional(request))?.user.id ?? null); }
+  @Get('posts/:id/replies') @Header('Cache-Control', 'no-store') async replies(@Param('id') id: string, @Query() query: Record<string, unknown>, @Req() request: AuthRequest) {
     const pagination = forumFilters(query);
-    return this.repository.listReplies(forumId(id), pagination.before, pagination.limit);
+    return this.repository.listReplies(forumId(id), pagination.before, pagination.limit, (await this.sessions.optional(request))?.user.id ?? null);
   }
   @Post('posts') async create(@Body() body: unknown, @Req() request: AuthRequest, @Res() response: Response) {
     const actor = await this.sessions.required(request);

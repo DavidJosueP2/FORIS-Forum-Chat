@@ -26,10 +26,10 @@ async function fixture(t: TestContext, globalBytes?: number) {
     return { id, cookie: 'foris_session=' + token };
   };
   const bytes = await sharp({ create: { width: 2, height: 2, channels: 3, background: '#445544' } }).png().toBuffer();
-  const authorize = (cookie: string, requestId = randomUUID(), size = bytes.length) => api.post('/api/media/uploads').set('Origin', origin).set('Cookie', cookie)
-    .send({ originalName: 'imagen.png', mime: 'image/png', bytes: size, requestId });
-  const upload = async (cookie: string) => {
-    const intent = await authorize(cookie).expect(201);
+  const authorize = (cookie: string, requestId = randomUUID(), size = bytes.length, purpose = 'post') => api.post('/api/media/uploads').set('Origin', origin).set('Cookie', cookie)
+    .send({ originalName: 'imagen.png', mime: 'image/png', bytes: size, requestId, purpose });
+  const upload = async (cookie: string, purpose = 'post') => {
+    const intent = await authorize(cookie, randomUUID(), bytes.length, purpose).expect(201);
     await api.put(intent.body.upload.url as string).set('Origin', origin).set('Cookie', cookie).set('Content-Type', 'image/png').send(bytes).expect(200);
     return api.post('/api/media/' + intent.body.media.id + '/complete').set('Origin', origin).set('Cookie', cookie).send({}).expect(200);
   };
@@ -96,4 +96,59 @@ test('no basta con declarar un MIME permitido: se rechaza el contenido inválido
   await api.post('/api/media/' + intent.body.media.id + '/complete').set('Origin', origin).set('Cookie', owner.cookie).send({}).expect(400);
   assert.equal((await api.get('/api/media/' + intent.body.media.id).set('Cookie', owner.cookie)).body.state, 'REJECTED');
   await api.get('/api/media/' + intent.body.media.id + '/read-url').set('Cookie', owner.cookie).expect(409);
+});
+
+
+test('las fotos de perfil se vinculan a su propietario y no se reutilizan como imágenes de publicaciones', async t => {
+  const { api, user, upload } = await fixture(t);
+  const owner = await user(); const other = await user();
+  const image = await upload(owner.cookie, 'avatar');
+  const id = image.body.id as string;
+  await api.patch('/api/account/avatar').set('Origin', origin).set('Cookie', other.cookie).send({ mediaId: id }).expect(404);
+  await api.patch('/api/account/avatar').set('Origin', origin).set('Cookie', owner.cookie).send({ mediaId: id }).expect(200);
+  assert.equal((await api.get('/api/auth/session').set('Cookie', owner.cookie)).body.user.avatarId, id);
+  assert.equal((await api.get('/api/profiles/' + owner.id + '/avatar')).body.avatarId, id);
+  await api.get('/api/media/' + id + '/read-url').expect(200);
+  await api.post('/api/posts').set('Origin', origin).set('Cookie', owner.cookie).send({ title: 'No reutilizar', body: 'Texto', topicId: 'general', requestId: randomUUID(), mediaIds: [id] }).expect(409);
+  await api.patch('/api/account/avatar').set('Origin', origin).set('Cookie', owner.cookie).send({ mediaId: null }).expect(200);
+  assert.equal((await api.get('/api/profiles/' + owner.id + '/avatar')).body.avatarId, null);
+  await api.get('/api/media/' + id + '/read-url').expect(404);
+});
+
+test('imágenes de comunidades privadas y publicaciones no se exponen mediante IDs de medios', async t => {
+  const { api, user, upload } = await fixture(t);
+  const owner = await user(); const viewer = await user();
+  const image = await upload(owner.cookie, 'community');
+  const photo = image.body.id as string;
+  const created = await api.post('/api/communities').set('Origin', origin).set('Cookie', owner.cookie).send({ name: 'Fotos privadas', description: 'Solo miembros.', visibility: 'private', imageId: photo, requestId: randomUUID() }).expect(201);
+  const communityId = created.body.community.id as string;
+  await api.get('/api/media/' + photo).set('Cookie', viewer.cookie).expect(404);
+  await api.get('/api/media/' + photo + '/read-url').expect(404);
+  const invitation = await api.post('/api/communities/' + communityId + '/invitations').set('Origin', origin).set('Cookie', owner.cookie).send({}).expect(201);
+  await api.post('/api/community-invitations/accept').set('Origin', origin).set('Cookie', viewer.cookie).send({ token: new URL(invitation.body.url as string).pathname.split('/').at(-1) }).expect(201);
+  await api.get('/api/media/' + photo + '/read-url').set('Cookie', viewer.cookie).expect(200);
+  const postImage = await upload(owner.cookie);
+  const posted = await api.post('/api/posts').set('Origin', origin).set('Cookie', owner.cookie).send({ title: 'Foto reservada', body: 'Solo miembros', topicId: 'general', communityId, requestId: randomUUID(), mediaIds: [postImage.body.id] }).expect(201);
+  assert.equal(posted.body.post.images.length, 1);
+  await api.get('/api/media/' + postImage.body.id + '/read-url').expect(404);
+  await api.delete('/api/communities/' + communityId + '/membership').set('Origin', origin).set('Cookie', viewer.cookie).send({}).expect(200);
+  await api.get('/api/media/' + photo + '/read-url').set('Cookie', viewer.cookie).expect(404);
+  await api.get('/api/media/' + postImage.body.id + '/read-url').set('Cookie', viewer.cookie).expect(404);
+});
+
+
+test('salir de una privada también impide renovar enlaces de las imágenes propias publicadas allí', async t => {
+  const { api, user, upload } = await fixture(t);
+  const owner = await user(); const author = await user();
+  const created = await api.post('/api/communities').set('Origin', origin).set('Cookie', owner.cookie).send({ name: 'Privacidad al salir', description: 'Contenido reservado.', visibility: 'private', requestId: randomUUID() }).expect(201);
+  const id = created.body.community.id as string;
+  const invitation = await api.post('/api/communities/' + id + '/invitations').set('Origin', origin).set('Cookie', owner.cookie).send({}).expect(201);
+  await api.post('/api/community-invitations/accept').set('Origin', origin).set('Cookie', author.cookie).send({ token: new URL(invitation.body.url as string).pathname.split('/').at(-1) }).expect(201);
+  const image = await upload(author.cookie);
+  await api.post('/api/posts').set('Origin', origin).set('Cookie', author.cookie).send({ title: 'Mi imagen privada', body: 'Para miembros', topicId: 'general', communityId: id, requestId: randomUUID(), mediaIds: [image.body.id] }).expect(201);
+  await api.get('/api/media/' + image.body.id + '/read-url').set('Cookie', author.cookie).expect(200);
+  await api.delete('/api/communities/' + id + '/membership').set('Origin', origin).set('Cookie', author.cookie).send({}).expect(200);
+  await api.get('/api/media/' + image.body.id + '/read-url').set('Cookie', author.cookie).expect(404);
+  await api.get('/api/media/' + image.body.id).set('Cookie', author.cookie).expect(404);
+  await api.post('/api/media/' + image.body.id + '/complete').set('Origin', origin).set('Cookie', author.cookie).send({}).expect(404);
 });

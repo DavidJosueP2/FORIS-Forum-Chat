@@ -4,6 +4,7 @@ import { ArrowDown, LoaderCircle } from 'lucide-react'
 
 import { ForisCharacter } from '@/components/brand/foris-character'
 import { Button } from '@/components/ui/button'
+import { IdentityImage } from '@/features/media/components/identity-image'
 import { Skeleton } from '@/components/ui/skeleton'
 import { isSameDay, messageDay, messageTime } from '../lib/messages'
 
@@ -161,9 +162,7 @@ export function MessageFeed({
                 <li key={message.id}>
                   {startDay && <p className="message-day">{messageDay(message)}</p>}
                   <article data-message-id={message.id} className={'message-row' + (own ? ' message-own' : '')}>
-                    <span className="message-avatar" aria-hidden="true">
-                      {Array.from(message.author)[0].toLocaleUpperCase('es')}
-                    </span>
+                    <IdentityImage userId={message.accountId} name={message.author} className="message-avatar" />
                     <div className="message-text">
                       <header className="message-meta">
                         <span className="message-author">{message.author}</span>

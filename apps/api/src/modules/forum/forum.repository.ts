@@ -8,6 +8,7 @@ import { HttpError } from '../../common/errors/http-error.js';
 import type { ForumFilters } from './forum-validation.js';
 import { CommunityRepository } from '../communities/community.repository.js';
 import { MediaRepository } from '../media/media.repository.js';
+import { readablePost } from '../communities/community-access.js';
 
 interface PostRow extends QueryResultRow {
   id: string; title: string; body: string; topic_id: string; topic_name: string; topic_description: string;
@@ -48,11 +49,11 @@ export class ForumRepository {
   async topics(): Promise<ForumTopic[]> {
     return (await this.database.query<ForumTopic & QueryResultRow>('SELECT id,name,description FROM forum_topics ORDER BY position,id')).rows;
   }
-  async list(filters: ForumFilters): Promise<ForumPage<ForumPostSummary>> {
-    const where: string[] = [];
-    const values: unknown[] = [];
+  async list(filters: ForumFilters, userId: string | null = null): Promise<ForumPage<ForumPostSummary>> {
+    const where: string[] = [readablePost('$1')];
+    const values: unknown[] = [userId];
     if (filters.community) {
-      await this.communities.get(filters.community, null);
+      await this.communities.get(filters.community, userId);
       values.push(filters.community); where.push('p.community_id=$' + values.length);
     }
     if (filters.topic) {
@@ -72,14 +73,14 @@ export class ForumRepository {
     const images = await this.media.images(selected.items.map(item => item.id));
     return { ...selected, items: selected.items.map(item => ({ ...item, images: images.get(item.id) ?? [] })) };
   }
-  async getPost(id: string, client: SqlClient = this.database): Promise<ForumPost> {
-    const row = (await client.query<PostRow>(POSTS + ' WHERE p.id=$1', [id])).rows[0];
+  async getPost(id: string, client: SqlClient = this.database, userId: string | null = null): Promise<ForumPost> {
+    const row = (await client.query<PostRow>(POSTS + ' WHERE p.id=$1 AND ' + readablePost('$2'), [id, userId])).rows[0];
     if (!row) throw new HttpError(404, 'POST_NOT_FOUND', 'Esta publicación no existe.');
     const images = await this.media.images([id], client);
     return { ...detail(row), images: images.get(id) ?? [] };
   }
-  async listReplies(postId: string, before: string | undefined, limit: number): Promise<ForumPage<ForumReply>> {
-    const exists = await this.database.query('SELECT id FROM forum_posts WHERE id=$1', [postId]);
+  async listReplies(postId: string, before: string | undefined, limit: number, userId: string | null = null): Promise<ForumPage<ForumReply>> {
+    const exists = await this.database.query('SELECT p.id FROM forum_posts p WHERE p.id=$1 AND ' + readablePost('$2'), [postId, userId]);
     if (!exists.rows[0]) throw new HttpError(404, 'POST_NOT_FOUND', 'Esta publicación no existe.');
     const result = await this.database.query<ReplyRow>(
       REPLIES + ' WHERE r.post_id=$1' + (before ? ' AND r.id<$3' : '') + ' ORDER BY r.id DESC LIMIT $2',
@@ -104,7 +105,7 @@ export class ForumRepository {
       if (existing) {
         if (existing.title !== input.title || existing.body !== input.body || existing.topic_id !== input.topicId || String(existing.community_id ?? '') !== (input.communityId ?? '')
           || JSON.stringify(existing.media_request_ids) !== JSON.stringify(input.mediaIds ?? [])) throw new HttpError(409, 'REQUEST_CONFLICT', 'Esta solicitud ya corresponde a otra publicación.');
-        return { post: await this.getPost(String(existing.id), client), created: false };
+        return { post: await this.getPost(String(existing.id), client, actor.user.id), created: false };
       }
       const topic = await client.query('SELECT id FROM forum_topics WHERE id=$1', [input.topicId]);
       if (!topic.rows[0]) throw new HttpError(404, 'TOPIC_NOT_FOUND', 'Elige un tópico disponible.');
@@ -113,7 +114,7 @@ export class ForumRepository {
       const inserted = await client.query<{ id: string }>('INSERT INTO forum_posts(topic_id,author_id,title,body,request_id,community_id,media_request_ids) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING id', [input.topicId, actor.user.id, input.title, input.body, input.requestId, input.communityId ?? null, input.mediaIds ?? []]);
       await this.media.attach(client, input.mediaIds ?? [], actor.user.id, String(inserted.rows[0].id));
       if (input.communityId) await this.communities.published(client, input.communityId, String(inserted.rows[0].id), actor.user.id);
-      return { post: await this.getPost(String(inserted.rows[0].id), client), created: true };
+      return { post: await this.getPost(String(inserted.rows[0].id), client, actor.user.id), created: true };
     });
   }
   async createReply(postId: string, input: CreateForumReply, actor: AuthContext): Promise<CreatedForumReply> {

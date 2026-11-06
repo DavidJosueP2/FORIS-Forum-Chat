@@ -12,19 +12,21 @@ Compartir preguntas, ideas y proyectos en publicaciones organizadas por tópicos
 
 ## Users
 
-Participantes de comunidades abiertas. Cualquiera puede leer el foro y enviar mensajes en el chat global; publicar o responder en el foro requiere una cuenta. La interfaz y los mensajes del sistema están en español.
+Participantes de comunidades públicas o privadas por invitación. Cualquiera puede leer el contenido público y enviar mensajes en el chat global; el contenido privado requiere pertenecer a su comunidad y publicar o responder requiere una cuenta. La interfaz y los mensajes del sistema están en español.
 
 ## Capabilities and Constraints
 
 - Foros de publicaciones con título, cuerpo y tópico. Los tópicos predeterminados son General, Tecnología, Aprendizaje, Creatividad y Proyectos.
-- La navegación muestra Foros, Comunidades y Chat global en ese orden. Comunidades permite explorar espacios abiertos, crearlos con una cuenta, unirse, salir y guardar favoritas independientemente de la membresía.
-- Cada comunidad tiene publicaciones asociadas. Sus miembros pueden publicar y responder; cualquiera puede leer. El creador pertenece a su comunidad y no puede abandonarla en esta etapa.
+- La navegación muestra Foros, Comunidades y Chat global en ese orden. Comunidades permite crear espacios públicos o privados, explorar los públicos y los privados de los que se es miembro, unirse, salir y guardar favoritas. Las privadas solo admiten nuevos miembros mediante invitación.
+- Cada comunidad tiene publicaciones asociadas. Sus miembros pueden publicar y responder. La lectura es pública en las comunidades públicas y exclusiva de miembros en las privadas. El creador pertenece a su comunidad y no puede abandonarla en esta etapa.
 - Las preferencias por comunidad permiten recibir o silenciar avisos de nuevas publicaciones. El usuario confirmó notificaciones solo dentro de Foris, con bandeja privada y estado leído. No se notifica al autor su propia publicación ni se envían avisos a quien no pertenece a la comunidad.
 - Inicio / con búsqueda, filtros por tópico o autor y paginación; /publicar para crear; /publicaciones/:postId para leer y responder. El foro no usa entrega en tiempo real.
 - Los invitados solo leen el foro. La API exige una sesión vigente de una cuenta verificada para crear publicaciones o respuestas y asigna el autor desde esa sesión.
 - El chat global se conserva en /chat con envío como invitado o miembro, historial y eventos en tiempo real. La petición más reciente del usuario mantiene expresamente esta participación anónima.
-- El chat global incluye una videollamada WebRTC compartida de hasta cuatro cuentas verificadas. Entrar requiere una acción explícita y permiso de cámara/micrófono; incluye silenciar, apagar cámara y salir. Señalización privada y plazas se coordinan con PostgreSQL. Producción requiere TURN con credenciales temporales; Foris no graba ni almacena el audio o vídeo de la llamada.
+- El chat global incluye una videollamada WebRTC compartida de hasta cuatro cuentas verificadas. Entrar requiere una acción explícita y permiso de cámara/micrófono; incluye silenciar, apagar cámara y salir. La llamada ocupa toda la ventana y se puede minimizar para escribir en el chat sin desconectar el audio; una franja permite volver a la llamada. Señalización privada y plazas se coordinan con PostgreSQL. Producción requiere TURN con credenciales temporales; Foris no graba ni almacena el audio o vídeo de la llamada.
 - Las publicaciones admiten hasta tres imágenes JPEG, PNG o WebP de 5 MiB cada una por defecto. El propietario puede retirarlas desde el detalle. Las respuestas y los mensajes del chat siguen siendo texto; documentos, audio o vídeo como archivos adjuntos y edición del texto de una publicación quedan fuera de esta etapa.
+- La creación de comunidades incorpora imagen opcional, nombre, descripción y selector de acceso; los límites se muestran discretamente dentro de los campos. El creador de una privada genera y revoca enlaces de un solo uso que caducan a los siete días. Un enlace válido muestra el nombre de la comunidad para aceptar con una cuenta; no revela publicaciones ni imágenes privadas.
+- Los usuarios pueden subir, cambiar y quitar su foto de perfil, visible públicamente en su identidad. Las imágenes de comunidades siguen los permisos de estas. Se reutilizan la validación de imágenes, las cuotas y los adaptadores existentes.
 - El almacenamiento usa un puerto con adaptadores local y S3 compatible con R2. Desarrollo guarda archivos en .data/uploads; producción exige almacenamiento externo privado. PostgreSQL conserva metadatos e identificadores, sin binarios ni URLs firmadas persistidas. Hay validación real de imágenes, cuotas con reservas y limpieza recuperable.
 - Nombre visible opcional para invitados. Una cuenta acredita acceso a un correo o identidad de Google, no el nombre real de una persona.
 - Publicaciones, respuestas, cuentas e historial del chat persisten en PostgreSQL. Los reintentos de envío usan identificadores para evitar duplicados.

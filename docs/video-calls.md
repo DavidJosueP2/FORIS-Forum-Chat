@@ -1,6 +1,6 @@
 # Videollamada del chat global
 
-La acción «Iniciar videollamada» o «Unirse a la llamada» aparece encima de los mensajes de /chat. Abre un panel en línea; el navegador solo pide cámara y micrófono al pulsar «Entrar con cámara y micrófono». Se puede silenciar, apagar cámara, cancelar la entrada y salir. Cerrar el panel también sale. Los invitados mantienen el chat de texto y ven un enlace para entrar con una cuenta.
+El botón «Videollamada» aparece a la derecha de «Chat global» en /chat; en móvil conserva el icono con nombre accesible. Abre una vista que ocupa toda la ventana de Foris, con vídeos grandes y controles al pie. El navegador solo pide cámara y micrófono al pulsar «Entrar con cámara y micrófono». Una llamada activa se puede minimizar para seguir escribiendo: aparece una franja con «Volver a la llamada» y salida, sin desconectar ni detener el audio. Volver restaura la vista completa. Salir de la llamada detiene los dispositivos. Antes de entrar, cerrar cancela cualquier preparación pendiente. Los invitados mantienen el chat de texto y el enlace para entrar con una cuenta.
 
 ## Alcance
 
@@ -17,7 +17,8 @@ WebRTC transporta audio y vídeo entre navegadores; Nest coordina únicamente pr
 | apps/api/src/database/migrations/006-create-video-calls.ts | Sala, participantes y señales efímeras |
 | packages/contracts/src/video-calls.d.ts | Contratos públicos de llamada |
 | apps/web/src/features/video-calls/lib/video-call-client.ts | Dispositivos, conexiones, negociación y liberación |
-| apps/web/src/features/video-calls/components/global-video-call.tsx | Panel, consentimiento, vídeos y controles |
+| apps/web/src/features/video-calls/components/global-video-call.tsx | Vista completa, consentimiento, minimizar/regresar y controles |
+| apps/web/src/features/video-calls/components/call-media.tsx | Vídeos y audio remoto persistente al minimizar |
 
 Se reutilizan las sesiones HttpOnly y el patrón de transacciones del proyecto. Cada operación verifica la cuenta y sesión; el participante queda vinculado a ambas. Las escrituras requieren el origen exacto de APP_URL y JSON limitado a 80 KiB, sin compresión. Los IDs y campos se validan, las consultas son parametrizadas y el SDP se limita a 65536 caracteres. No se aceptan autores enviados por el cliente. Las señales solo se consultan por el destinatario de esa sesión y solo se envían a otros participantes vigentes.
 
@@ -25,7 +26,7 @@ La fila de sala se bloquea con FOR UPDATE antes de comprobar plazas o alterar pa
 
 La sincronización privada consulta señales aproximadamente cada 1,5 segundos y renueva una presencia de noventa segundos. Las señales caducan a los dos minutos; eliminarlas no rompe una conexión establecida. La participación coordinada dura hasta treinta minutos. Hay limpieza al operar y cada minuto, sin persistir SDP en logs o almacenamiento del navegador. PostgreSQL conserva temporalmente el SDP, que contiene información de conexión; no contiene grabaciones. Revocar la sesión elimina la participación mediante la relación existente y corta futuras operaciones de señalización.
 
-La salida cierra conexiones y detiene pistas de cámara/micrófono, también al cancelar, desmontar la página, recibir pagehide u offline. La falta de comunicación exitosa con Foris durante treinta segundos detiene la llamada en el cliente. Una petición de salida perdida se recupera con la caducidad de presencia. La API no puede cancelar el diálogo nativo de permisos; si la persona sale antes de responder, cualquier flujo que se obtenga después se detiene. El bloqueo de reproducción automática ofrece un botón explícito para reproducir.
+La salida cierra conexiones y detiene pistas de cámara/micrófono, también al cancelar, desmontar la página, recibir pagehide u offline. La falta de comunicación exitosa con Foris durante treinta segundos detiene la llamada en el cliente. Una petición de salida perdida se recupera con la caducidad de presencia. La API no puede cancelar el diálogo nativo de permisos; si la persona sale antes de responder, cualquier flujo que se obtenga después se detiene. El audio remoto permanece montado fuera de la vista completa, de modo que minimizar no lo interrumpe. Los vídeos están silenciados para evitar sonido duplicado. Si el navegador bloquea la reproducción se ofrece «Activar audio» tanto en la vista completa como en la franja de regreso.
 
 Los navegadores pueden suspender temporizadores en segundo plano. La caducidad del servidor controla participación y señalización; el cierre del transporte WebRTC depende del cliente. Un navegador modificado podría conservar una conexión ya establecida fuera de esos controles: no se promete revocación instantánea de medios P2P. Una implementación con SFU permitiría controlar ese transporte desde el servidor.
 
@@ -79,4 +80,4 @@ Todas las rutas requieren sesión de cuenta verificada y devuelven no-store.
 
 Se añadieron fuentes de pruebas para configuración, validación, credenciales TURN, autenticación/origen, capacidad, idempotencia, propiedad y privacidad de señales, cursores y caducidad. Las pruebas de integración preparadas usan pg-mem; no demuestran los bloqueos reales de PostgreSQL. La comprobación de concurrencia en PostgreSQL y de medios entre navegadores/redes queda pendiente.
 
-Por petición vigente del usuario, solo se realizó revisión estática: ESLint, imports, CSS, configuración y revisión independiente de fuentes. No se ejecutaron pruebas, compilación, typecheck, migraciones, servidores, Docker ni llamadas reales. Tampoco se abrió la cámara. Debe validarse manualmente la conexión entre navegadores, permisos rechazados, cámara ocupada, pérdida de red, cierre de pestaña y funcionamiento de TURN antes de desplegar.
+Por petición vigente del usuario, solo se realizó revisión estática: ESLint, imports, CSS, configuración y revisión independiente de fuentes. No se ejecutaron pruebas, compilación, typecheck, migraciones, servidores, Docker ni llamadas reales. La apertura automática, minimizar/regresar, continuidad de audio, foco y adaptación a móvil requieren comprobación posterior en navegador. Tampoco se abrió la cámara. Debe validarse manualmente la conexión entre navegadores, permisos rechazados, cámara ocupada, pérdida de red, cierre de pestaña y funcionamiento de TURN antes de desplegar.

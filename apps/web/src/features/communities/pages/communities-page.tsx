@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { ArrowUpRight, Plus, Search, Star, UsersRound } from 'lucide-react'
+import { ArrowUpRight, LockKeyhole, Plus, Search, Star, UsersRound } from 'lucide-react'
 import type { Community } from '@messages/contracts'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -8,6 +8,7 @@ import { useAuth } from '@/features/account/hooks/use-auth'
 import { ForumShell } from '@/features/forum/components/forum-shell'
 import { ForumEmpty, ForumError, ForumLoading, ParticipationGate } from '@/features/forum/components/forum-states'
 import { useForumPage } from '@/features/forum/hooks/use-forum'
+import { IdentityImage } from '@/features/media/components/identity-image'
 
 function CommunityList({ path, scope, searched }: { path: string; scope: string; searched: boolean }) {
   const page = useForumPage<Community>(path)
@@ -19,11 +20,11 @@ function CommunityList({ path, scope, searched }: { path: string; scope: string;
   </ForumEmpty>
   return <>
     <ol className="community-list" aria-label="Comunidades">
-      {page.items.map(item => <li key={item.id}><article className="community-row">
+      {page.items.map(item => <li key={item.id}><article className="community-row community-row-with-image"><IdentityImage mediaId={item.imageId} name={item.name} className="community-list-photo" /><div>
         <div className="community-row-title"><h2><Link to={'/comunidades/' + item.id}>{item.name}<ArrowUpRight aria-hidden="true" /></Link></h2>{item.isFavorite && <Star className="community-saved-star" aria-label="En favoritas" />}{item.membership && <span className="forum-topic-label">{item.membership.role === 'owner' ? 'La creaste tú' : 'Formas parte'}</span>}</div>
         <p className="community-description">{item.description}</p>
-        <div className="forum-meta"><span className="community-members"><UsersRound aria-hidden="true" />{item.memberCount} {item.memberCount === 1 ? 'miembro' : 'miembros'}</span><span>{item.postCount} {item.postCount === 1 ? 'publicación' : 'publicaciones'}</span></div>
-      </article></li>)}
+        <div className="forum-meta">{item.visibility === 'private' && <span className="community-members"><LockKeyhole aria-hidden="true" />Privada</span>}<span className="community-members"><UsersRound aria-hidden="true" />{item.memberCount} {item.memberCount === 1 ? 'miembro' : 'miembros'}</span><span>{item.postCount} {item.postCount === 1 ? 'publicación' : 'publicaciones'}</span></div>
+      </div></article></li>)}
     </ol>
     {page.moreError && <p className="forum-error" role="alert">{page.moreError}</p>}
     {page.hasMore && <Button variant="secondary" className="h-11 px-6 forum-more" disabled={page.loadingMore} onClick={() => void page.loadMore()}>{page.loadingMore ? 'Cargando…' : 'Ver más comunidades'}</Button>}

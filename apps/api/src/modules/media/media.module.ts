@@ -11,11 +11,13 @@ import { MediaRepository } from './media.repository.js';
 import { MediaService } from './media.service.js';
 import { MediaController, MediaLocalController } from './media.controller.js';
 import { MediaHttpMiddleware, MediaLocalUploadMiddleware } from './media-http.middleware.js';
+import { AccountAvatarController, PublicAvatarController } from './account-avatar.controller.js';
+import { AuthHttpMiddleware } from '../auth/auth-http.middleware.js';
 
 @Module({
   imports: [AuthModule],
-  controllers: [MediaController, MediaLocalController],
-  providers: [MediaRepository, MediaService, MediaHttpMiddleware, MediaLocalUploadMiddleware,
+  controllers: [MediaController, MediaLocalController, AccountAvatarController, PublicAvatarController],
+  providers: [MediaRepository, MediaService, MediaHttpMiddleware, MediaLocalUploadMiddleware, AuthHttpMiddleware,
     { provide: OBJECT_STORAGE, inject: [APP_CONFIG], useFactory: (config: AppConfig) => config.media.driver === 'local'
       ? new LocalStorageAdapter(config.media, config.auth?.secret ?? '') : new S3StorageAdapter(config.media) }],
   exports: [MediaRepository],
@@ -23,6 +25,8 @@ import { MediaHttpMiddleware, MediaLocalUploadMiddleware } from './media-http.mi
 export class MediaModule implements NestModule {
   constructor(@Inject(APP_CONFIG) private readonly config: AppConfig) {}
   configure(consumer: MiddlewareConsumer) {
+    consumer.apply(AuthHttpMiddleware, json({ limit: '16kb', strict: true })).forRoutes(AccountAvatarController);
+    consumer.apply(MediaHttpMiddleware).forRoutes(PublicAvatarController);
     consumer.apply(MediaHttpMiddleware).forRoutes({ path: 'media/{*path}', method: RequestMethod.ALL });
     consumer.apply(json({ limit: '16kb', strict: true })).forRoutes(
       { path: 'media/uploads', method: RequestMethod.POST },

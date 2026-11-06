@@ -1,4 +1,5 @@
 export type ImageMime = 'image/jpeg' | 'image/png' | 'image/webp';
+export type ImagePurpose = 'post' | 'community' | 'avatar';
 export type MediaState = 'PENDING' | 'VERIFYING' | 'READY' | 'REJECTED' | 'DELETING' | 'DELETED' | 'EXPIRED';
 export interface MediaImage {
   id: string; originalName: string; mime: ImageMime; bytes: number;

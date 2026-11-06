@@ -32,7 +32,7 @@ export function configureApplication(app: NestExpressApplication): void {
     strictTransportSecurity: false,
   }));
   app.useStaticAssets(config.publicDirectory, { etag: true, maxAge: 0 });
-  for (const path of ['/login', '/profile', '/chat', '/publicar', '/publicaciones/:id', '/comunidades', '/comunidades/crear', '/comunidades/:id', '/notificaciones']) {
+  for (const path of ['/login', '/profile', '/chat', '/publicar', '/publicaciones/:id', '/comunidades', '/comunidades/crear', '/comunidades/:id', '/invitaciones/:token', '/notificaciones']) {
     express.get(path, (_request, response) => {
       response.set('Cache-Control', 'no-store');
       response.sendFile('index.html', { root: config.publicDirectory });

@@ -10,6 +10,8 @@ import { PasswordField } from '../components/password-field'
 import { OtpForm } from '../components/otp-form'
 import { useAuth } from '../hooks/use-auth'
 import { accountError, accountRequest, startGoogle } from '../api/account-api'
+import { ProfilePhoto } from '../components/profile-photo'
+import { IdentityImage } from '@/features/media/components/identity-image'
 
 function GoogleConfirmation() {
   const [error, setError] = useState<string | null>(null)
@@ -249,12 +251,13 @@ export function ProfilePage() {
     <AccountShell>
       <main id="account-content" className="profile-main" tabIndex={-1}>
         <header className="profile-heading">
-          <span className="profile-avatar" aria-hidden="true">{Array.from(user.displayName)[0]?.toLocaleUpperCase('es')}</span>
+          <IdentityImage mediaId={user.avatarId} name={user.displayName} className="profile-avatar" />
           <div><h1>Tu perfil</h1><p>Hola, {user.displayName}. Este es tu lugar en Foris.</p></div>
         </header>
         {params.get('notice') === 'google_linked' && <p className="account-notice" role="status">Google ya está vinculado a tu cuenta.</p>}
         {params.get('notice') === 'reauthenticated' && <p className="account-notice" role="status">Identidad confirmada. Ya puedes continuar con el cambio.</p>}
         {auth.error && <p className="account-error" role="alert">{auth.error}</p>}
+        <ProfilePhoto key={'photo-' + user.id} user={user} />
         <PersonalDetails key={user.id} user={user} />
         <EmailSettings key={'email-' + user.id} user={user} />
         <PasswordSettings key={'password-' + user.id} user={user} creationRequest={passwordCreationRequest} onCreatePassword={createPassword} />

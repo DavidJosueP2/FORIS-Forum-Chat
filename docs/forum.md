@@ -4,8 +4,9 @@ El inicio de Foris se llama Foros y muestra publicaciones organizadas en los tó
 
 | Acción | Invitado | Cuenta verificada con sesión vigente |
 | --- | --- | --- |
-| Leer publicaciones y respuestas | Sí | Sí |
-| Buscar y filtrar publicaciones | Sí | Sí |
+| Leer publicaciones y respuestas públicas | Sí | Sí |
+| Leer contenido de una comunidad privada | No | Solo miembros |
+| Buscar y filtrar publicaciones | Solo contenido público | Contenido público y privado accesible |
 | Crear una publicación | No | Sí |
 | Responder una publicación | No | Sí |
 | Leer y escribir en el chat global | Sí | Sí |
@@ -62,3 +63,8 @@ El formulario permite seleccionar, previsualizar, subir, reintentar y retirar im
 La migración 003-create-forum crea forum_topics, forum_posts y forum_replies, carga los cinco tópicos y añade return_to a auth_google_flows. Se aplica mediante el mecanismo existente cuando se inicie la API. No modifica ni elimina los mensajes del chat ni las cuentas existentes.
 
 Se añaden casos de prueba para permisos, sesiones revocadas o no verificadas, autoría, reintentos, contadores, paginación y validación. Por instrucción del usuario no se han ejecutado pruebas, compilaciones, migraciones ni servidores. La comprobación en ejecución y en navegador queda pendiente.
+
+
+## Contenido privado
+
+La lectura de comunidades privadas requiere una sesión verificada y pertenecer a la comunidad. El filtro se aplica en SQL antes de paginar, tanto en el índice general como al buscar, filtrar por autor o comunidad y consultar por ID. También protege respuestas, metadatos de medios y nuevos permisos temporales de lectura, incluso si la imagen fue subida por un exmiembro. Los recursos inaccesibles responden 404. Las vistas del índice y detalle se desmontan al cambiar de cuenta o cerrar sesión para retirar datos privados de la interfaz. Los permisos temporales ya emitidos conservan su caducidad; no se promete revocación instantánea de URLs o datos previamente recibidos por un cliente.

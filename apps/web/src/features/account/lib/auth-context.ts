@@ -10,6 +10,7 @@ export interface AuthState {
   refresh: () => Promise<void>
   applySession: (session: AuthSession) => void
   updateUser: (user: AccountUser) => void
+  updateAvatar: (userId: string, avatarId: string | null) => void
   logout: () => Promise<void>
 }
 export const AuthContext = createContext<AuthState | undefined>(undefined)

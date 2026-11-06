@@ -8,6 +8,7 @@ import { ForumShell } from '../components/forum-shell'
 import { ForumEmpty, ForumError, ForumLoading, ForumTime } from '../components/forum-states'
 import { useForumPage, useResource } from '../hooks/use-forum'
 import { PrivateImage } from '@/features/media/components/private-image'
+import { useAuth } from '@/features/account/hooks/use-auth'
 
 export function PostList({ path, filtered, createTo = '/publicar', emptyTitle }: { path: string; filtered: boolean; createTo?: string; emptyTitle?: string }) {
   const page = useForumPage<ForumPostSummary>(path)
@@ -79,6 +80,7 @@ function ForumIndex() {
   </main></ForumShell>
 }
 export function ForumPage() {
+  const auth = useAuth()
   const [params] = useSearchParams()
-  return <ForumIndex key={params.toString()} />
+  return <ForumIndex key={params.toString() + (auth.session.user?.id ?? 'guest') + auth.status} />
 }

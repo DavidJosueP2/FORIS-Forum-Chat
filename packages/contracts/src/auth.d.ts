@@ -1,4 +1,5 @@
 export interface AccountUser {
+  avatarId?: string | null;
   id: string; email: string; displayName: string; givenName: string; familyName: string;
   bio: string; emailVerified: boolean; hasPassword: boolean;
   google: { email: string } | null; createdAt: string;

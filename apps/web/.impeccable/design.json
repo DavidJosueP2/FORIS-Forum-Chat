@@ -153,7 +153,7 @@
   ],
   "narrative": {
     "northStar": "Humano, sencillo y conversacional",
-    "overview": "Base visual de Foris para comunidades abiertas. La lectura manda; las formas suaves y los personajes aportan cercanía en momentos concretos. El contenido se organiza por tipografía, espacio y superficies sólidas. El inicio abre Foros con las publicaciones organizadas por tópico; Comunidades permite explorar espacios públicos y decidir cómo seguirlos. El chat global conserva la conversación inmediata y la escritura como invitado en /chat.\n\nEl nombre, las cuatro familias tipográficas y el lenguaje de personajes forman la identidad actual. La dirección del foro se recoge en .impeccable/forum-direction.md, la de comunidades en .impeccable/communities-direction.md, la del chat global en .impeccable/surfaces/apps-web-src-app-tsx.md y la de acceso y perfil en .impeccable/surfaces/apps-web-src-features-account-pages-login-page-tsx.md; las restricciones de estilo del usuario se conservan en el PRODUCT.md de la raíz.",
+    "overview": "Base visual de Foris para conversar en comunidades públicas o privadas. La lectura manda; las formas suaves y los personajes aportan cercanía en momentos concretos. El contenido se organiza por tipografía, espacio y superficies sólidas. El inicio abre Foros con las publicaciones organizadas por tópico; Comunidades permite explorar espacios públicos y acceder a los privados de los que se forma parte. El chat global conserva la conversación inmediata y la escritura como invitado en /chat.\n\nEl nombre, las cuatro familias tipográficas y el lenguaje de personajes forman la identidad actual. La dirección del foro se recoge en .impeccable/forum-direction.md, la de comunidades en .impeccable/communities-direction.md y su extensión de privacidad y fotos en .impeccable/communities-privacy-direction.md, la del chat global en .impeccable/surfaces/apps-web-src-app-tsx.md y la de acceso y perfil en .impeccable/surfaces/apps-web-src-features-account-pages-login-page-tsx.md; las restricciones de estilo del usuario se conservan en el PRODUCT.md de la raíz.",
     "keyCharacteristics": [
       "Colores sólidos.",
       "Jerarquía por espacio y tipografía.",
@@ -176,7 +176,7 @@
       },
       {
         "name": "Seguimiento de comunidades",
-        "body": "Usar las listas y formularios abiertos de features/communities con los tokens existentes. Distinguir pertenencia, favorita y avisos mediante texto y controles propios: guardar no implica unirse, silenciar no implica salir. La bandeja privada muestra avisos dentro de Foris y acciones explícitas de lectura y actualización; sus permisos y contrato se describen en docs/communities.md.",
+        "body": "Usar las listas y formularios abiertos de features/communities con los tokens existentes. Crear reúne imagen opcional, nombre, descripción y selector Pública/Privada, con caracteres restantes dentro de los campos. Las privadas exigen invitación y pertenencia; el creador administra imagen y enlaces de un uso y siete días desde una sección plegable. Las fotos de comunidad y perfil son contenido de usuarios, sin señales de verificación personal. Distinguir pertenencia, favorita y avisos mediante texto y controles propios: guardar no implica unirse, silenciar no implica salir. La bandeja privada muestra avisos dentro de Foris según el acceso vigente y acciones explícitas de lectura y actualización; sus permisos y contrato se describen en docs/communities.md.",
         "section": "components"
       },
       {

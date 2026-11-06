@@ -12,7 +12,7 @@ La API y Vite leen la configuración de la raíz del repositorio, desde cualquie
 4. .env.local.
 5. .env.
 
-.env.development se versiona y solo contiene valores públicos: el nombre del perfil, hosts locales de API y PostgreSQL y STORAGE_DRIVER=local con STORAGE_LOCAL_ROOT=.data/uploads. Los puertos, nombres de base de datos y credenciales actuales continúan en el .env privado. El archivo de ejemplo conserva la plantilla de esos valores.
+.env.development se versiona y solo contiene valores públicos: el nombre del perfil, hosts locales de API y PostgreSQL, el origen local APP_URL y TRUST_PROXY, y STORAGE_DRIVER=local con STORAGE_LOCAL_ROOT=.data/uploads. Los puertos, nombres de base de datos y credenciales actuales continúan en el .env privado. El archivo de ejemplo conserva la plantilla de esos valores.
 
 .env.development.local es opcional y permanece excluido de Git. Permite ajustes personales, por ejemplo:
 
@@ -24,6 +24,10 @@ PGPORT=5433
 ```
 
 Los valores predeterminados de la aplicación son API 3000, frontend 5173 y PostgreSQL 5433. PGPASSWORD se sigue obteniendo del entorno privado. No se sustituyen contraseñas, AUTH_SECRET ni credenciales de Google o SMTP.
+
+El perfil de desarrollo fija APP_URL=http://127.0.0.1:5173 y TRUST_PROXY=0 para el acceso local y su callback de Google. Abre el frontend con ese mismo origen: localhost, 127.0.0.1 y la IP de la red son orígenes distintos. Un cambio de APP_URL requiere reiniciar la API; una pestaña abierta en el origen anterior será rechazada por los controles de escritura.
+
+Si pruebas un proxy HTTPS, configura su origen en .env.development.local y entra por esa misma dirección. Esto también cambia las cookies y el callback OAuth. Google no permite IPs de red como host del callback; para Google desde otros equipos se necesita un dominio HTTPS y registrar su callback exacto. No se deben añadir orígenes arbitrarios ni desactivar la validación para resolver el desajuste. Referencia: [validación de callbacks de Google](https://developers.google.com/identity/protocols/oauth2/web-server#uri-validation).
 
 NODE_ENV se selecciona desde el proceso; los comandos de desarrollo lo establecen explícitamente. Sin una selección externa, la API usa development. También reconoce test y production para seleccionar los archivos correspondientes si existen; esta tarea solo añade el perfil development. El Dockerfile existente sigue indicando production.
 

@@ -65,9 +65,11 @@ test('favoritas independientes, membresías sin duplicar y preferencias aisladas
   const favorites = (await api.get('/api/communities?scope=favorites').set('Cookie', user.cookie)).body as ForumPage<Community>;
   assert.deepEqual(favorites.items.map(item => item.id), [id]);
   const left = await api.delete(path + '/membership').set('Origin', origin).set('Cookie', user.cookie).send({}).expect(200);
-  assert.equal(left.body.memberCount, 1);
-  assert.equal(left.body.membership, null);
-  assert.equal(left.body.isFavorite, true);
+  assert.equal(left.body.left, true);
+  const afterLeaving = await api.get(path).set('Cookie', user.cookie).expect(200);
+  assert.equal(afterLeaving.body.memberCount, 1);
+  assert.equal(afterLeaving.body.membership, null);
+  assert.equal(afterLeaving.body.isFavorite, true);
   assert.equal((await api.get('/api/communities?scope=mine').set('Cookie', user.cookie)).body.items.length, 0);
   await api.delete(path + '/membership').set('Origin', origin).set('Cookie', user.cookie).send({}).expect(200);
   assert.equal((await api.get(path)).body.memberCount, 1);
@@ -139,4 +141,66 @@ test('rechaza campos falsificados, preferencias inválidas y sesiones revocadas'
   await api.patch(path).set('Origin', origin).set('Cookie', owner.cookie).send({ favorite: false }).expect(401);
   await api.get('/api/communities/0').expect(400);
   await api.get('/api/communities/999999').expect(404);
+});
+
+
+test('una comunidad privada no filtra contenido en búsquedas, detalle, respuestas ni avisos tras salir', async t => {
+  const { api, member } = await fixture(t);
+  const owner = await member(); const invited = await member(); const outsider = await member();
+  const created = await api.post('/api/communities').set('Origin', origin).set('Cookie', owner.cookie).send({ ...communityInput('Espacio reservado'), visibility: 'private' }).expect(201);
+  const id = created.body.community.id as string;
+  await api.get('/api/communities/' + id).expect(404);
+  assert.equal((await api.get('/api/communities?search=reservado')).body.items.length, 0);
+  await api.post('/api/communities/' + id + '/membership').set('Origin', origin).set('Cookie', outsider.cookie).send({}).expect(404);
+  const invitation = await api.post('/api/communities/' + id + '/invitations').set('Origin', origin).set('Cookie', owner.cookie).send({}).expect(201);
+  const token = new URL(invitation.body.url as string).pathname.split('/').at(-1)!;
+  await api.post('/api/community-invitations/preview').set('Origin', origin).send({ token }).expect(201);
+  await api.post('/api/community-invitations/accept').set('Origin', origin).set('Cookie', invited.cookie).send({ token }).expect(201);
+  await api.post('/api/community-invitations/accept').set('Origin', origin).set('Cookie', invited.cookie).send({ token }).expect(201);
+  await api.post('/api/community-invitations/accept').set('Origin', origin).set('Cookie', outsider.cookie).send({ token }).expect(410);
+  const post = await api.post('/api/posts').set('Origin', origin).set('Cookie', owner.cookie).send(postInput(id, 'Una conversación privada')).expect(201);
+  const postId = post.body.post.id as string;
+  await api.get('/api/posts/' + postId).expect(404);
+  await api.get('/api/posts/' + postId + '/replies').set('Cookie', outsider.cookie).expect(404);
+  await api.get('/api/posts?community=' + id).set('Cookie', outsider.cookie).expect(404);
+  assert.equal((await api.get('/api/posts?search=privada').set('Cookie', outsider.cookie)).body.items.length, 0);
+  await api.get('/api/posts/' + postId).set('Cookie', invited.cookie).expect(200);
+  assert.equal((await api.get('/api/notifications/count').set('Cookie', invited.cookie)).body.unreadCount, 1);
+  await api.delete('/api/communities/' + id + '/membership').set('Origin', origin).set('Cookie', invited.cookie).send({}).expect(200);
+  await api.get('/api/posts/' + postId).set('Cookie', invited.cookie).expect(404);
+  assert.equal((await api.get('/api/notifications/count').set('Cookie', invited.cookie)).body.unreadCount, 0);
+  await api.post('/api/community-invitations/accept').set('Origin', origin).set('Cookie', invited.cookie).send({ token }).expect(410);
+});
+
+test('solo el creador administra invitaciones; enlaces caducados o revocados no admiten miembros', async t => {
+  const { api, member, database } = await fixture(t);
+  const owner = await member(); const user = await member();
+  const result = await api.post('/api/communities').set('Origin', origin).set('Cookie', owner.cookie).send({ ...communityInput('Con invitación'), visibility: 'private' }).expect(201);
+  const path = '/api/communities/' + result.body.community.id + '/invitations';
+  await api.post(path).set('Origin', origin).set('Cookie', user.cookie).send({}).expect(404);
+  const revoked = await api.post(path).set('Origin', origin).set('Cookie', owner.cookie).send({}).expect(201);
+  const revokedToken = new URL(revoked.body.url as string).pathname.split('/').at(-1)!;
+  const rows = await database.query<{ token_hash: string }>('SELECT token_hash FROM community_invitations WHERE id=$1', [revoked.body.invitation.id]);
+  assert.equal(rows.rows[0].token_hash, tokenHash(revokedToken));
+  await api.delete(path + '/' + revoked.body.invitation.id).set('Origin', origin).set('Cookie', owner.cookie).send({}).expect(200);
+  await api.post('/api/community-invitations/accept').set('Origin', origin).set('Cookie', user.cookie).send({ token: revokedToken }).expect(410);
+  const expired = await api.post(path).set('Origin', origin).set('Cookie', owner.cookie).send({}).expect(201);
+  await database.query('UPDATE community_invitations SET expires_at=$2 WHERE id=$1', [expired.body.invitation.id, new Date(Date.now() - 1000)]);
+  await api.post('/api/community-invitations/accept').set('Origin', origin).set('Cookie', user.cookie).send({ token: new URL(expired.body.url as string).pathname.split('/').at(-1) }).expect(410);
+});
+
+
+test('las invitaciones activas siguen siendo revocables aunque exista un historial más reciente', async t => {
+  const { api, member, database } = await fixture(t);
+  const owner = await member();
+  const result = await api.post('/api/communities').set('Origin', origin).set('Cookie', owner.cookie).send({ ...communityInput('Enlaces bajo control'), visibility: 'private' }).expect(201);
+  const id = result.body.community.id as string;
+  const path = '/api/communities/' + id + '/invitations';
+  const active = await api.post(path).set('Origin', origin).set('Cookie', owner.cookie).send({}).expect(201);
+  await database.query('UPDATE community_invitations SET created_at=$2 WHERE id=$1', [active.body.invitation.id, new Date(Date.now() - 3600000)]);
+  for (let index = 0; index < 21; index++) await database.query('INSERT INTO community_invitations(id,community_id,created_by,token_hash,expires_at,revoked_at) VALUES($1,$2,$3,$4,$5,$6)', [randomUUID(), id, owner.id, tokenHash(randomToken()), new Date(Date.now() + 86400000), new Date()]);
+  const all = await api.get(path).set('Cookie', owner.cookie).expect(200);
+  assert.equal(all.body[0].id, active.body.invitation.id);
+  assert.equal(all.body.length, 21);
+  await api.delete(path + '/' + active.body.invitation.id).set('Origin', origin).set('Cookie', owner.cookie).send({}).expect(200);
 });

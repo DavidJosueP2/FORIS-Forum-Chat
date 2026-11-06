@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Get, Header, Inject, Param, Patch, Post, Quer
 import type { Response } from 'express';
 import { SessionService } from '../auth/session.service.js';
 import type { AuthRequest } from '../auth/auth.types.js';
-import { inputRecord, resourceId } from '../../common/validation/input.js';
+import { inputRecord, resourceId, requestId } from '../../common/validation/input.js';
 import { communityInput, preferencesInput, communityFilters } from './community-validation.js';
 import { CommunityRepository } from './community.repository.js';
 
@@ -37,5 +37,10 @@ export class CommunityController {
   @Patch(':id/preferences') async preferences(@Param('id') id: string, @Body() body: unknown, @Req() request: AuthRequest) {
     const actor = await this.sessions.required(request);
     return this.communities.preferences(resourceId(id), preferencesInput(body), actor);
+  }
+  @Patch(':id/image') async image(@Param('id') id: string, @Body() body: unknown, @Req() request: AuthRequest) {
+    const actor = await this.sessions.required(request);
+    const fields = inputRecord(body, ['mediaId']);
+    return this.communities.updateImage(resourceId(id), fields.mediaId === null ? null : requestId(fields.mediaId), actor);
   }
 }

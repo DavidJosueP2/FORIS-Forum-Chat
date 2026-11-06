@@ -53,7 +53,7 @@ export class MediaService implements OnModuleInit, BeforeApplicationShutdown {
     let row: MediaRow | undefined;
     try {
       row = await this.repository.claimVerification(id, actor);
-      if (row.state === 'READY') return mediaMetadata(row);
+      if (row.state === 'READY') return mediaMetadata(await this.repository.view(row.id, actor.user.id));
       const current = row;
       const info = await this.operation('object_head', () => this.storage.head(current.staging_key));
       if (!info) throw new HttpError(409, 'MEDIA_NOT_UPLOADED', 'La imagen todavía no se ha subido. Vuelve a intentarlo.');

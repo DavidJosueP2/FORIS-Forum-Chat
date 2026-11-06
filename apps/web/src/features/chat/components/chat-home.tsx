@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { AccountEntry } from '@/features/account/components/account-entry'
 import { NotificationEntry } from '@/features/communities/components/notification-entry'
 import { GlobalVideoCall } from '@/features/video-calls/components/global-video-call'
+import { IdentityImage } from '@/features/media/components/identity-image'
 import { useAuth } from '@/features/account/hooks/use-auth'
 import { useChat, type ConnectionState } from '../hooks/use-chat'
 import { readDraft, readGuestProfile, storeDraft, storeGuestProfile } from '../lib/guest-session'
@@ -43,6 +44,7 @@ export function ChatHome() {
   const chat = useChat(session.user?.id)
   const [profile, setProfile] = useState(readGuestProfile)
   const [draft, setDraft] = useState(readDraft)
+  const [videoCallTrigger, setVideoCallTrigger] = useState<HTMLDivElement | null>(null)
   const draftRef = useRef(draft)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const identity = session.user
@@ -81,7 +83,7 @@ export function ChatHome() {
         <div className="sidebar-bottom">
           <RoomInfoDialog />
           <div className="sidebar-profile">
-            <span className="sidebar-profile-avatar" aria-hidden="true"><UserRound /></span>
+            {session.user ? <IdentityImage mediaId={session.user.avatarId} name={session.user.displayName} className="sidebar-profile-avatar" /> : <span className="sidebar-profile-avatar" aria-hidden="true"><UserRound /></span>}
             <div>
               {session.user
                 ? <Button asChild variant="ghost" className="guest-name-trigger h-11"><Link to="/profile"><span>{session.user.displayName}</span></Link></Button>
@@ -95,7 +97,10 @@ export function ChatHome() {
       <div className="chat-workspace">
         <header className="chat-header">
           <div className="room-heading">
-            <h1><span className="mobile-wordmark">Foris <span aria-hidden="true">/</span> </span>Chat global</h1>
+            <div className="room-title-row">
+              <h1><span className="mobile-wordmark">Foris <span aria-hidden="true">/</span> </span>Chat global</h1>
+              <div className="call-entry-slot" ref={setVideoCallTrigger} />
+            </div>
             <ConnectionStatus state={chat.connection} connections={chat.connections} />
           </div>
           <div className="header-actions">
@@ -109,7 +114,7 @@ export function ChatHome() {
 
         <div className="conversation-layout">
           <main id="conversation" tabIndex={-1} className="conversation-main" aria-label="Chat global">
-            <GlobalVideoCall key={session.user?.id ?? 'guest'} user={session.user} />
+            <GlobalVideoCall key={session.user?.id ?? 'guest'} user={session.user} triggerContainer={videoCallTrigger} />
             {auth.status === 'error' && !session.user && (
               <div className="connection-notice" role="alert">
                 <p>No pudimos comprobar tu sesión. Tu borrador sigue aquí.</p>

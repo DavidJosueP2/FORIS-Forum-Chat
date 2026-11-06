@@ -5,7 +5,7 @@ import type { QueryResult, QueryResultRow } from 'pg';
 export interface AuthUserRow extends QueryResultRow {
   id: string; email: string; display_name: string; given_name: string;
   family_name: string; bio: string; password_hash: string | null;
-  email_verified_at: Date | null; created_at: Date; google_email?: string | null;
+  email_verified_at: Date | null; created_at: Date; google_email?: string | null; avatar_id?: string | null;
 }
 export interface AuthContext {
   user: AccountUser; sessionId: string; authenticatedAt: Date; expiresAt: Date;

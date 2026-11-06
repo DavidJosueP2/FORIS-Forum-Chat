@@ -89,7 +89,7 @@ Configura una regla de ciclo de vida para **el prefijo foris/staging/** que elim
 7. La respuesta pública incluye IDs y metadatos, sin claves ni enlaces persistidos. Para mostrar una imagen se solicita una URL de lectura temporal y se renueva antes de caducar.
 8. El propietario puede solicitar borrado. Se oculta inmediatamente; si falla el proveedor queda DELETING y se reintenta. La cuota usada solo se libera después de completar el borrado físico.
 
-Una imagen no asociada solo es consultable por su propietario. Las publicaciones y comunidades actuales son abiertas, por lo que cualquiera que pueda leerlas puede solicitar sus imágenes READY. Si se incorporan comunidades privadas habrá que extender esta autorización. Una URL de lectura ya emitida es un permiso al portador hasta su caducidad o eliminación del objeto; no es una sesión revocable instantáneamente. Los enlaces no se guardan en borradores ni en la base, y las respuestas indican no-store y no-referrer.
+Una imagen sin asociar solo es consultable por su propietario. Las imágenes vinculadas se autorizan según su recurso: publicaciones y comunidades privadas requieren membresía, incluso para el autor que haya abandonado la comunidad. Las fotos de perfil vinculadas y las imágenes de contenido público admiten lectura pública. La confirmación repetida de una imagen ya vinculada también aplica esta autorización. Una URL de lectura ya emitida es un permiso al portador hasta su caducidad o eliminación del objeto; no es una sesión revocable instantáneamente. Los enlaces no se guardan en borradores ni en la base, y las respuestas indican no-store y no-referrer.
 
 Los estados principales son PENDING, VERIFYING, READY, REJECTED, DELETING y DELETED; EXPIRED está reservado en el modelo. Un fallo transitorio de verificación devuelve a PENDING para reintentar. Los inválidos quedan REJECTED sin acceso público. El recolector elimina subidas caducadas y READY sin publicación después del plazo de huérfanos. Un lease vencido permite recuperar trabajo interrumpido. Los borradores pueden perder una imagen tras ese plazo y piden retirarla o seleccionarla otra vez.
 
@@ -124,13 +124,13 @@ R2 publica para Standard una capa gratuita mensual de 10 GB-mes, un millón de o
 | GET /api/media/usage | Sesión; usado, reservado y límite del propietario |
 | POST /api/media/uploads | Sesión verificada; autorización y URL PUT |
 | POST /api/media/:id/complete | Propietario; verificación o confirmación idempotente |
-| GET /api/media/:id | Propietario o imagen READY de publicación abierta |
+| GET /api/media/:id | Propietario si no está vinculada; en otro caso permisos del recurso |
 | GET /api/media/:id/read-url | Mismos permisos; URL y fecha de caducidad |
 | DELETE /api/media/:id | Propietario; DELETED o DELETING recuperable |
 | PUT /api/media/:id/local-upload | Solo local; sesión, origen y ticket de subida |
 | GET /api/media/:id/local-content | Solo local; ticket de lectura |
 
-Las escrituras JSON requieren Origin igual a APP_URL. uploads recibe originalName, mime, bytes y requestId. complete y DELETE reciben un objeto JSON vacío. POST /api/posts acepta mediaIds; no recibe claves S3 ni URLs del cliente.
+Las escrituras JSON requieren Origin igual a APP_URL. uploads recibe originalName, mime, bytes, requestId y purpose opcional: post (predeterminado), community o avatar. La finalidad forma parte de la autorización idempotente y no se puede cambiar al asociar. complete y DELETE reciben un objeto JSON vacío. POST /api/posts acepta mediaIds; no recibe claves S3 ni URLs del cliente.
 
 ## Operación y evolución
 
@@ -142,8 +142,15 @@ Cada medio conserva un storage_profile derivado de la raíz local o del proveedo
 
 ## Comprobación de esta entrega
 
-Se prepararon fuentes de pruebas unitarias e integración para configuración, tipos/tamaño, tickets, validación real, almacenamiento local inmutable, S3 simulado, permisos, asociación, reintentos, cuotas, eliminación y contenido inválido. El caso opcional media-postgres.test.ts cubre reservas concurrentes entre cuentas y recolectores simultáneos con PostgreSQL real.
+Se prepararon fuentes de pruebas unitarias e integración para configuración, tipos/tamaño, tickets, validación real, almacenamiento local inmutable, S3 simulado, permisos, asociación, reintentos, cuotas, eliminación y contenido inválido. El caso opcional media-postgres.test.ts cubre reservas concurrentes entre cuentas y recolectores simultáneos con PostgreSQL real. Se añadieron fuentes de casos para fotos de perfil, imágenes privadas, invitaciones y el autor de una imagen que abandona la comunidad; tampoco se ejecutaron.
 
 Ese caso está desactivado salvo que se defina FORIS_MEDIA_TEST_DATABASE_URL para una base dedicada llamada foris_media_test en localhost/127.0.0.1/[::1]. Crea y elimina únicamente un esquema aleatorio propio y su directorio temporal; nunca usa la base configurada en .env. El resto utiliza pg-mem y almacenamiento temporal, sin demostrar los bloqueos reales de PostgreSQL. El SDK se simula y las firmas de prueba usan credenciales ficticias locales, sin tocar R2.
 
 Por decisión expresa del usuario se mantuvo **solo revisión estática**: ESLint, inspección de fuentes, contratos, dependencias, imports y CSS. No se ejecutaron pruebas, compilaciones, typecheck, migraciones, servidores, Docker ni operaciones contra el bucket real. Permanecen pendientes la validación en ejecución de las pruebas preparadas y la prueba manual navegador → R2 → confirmación → publicación → lectura → eliminación, con CORS y credenciales reales configurados por el usuario.
+
+
+## Imágenes de comunidades y fotos de perfil
+
+La migración 007 añade purpose y vínculos únicos community_id/avatar_user_id a media, con restricciones que impiden asociar una imagen a varios tipos de recurso. Solo se vincula una imagen READY propia con la finalidad adecuada. Reemplazar o quitar una foto desvincula la anterior; pasa a ser privada del propietario y el recolector la elimina cuando cumple el plazo de huérfanos. Las fotos vinculadas se excluyen de esa limpieza, pero mantienen la limpieza de staging y sus cuotas. Las URLs emitidas antes de retirar una imagen o salir de una comunidad pueden seguir sirviendo hasta su caducidad, como el resto de permisos temporales.
+
+PATCH /api/account/avatar recibe mediaId UUID o null y solo modifica la cuenta de la sesión. GET /api/profiles/:userId/avatar devuelve únicamente el ID de la foto pública o null, sin exponer datos personales. PATCH /api/communities/:id/image recibe mediaId o null y exige ser creador. Crear una comunidad admite imageId opcional; el snapshot inicial permite reintentos aunque su imagen cambie después. La aceptación, propiedad y privacidad se comprueban en el servidor.

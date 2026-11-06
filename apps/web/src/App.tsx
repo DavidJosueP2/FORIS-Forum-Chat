@@ -10,6 +10,7 @@ import { CommunitiesPage } from '@/features/communities/pages/communities-page'
 import { CommunityPage } from '@/features/communities/pages/community-page'
 import { CreateCommunityPage } from '@/features/communities/pages/create-community-page'
 import { NotificationsPage } from '@/features/communities/pages/notifications-page'
+import { InvitationPage } from '@/features/communities/pages/invitation-page'
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
         <Route path="/comunidades/crear" element={<CreateCommunityPage />} />
         <Route path="/comunidades/:communityId" element={<CommunityPage />} />
         <Route path="/notificaciones" element={<NotificationsPage />} />
+        <Route path="/invitaciones/:token" element={<InvitationPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="*" element={<Navigate to="/" replace />} />

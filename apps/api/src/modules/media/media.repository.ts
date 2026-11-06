@@ -10,6 +10,7 @@ import { SessionService } from '../auth/session.service.js';
 import type { AuthContext, SqlClient } from '../auth/auth.types.js';
 import type { UploadInput } from './media-validation.js';
 import { EXTENSION } from './media-validation.js';
+import { readableCommunity, readablePost } from '../communities/community-access.js';
 
 export interface MediaRow extends QueryResultRow {
   id: string; owner_id: string; storage_profile: string; provider: string; staging_key: string; object_key: string;
@@ -19,6 +20,7 @@ export interface MediaRow extends QueryResultRow {
   upload_expires_at: Date; cleanup_after: Date; lease_token: string | null; lease_until: Date | null;
   staging_deleted_at: Date | null; created_at: Date; confirmed_at: Date | null; deleted_at: Date | null;
   post_id: string | null; position: number | null;
+  purpose: 'post' | 'community' | 'avatar'; community_id: string | null; avatar_user_id: string | null;
 }
 export function mediaImage(row: MediaRow): MediaImage {
   return { id: row.id, originalName: row.original_name, mime: row.validated_mime!,
@@ -52,7 +54,14 @@ export class MediaRepository {
   }
   async view(id: string, userId: string | null): Promise<MediaRow> {
     const row = await this.get(id);
-    if (!(row.owner_id === userId || (row.state === 'READY' && row.post_id))) throw new HttpError(404, 'MEDIA_NOT_FOUND', 'Esta imagen no existe.');
+    const linked = Boolean(row.post_id || row.community_id || row.avatar_user_id);
+    let allowed = !linked && row.owner_id === userId;
+    if (row.state === 'READY') {
+      if (row.avatar_user_id) allowed = true;
+      else if (row.community_id) allowed = Boolean((await this.database.query('SELECT c.id FROM communities c WHERE c.id=$1 AND ' + readableCommunity('c', '$2'), [row.community_id, userId])).rows[0]);
+      else if (row.post_id) allowed = Boolean((await this.database.query('SELECT p.id FROM forum_posts p WHERE p.id=$1 AND ' + readablePost('$2'), [row.post_id, userId])).rows[0]);
+    }
+    if (!allowed) throw new HttpError(404, 'MEDIA_NOT_FOUND', 'Esta imagen no existe.');
     this.profile(row);
     return row;
   }
@@ -82,7 +91,7 @@ export class MediaRepository {
       const existing = (await client.query<MediaRow>('SELECT * FROM media WHERE owner_id=$1 AND request_id=$2', [actor.user.id, input.requestId])).rows[0];
       if (existing) {
         this.profile(existing);
-        if (existing.original_name !== input.originalName || existing.declared_mime !== input.mime || Number(existing.declared_bytes) !== input.bytes) throw new HttpError(409, 'REQUEST_CONFLICT', 'Esta solicitud corresponde a otro archivo.');
+        if (existing.original_name !== input.originalName || existing.declared_mime !== input.mime || Number(existing.declared_bytes) !== input.bytes || existing.purpose !== input.purpose) throw new HttpError(409, 'REQUEST_CONFLICT', 'Esta solicitud corresponde a otro archivo.');
         return existing;
       }
       const rate = await client.query<{ total: string }>(`SELECT COUNT(*)::text AS total FROM media WHERE owner_id=$1 AND created_at>CURRENT_TIMESTAMP-INTERVAL '1 hour'`, [actor.user.id]);
@@ -93,11 +102,11 @@ export class MediaRepository {
       if (Number(quota.user.used_bytes) + Number(quota.user.reserved_bytes) + reservation > this.config.userBytes) throw new HttpError(409, 'MEDIA_USER_QUOTA', 'No tienes espacio disponible para otra imagen. Elimina imágenes o espera a que caduquen las subidas pendientes.');
       const id = randomUUID();
       const expires = new Date(Date.now() + this.config.uploadSeconds * 1000);
-      const result = await client.query<MediaRow>(`INSERT INTO media(id,owner_id,request_id,storage_profile,provider,staging_key,object_key,original_name,declared_mime,declared_bytes,reserved_bytes,upload_expires_at,cleanup_after)
-        VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
+      const result = await client.query<MediaRow>(`INSERT INTO media(id,owner_id,request_id,storage_profile,provider,staging_key,object_key,original_name,declared_mime,declared_bytes,reserved_bytes,upload_expires_at,cleanup_after,purpose)
+        VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`,
       [id, actor.user.id, input.requestId, this.config.profile, this.config.provider,
         'foris/staging/' + id + '/' + randomUUID() + '.bin', 'foris/images/' + id + '/' + randomUUID() + '.' + EXTENSION[input.mime],
-        input.originalName, input.mime, input.bytes, reservation, expires, new Date(expires.getTime() + 60000)]);
+        input.originalName, input.mime, input.bytes, reservation, expires, new Date(expires.getTime() + 60000), input.purpose]);
       await client.query("UPDATE media_quotas SET reserved_bytes=reserved_bytes+$2 WHERE scope IN ('global',$1)", ['user:' + actor.user.id, reservation]);
       await this.event(client, id, 'authorized');
       return result.rows[0];
@@ -181,14 +190,14 @@ export class MediaRepository {
       const rows = await client.query<MediaRow>(`SELECT * FROM media WHERE storage_profile=$1
         AND (lease_until IS NULL OR lease_until<CURRENT_TIMESTAMP) AND (
           (reserved_bytes>0 AND cleanup_after<=CURRENT_TIMESTAMP)
-          OR (state='READY' AND post_id IS NULL AND confirmed_at<$2)
+          OR (state='READY' AND post_id IS NULL AND community_id IS NULL AND avatar_user_id IS NULL AND confirmed_at<$2)
           OR (state='DELETING' AND cleanup_after<=CURRENT_TIMESTAMP)
           OR (staging_deleted_at IS NOT NULL AND upload_expires_at>CURRENT_TIMESTAMP-INTERVAL '1 day' AND cleanup_after<=CURRENT_TIMESTAMP))
         ORDER BY cleanup_after,id LIMIT 10 FOR UPDATE SKIP LOCKED`,
       [this.config.profile, new Date(Date.now() - this.config.orphanHours * 3600000)]);
       const claimed: MediaRow[] = [];
       for (const row of rows.rows) {
-        const orphan = row.state === 'READY' && !row.post_id && new Date(row.confirmed_at!).getTime() < Date.now() - this.config.orphanHours * 3600000;
+        const orphan = row.state === 'READY' && !row.post_id && !row.community_id && !row.avatar_user_id && new Date(row.confirmed_at!).getTime() < Date.now() - this.config.orphanHours * 3600000;
         const state = row.state === 'READY' && !orphan ? 'READY' : 'DELETING';
         const result = await client.query<MediaRow>(`UPDATE media SET state=$2,lease_token=$3,lease_until=CURRENT_TIMESTAMP+INTERVAL '2 minutes' WHERE id=$1 RETURNING *`, [row.id, state, randomUUID()]);
         claimed.push(result.rows[0]);
@@ -207,7 +216,7 @@ export class MediaRepository {
     if (rows.rows.length !== ids.length) throw new HttpError(400, 'MEDIA_NOT_READY', 'Una de las imágenes no está disponible.');
     for (const row of rows.rows) {
       this.owned(row, ownerId);
-      if (row.state !== 'READY' || (row.post_id && String(row.post_id) !== postId)) throw new HttpError(409, 'MEDIA_NOT_READY', 'La imagen no está lista o ya pertenece a otra publicación.');
+      if (row.purpose !== 'post' || row.community_id || row.avatar_user_id || row.state !== 'READY' || (row.post_id && String(row.post_id) !== postId)) throw new HttpError(409, 'MEDIA_NOT_READY', 'La imagen no está lista o ya pertenece a otro recurso.');
     }
     for (const [position, id] of ids.entries()) await client.query('UPDATE media SET post_id=$2,position=$3 WHERE id=$1', [id, postId, position]);
   }
@@ -217,6 +226,32 @@ export class MediaRepository {
     const rows = await client.query<MediaRow>("SELECT * FROM media WHERE post_id=ANY($1::bigint[]) AND state='READY' ORDER BY post_id,position", [postIds]);
     for (const row of rows.rows) images.set(String(row.post_id), [...(images.get(String(row.post_id)) ?? []), mediaImage(row)]);
     return images;
+  }
+  /** El llamador mantiene el bloqueo del usuario y, al editar una comunidad, el de esa comunidad. */
+  async portrait(client: SqlClient, purpose: 'avatar' | 'community', targetId: string, ownerId: string, mediaId: string | null): Promise<void> {
+    const column = purpose === 'avatar' ? 'avatar_user_id' : 'community_id';
+    const rows = await client.query<MediaRow>('SELECT * FROM media WHERE ' + column + '=$1 OR id=$2 ORDER BY id FOR UPDATE', [targetId, mediaId]);
+    if (mediaId) {
+      const image = rows.rows.find(row => row.id === mediaId);
+      if (!image) throw new HttpError(404, 'MEDIA_NOT_FOUND', 'La imagen no está disponible.');
+      this.owned(image, ownerId);
+      if (image.state !== 'READY' || image.purpose !== purpose || image.post_id
+        || (image.community_id && (purpose !== 'community' || String(image.community_id) !== targetId))
+        || (image.avatar_user_id && (purpose !== 'avatar' || image.avatar_user_id !== targetId))) throw new HttpError(409, 'MEDIA_NOT_READY', 'Elige una imagen propia preparada para este espacio.');
+    }
+    await client.query('UPDATE media SET ' + column + '=NULL WHERE ' + column + '=$1', [targetId]);
+    if (mediaId) await client.query('UPDATE media SET ' + column + '=$2 WHERE id=$1', [mediaId, targetId]);
+  }
+  avatar(actor: AuthContext, mediaId: string | null) {
+    return this.database.transaction(async client => {
+      await this.actor(client, actor);
+      await this.portrait(client, 'avatar', actor.user.id, actor.user.id, mediaId);
+      return { avatarId: mediaId };
+    });
+  }
+  async publicAvatar(userId: string) {
+    const row = (await this.database.query<{ id: string }>("SELECT id FROM media WHERE avatar_user_id=$1 AND state='READY'", [userId])).rows[0];
+    return { avatarId: row?.id ?? null };
   }
   async pruneAudit() {
     await this.database.query("DELETE FROM media_events WHERE created_at<CURRENT_TIMESTAMP-INTERVAL '30 days'");

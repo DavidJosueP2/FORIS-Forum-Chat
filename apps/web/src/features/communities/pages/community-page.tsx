@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, Bell, Check, Plus, Star, UsersRound } from 'lucide-react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { ArrowLeft, Bell, Check, Globe2, LockKeyhole, Plus, Star, UsersRound } from 'lucide-react'
 import type { Community, CommunityPreferences } from '@messages/contracts'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/features/account/hooks/use-auth'
@@ -11,8 +11,11 @@ import { ForumEmpty, ForumError, ForumLoading } from '@/features/forum/component
 import { PostList } from '@/features/forum/pages/forum-page'
 import { useResource } from '@/features/forum/hooks/use-forum'
 import { validCommunityId } from '../lib/notifications'
+import { IdentityImage } from '@/features/media/components/identity-image'
+import { CommunityManagement } from '../components/community-management'
 
 function CommunityControls({ community, onChanged }: { community: Community; onChanged: (value: Community) => void }) {
+  const navigate = useNavigate()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
@@ -24,10 +27,15 @@ function CommunityControls({ community, onChanged }: { community: Community; onC
     guard.current = true
     setBusy(true); setError(null); setNotice(null)
     try {
-      const result = await accountRequest<Community>('communities/' + community.id + (action === 'preferences' ? '/preferences' : '/membership'), action === 'preferences' ? 'PATCH' : action === 'leave' ? 'DELETE' : 'POST', body)
+      if (action === 'leave') {
+        await accountRequest('communities/' + community.id + '/membership', 'DELETE', {})
+        if (alive.current) navigate('/comunidades?vista=mias', { replace: true })
+        return
+      }
+      const result = await accountRequest<Community>('communities/' + community.id + (action === 'preferences' ? '/preferences' : '/membership'), action === 'preferences' ? 'PATCH' : 'POST', body)
       if (!alive.current) return
       onChanged(result)
-      setNotice(action === 'join' ? 'Ya formas parte de la comunidad.' : action === 'leave' ? 'Saliste de la comunidad. No recibirás nuevas notificaciones.' : 'Tus preferencias se guardaron.')
+      setNotice(action === 'join' ? 'Ya formas parte de la comunidad.' : 'Tus preferencias se guardaron.')
     } catch (cause) { if (alive.current) setError(accountError(cause)) }
     finally { guard.current = false; if (alive.current) setBusy(false) }
   }
@@ -50,8 +58,9 @@ function CommunityContent({ id }: { id: string }) {
   if (!community.data) return null
   const item = community.data
   return <>
-    <header className="community-heading"><h1>{item.name}</h1><p className="community-description">{item.description}</p><div className="forum-meta"><span className="community-members"><UsersRound aria-hidden="true" />{item.memberCount} {item.memberCount === 1 ? 'miembro' : 'miembros'}</span><span>{item.postCount} {item.postCount === 1 ? 'publicación' : 'publicaciones'}</span><span>Creada por {item.owner.displayName}</span></div></header>
+    <header className="community-heading"><IdentityImage mediaId={item.imageId} name={item.name} className="community-photo" /><div><h1>{item.name}</h1><p className="community-description">{item.description}</p><div className="forum-meta"><span className="community-members">{item.visibility === 'private' ? <LockKeyhole aria-hidden="true" /> : <Globe2 aria-hidden="true" />}{item.visibility === 'private' ? 'Privada' : 'Pública'}</span><span className="community-members"><UsersRound aria-hidden="true" />{item.memberCount} {item.memberCount === 1 ? 'miembro' : 'miembros'}</span><span>{item.postCount} {item.postCount === 1 ? 'publicación' : 'publicaciones'}</span><span>Creada por {item.owner.displayName}</span></div></div></header>
     {auth.status === 'loading' ? <ForumLoading label="Comprobando tu cuenta…" /> : auth.status === 'error' ? <ForumError message={auth.error ?? 'No pudimos comprobar tu cuenta.'} retry={() => void auth.refresh()} /> : auth.session.user ? <CommunityControls community={item} onChanged={community.setData} /> : <section className="community-controls"><div className="forum-actions"><Button asChild className="h-11 px-6"><Link to={loginLink('/comunidades/' + id)}>Entrar para unirme</Link></Button><Button asChild variant="secondary" className="h-11 px-5"><Link to={loginLink('/comunidades/' + id)}><Star aria-hidden="true" />Guardar favorita</Link></Button></div><p className="forum-hint">Puedes leer sin cuenta. Para unirte o guardar favoritas, entra con Google o con tu correo.</p></section>}
+    {item.membership?.role === 'owner' && <CommunityManagement community={item} onChanged={community.setData} />}
     <section className="community-forums" aria-labelledby="community-forums-heading">
       <div className="forum-list-heading"><h2 id="community-forums-heading">Foros de la comunidad</h2>{item.membership && <Button asChild className="h-11 px-5"><Link to={'/publicar?comunidad=' + id}><Plus aria-hidden="true" />Nueva publicación</Link></Button>}</div>
       <PostList key={id} path={'posts?community=' + id} filtered={false} createTo={'/publicar?comunidad=' + id} emptyTitle="Una comunidad empieza escuchando" />
