@@ -9,6 +9,7 @@
 .canvas-header-actions { gap: 4px; flex-wrap: wrap; }
 .canvas-draft-status { min-height: 32px; display: flex; align-items: center; gap: 6px; color: var(--muted-foreground); font-size: .75rem; line-height: 1.5; margin: 4px 0 16px; }
 .canvas-draft-status svg { width: 14px; height: 14px; flex-shrink: 0; }
+.canvas-publish-error { margin-block: 0 16px; }
 .post-canvas .canvas-title { display: block; width: 100%; min-height: 52px; field-sizing: content; background: transparent; color: var(--foreground); border: 0; border-radius: 0; box-shadow: none; padding: 8px 0; margin-block: 0 16px; resize: vertical; font-family: var(--font-heading); font-size: 2rem; line-height: 1.4; font-weight: 600; letter-spacing: -.025em; overflow-wrap: anywhere; }
 .canvas-title::placeholder { color: var(--muted-foreground); opacity: 1; }
 .canvas-toolbar-fieldset { position: sticky; top: 0; z-index: 20; padding-block: 8px; background: var(--background); min-width: 0; }

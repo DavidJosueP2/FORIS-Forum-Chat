@@ -2,6 +2,8 @@
 
 `/publicar` abre directamente el espacio de creación. Volver está junto a Crear publicación; Vista previa y Publicar permanecen al alcance. No hay portada introductoria, selección de tópico obligatoria ni contadores de caracteres. Se puede seguir escribiendo al superar una extensión; el aviso aparece en rojo y se exige corregirla antes de publicar.
 
+Los errores del lienzo se anuncian con `role="alert"` debajo de «Borrador guardado en esta pestaña» y se limpian al editar el título o el contenido, sin mover el foco al aviso. Si se intenta publicar sin título, el foco permanece en el campo del título para corregirlo.
+
 ## Herramientas
 
 El editor usa Tiptap 3 y ProseMirror, cargados bajo demanda únicamente al entrar al lienzo. El índice de Foros conserva su implementación y sus filtros. La integración sigue la [instalación oficial de React](https://tiptap.dev/docs/editor/getting-started/install/react) y utiliza extensiones abiertas; no requiere un servicio remoto de edición ni una cuenta de Tiptap.

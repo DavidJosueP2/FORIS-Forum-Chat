@@ -30,7 +30,6 @@ export default function PostCanvas({ userId, initialTopic, initialCommunity, pos
   const [recovering, setRecovering] = useState(false)
   const guard = useRef(false)
   const title = useRef<HTMLTextAreaElement>(null)
-  const errorMessage = useRef<HTMLParagraphElement>(null)
   const uploadHandler = useRef<((files: File[]) => void) | null>(null)
   const navigate = useNavigate()
   function change(values: Partial<CanvasDraft>) { if (!guard.current) changeDraft(values) }
@@ -61,7 +60,6 @@ export default function PostCanvas({ userId, initialTopic, initialCommunity, pos
   const body = documentText(draft.content)
   const titleExceeded = draft.title.trim().normalize('NFC').length > 160
   const textExceeded = body.length > 10000
-  useEffect(() => { if (error && draft.title.trim()) errorMessage.current?.focus() }, [error, draft.title])
   async function publish() {
     if (!editor || guard.current) return
     setError(null)
@@ -106,8 +104,9 @@ export default function PostCanvas({ userId, initialTopic, initialCommunity, pos
       <div className="canvas-header-actions"><Button type="button" variant="ghost" className="h-11" disabled={publishing || recovering} aria-pressed={preview} onClick={() => setPreview(current => !current)}>{preview ? <PencilLine aria-hidden="true" /> : <Eye aria-hidden="true" />}<span>{preview ? 'Seguir creando' : 'Vista previa'}</span></Button><Button type="button" className="h-11 px-6" disabled={!editor || publishing || recovering || images.busy} onClick={() => void publish()}>{publishing && <LoaderCircle className="animate-spin" aria-hidden="true" />}{publishing ? post ? 'Guardando…' : 'Publicando…' : saveLabel}</Button></div>
     </header>
     <div className="canvas-draft-status" role="status">{storage === 'unavailable' ? 'No pudimos guardar el borrador en esta pestaña. Conserva una copia antes de salir.' : storage === 'saving' ? 'Guardando borrador…' : <><Check aria-hidden="true" />Borrador guardado en esta pestaña</>}</div>
+    {error && <p className="canvas-publish-error forum-error" role="alert">{error} Tu borrador sigue aquí.</p>}
     {conflict && post && <div className="canvas-version-conflict"><p role="alert">Hay otra versión de esta publicación. Tu borrador se conserva; puedes revisarlo antes de cargar la versión publicada.</p><div className="canvas-inline-actions"><Button asChild variant="ghost" className="h-11"><Link to={'/publicaciones/' + post.id} target="_blank" rel="noopener noreferrer">Ver versión publicada</Link></Button><AlertDialog><AlertDialogTrigger asChild><Button type="button" variant="secondary" className="h-11" disabled={publishing || recovering}>{recovering ? 'Cargando versión…' : 'Cargar versión publicada'}</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>¿Reemplazar este borrador?</AlertDialogTitle><AlertDialogDescription>Se cargarán los cambios publicados. Copia antes cualquier texto o cambio de este borrador que quieras conservar.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Conservar borrador</AlertDialogCancel><AlertDialogAction onClick={() => void reloadPublished()}>Cargar versión publicada</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></div></div>}
-    <label htmlFor="canvas-title" className="sr-only">Título de tu publicación</label><textarea ref={title} id="canvas-title" className="canvas-title" rows={1} value={draft.title} placeholder="Un título para tu idea" readOnly={preview} disabled={publishing || recovering} aria-invalid={titleExceeded} aria-describedby={titleExceeded ? 'canvas-title-error' : undefined} onChange={event => change({ title: event.target.value })} onKeyDown={event => { if (event.key === 'Enter' && !event.ctrlKey && !event.metaKey) { event.preventDefault(); editor?.commands.focus('start') } }} />
+    <label htmlFor="canvas-title" className="sr-only">Título de tu publicación</label><textarea ref={title} id="canvas-title" className="canvas-title" rows={1} value={draft.title} placeholder="Un título para tu idea" readOnly={preview} disabled={publishing || recovering} aria-invalid={titleExceeded} aria-describedby={titleExceeded ? 'canvas-title-error' : undefined} onChange={event => { change({ title: event.target.value }); setError(null) }} onKeyDown={event => { if (event.key === 'Enter' && !event.ctrlKey && !event.metaKey) { event.preventDefault(); editor?.commands.focus('start') } }} />
     {titleExceeded && <p id="canvas-title-error" className="forum-error" role="alert">El título supera los 160 caracteres. Acórtalo antes de publicar.</p>}
     <fieldset disabled={publishing || recovering} className="canvas-workspace"><legend className="sr-only">Contenido y opciones de la publicación</legend>
     {editor && !preview && <fieldset disabled={publishing} className="canvas-toolbar-fieldset"><legend className="sr-only">Herramientas del lienzo</legend><EditorToolbar editor={editor} onImages={images.select} imagesDisabled={images.busy || !images.options.data} /></fieldset>}
@@ -121,7 +120,6 @@ export default function PostCanvas({ userId, initialTopic, initialCommunity, pos
     <footer className="canvas-footer"><PublicationSettings categoryId={categoryId} categories={categories} communityId={draft.communityId} tags={draft.tags} disabled={publishing || recovering} communityLocked={Boolean(post)}
       onCategory={value => change({ categoryId: value, legacyTopicId: '' })} onCommunity={value => change({ communityId: value })} onTags={value => change({ tags: value })} />
       <div className="canvas-footer-notes"><p>{post ? 'La comunidad y el acceso de la publicación se conservan.' : draft.communityId ? 'Se compartirá con quienes puedan ver la comunidad elegida.' : 'Se compartirá públicamente en Foris.'}</p><p>Ctrl/⌘ + Enter para {post ? 'guardar cambios' : 'publicar'}</p></div>
-      {error && <p ref={errorMessage} className="forum-error" role="alert" tabIndex={-1}>{error} Tu borrador sigue aquí.</p>}
     </footer>
     </fieldset>
   </section>
