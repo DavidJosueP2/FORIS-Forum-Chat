@@ -1,12 +1,13 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
+import { isDeepStrictEqual } from 'node:util';
 import { Inject, Injectable } from '@nestjs/common';
-import type { CreateForumPost, CreateForumReply, CreatedForumReply, ForumPost, ForumPostSummary, ForumReply, ForumPage, ForumTopic } from '@messages/contracts';
+import type { CreateForumReply, CreatedForumReply, ForumDocument, ForumPost, ForumPostSummary, ForumReply, ForumPage, ForumTopic } from '@messages/contracts';
 import type { QueryResultRow } from 'pg';
 import { DatabaseService } from '../../database/database.service.js';
 import { SessionService } from '../auth/session.service.js';
 import type { AuthContext, SqlClient } from '../auth/auth.types.js';
 import { HttpError } from '../../common/errors/http-error.js';
-import type { ForumFilters } from './forum-validation.js';
+import type { ForumFilters, ValidatedPost, ValidatedPostUpdate } from './forum-validation.js';
 import { CommunityRepository } from '../communities/community.repository.js';
 import { MediaRepository } from '../media/media.repository.js';
 import { readablePost } from '../communities/community-access.js';
@@ -19,6 +20,8 @@ interface PostRow extends QueryResultRow {
   category_parent_id: string | null; category_root_id: string; category_depth: number; category_path: string[]; category_position: number;
   author_id: string; display_name: string; reply_count: number; created_at: Date; last_activity_at: Date; request_id: string;
   community_id: string | null; community_name: string | null; media_request_ids: string[]; tag_request_names: string[];
+  content: ForumDocument | null;
+  revision: number; updated_at: Date | null;
 }
 interface ReplyRow extends QueryResultRow {
   id: string; post_id: string; author_id: string; display_name: string; body: string; created_at: Date; request_id: string;
@@ -44,7 +47,9 @@ function summary(row: PostRow): ForumPostSummary {
     createdAt: new Date(row.created_at).toISOString(), lastActivityAt: new Date(row.last_activity_at).toISOString(),
   };
 }
-function detail(row: PostRow): ForumPost { return { ...summary(row), body: row.body }; }
+function detail(row: PostRow): ForumPost {
+  return { ...summary(row), body: row.body, content: row.content, revision: row.revision, updatedAt: row.updated_at ? new Date(row.updated_at).toISOString() : null };
+}
 function reply(row: ReplyRow): ForumReply {
   return { id: String(row.id), postId: String(row.post_id), body: row.body,
     author: { id: row.author_id, displayName: row.display_name }, createdAt: new Date(row.created_at).toISOString() };
@@ -127,7 +132,7 @@ export class ForumRepository {
     const result = await client.query<{ total: string }>('SELECT COUNT(*)::text AS total FROM ' + table + ` WHERE author_id=$1 AND created_at > CURRENT_TIMESTAMP - INTERVAL '1 hour'`, [userId]);
     if (Number(result.rows[0].total) >= maximum) throw new HttpError(429, 'FORUM_RATE_LIMIT', 'Has participado varias veces. Espera un poco antes de publicar de nuevo.');
   }
-  async createPost(input: CreateForumPost, actor: AuthContext): Promise<{ post: ForumPost; created: boolean }> {
+  async createPost(input: ValidatedPost, actor: AuthContext): Promise<{ post: ForumPost; created: boolean }> {
     return this.database.transaction(async client => {
       await this.member(client, actor);
       const categoryId = await this.taxonomy.resolve(input, client);
@@ -135,14 +140,15 @@ export class ForumRepository {
       if (existing) {
         if (existing.title !== input.title || existing.body !== input.body || existing.category_id !== categoryId || String(existing.community_id ?? '') !== (input.communityId ?? '')
           || JSON.stringify(existing.media_request_ids) !== JSON.stringify(input.mediaIds ?? [])
-          || JSON.stringify(existing.tag_request_names) !== JSON.stringify(input.tags ?? [])) throw new HttpError(409, 'REQUEST_CONFLICT', 'Esta solicitud ya corresponde a otra publicación.');
+          || JSON.stringify(existing.tag_request_names) !== JSON.stringify(input.tags ?? [])
+          || !isDeepStrictEqual(existing.content, input.content)) throw new HttpError(409, 'REQUEST_CONFLICT', 'Esta solicitud ya corresponde a otra publicación.');
         return { post: await this.getPost(String(existing.id), client, actor.user.id), created: false };
       }
       if (input.communityId) await this.communities.authorizePublication(client, input.communityId, actor.user.id);
       await this.rate(client, actor.user.id, 'posts', 10);
       const id = randomUUID();
-      await client.query(`INSERT INTO forum_posts(id,category_id,author_id,title,body,request_id,community_id,media_request_ids,tag_request_names)
-        VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`, [id, categoryId, actor.user.id, input.title, input.body, input.requestId, input.communityId ?? null, input.mediaIds ?? [], input.tags ?? []]);
+      await client.query(`INSERT INTO forum_posts(id,category_id,author_id,title,body,request_id,community_id,media_request_ids,tag_request_names,content)
+        VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`, [id, categoryId, actor.user.id, input.title, input.body, input.requestId, input.communityId ?? null, input.mediaIds, input.tags ?? [], input.content ? JSON.stringify(input.content) : null]);
       await this.taxonomy.attachTags(client, id, input.tags ?? []);
       await this.media.attach(client, input.mediaIds ?? [], actor.user.id, id);
       if (input.communityId) await this.communities.published(client, input.communityId, id, actor.user.id);
@@ -167,6 +173,34 @@ export class ForumRepository {
       const saved = (await client.query<ReplyRow>(REPLIES + ' WHERE r.id=$1', [inserted.rows[0].id])).rows[0];
       await client.query('UPDATE forum_posts SET reply_count=reply_count+1,last_activity_at=CURRENT_TIMESTAMP WHERE id=$1', [postId]);
       return { reply: reply(saved), replyCount: post.reply_count + 1, created: true };
+    });
+  }
+  async updatePost(id: string, input: ValidatedPostUpdate, actor: AuthContext): Promise<{ post: ForumPost; updated: boolean }> {
+    return this.database.transaction(async client => {
+      await this.member(client, actor);
+      const parent = (await client.query<{ community_id: string | null }>('SELECT community_id FROM forum_posts WHERE id=$1 AND author_id=$2', [id, actor.user.id])).rows[0];
+      if (!parent) throw new HttpError(404, 'POST_NOT_FOUND', 'Esta publicación no existe o no puedes editarla.');
+      // Mismo orden de bloqueos que las respuestas: usuario, comunidad, publicación y medios.
+      if (parent.community_id) await this.communities.authorizePublication(client, String(parent.community_id), actor.user.id);
+      const current = (await client.query<PostRow>('SELECT * FROM forum_posts WHERE id=$1 AND author_id=$2 FOR UPDATE', [id, actor.user.id])).rows[0];
+      if (!current) throw new HttpError(404, 'POST_NOT_FOUND', 'Esta publicación no existe o no puedes editarla.');
+      const categoryId = await this.taxonomy.resolve(input, client);
+      const hash = createHash('sha256').update(JSON.stringify({ title: input.title, content: input.content, categoryId, tags: input.tags ?? [], revision: input.revision })).digest('hex');
+      const previous = (await client.query<{ post_id: string; request_hash: string }>('SELECT post_id,request_hash FROM forum_post_edits WHERE author_id=$1 AND request_id=$2', [actor.user.id, input.requestId])).rows[0];
+      if (previous) {
+        if (previous.post_id !== id || previous.request_hash !== hash) throw new HttpError(409, 'REQUEST_CONFLICT', 'Esta solicitud ya corresponde a otra edición.');
+        return { post: await this.getPost(id, client, actor.user.id), updated: false };
+      }
+      if (current.revision !== input.revision) throw new HttpError(409, 'POST_VERSION_CONFLICT', 'La publicación cambió en otra pestaña. Tu borrador sigue aquí; revisa la versión publicada antes de continuar.');
+      const recent = await client.query<{ total: string }>("SELECT COUNT(*)::text AS total FROM forum_post_edits WHERE author_id=$1 AND created_at>CURRENT_TIMESTAMP-INTERVAL '1 hour'", [actor.user.id]);
+      if (Number(recent.rows[0]!.total) >= 20) throw new HttpError(429, 'FORUM_RATE_LIMIT', 'Has editado varias publicaciones. Espera un poco antes de guardar de nuevo.');
+      await this.media.replacePostImages(client, input.mediaIds, actor.user.id, id);
+      await client.query('DELETE FROM forum_post_tags WHERE post_id=$1', [id]);
+      await this.taxonomy.attachTags(client, id, input.tags ?? []);
+      await client.query(`UPDATE forum_posts SET title=$2,body=$3,content=$4,category_id=$5,revision=revision+1,updated_at=CURRENT_TIMESTAMP WHERE id=$1`,
+        [id, input.title, input.body, JSON.stringify(input.content), categoryId]);
+      await client.query('INSERT INTO forum_post_edits(post_id,author_id,request_id,request_hash,base_revision,revision) VALUES($1,$2,$3,$4,$5,$6)', [id, actor.user.id, input.requestId, hash, input.revision, input.revision + 1]);
+      return { post: await this.getPost(id, client, actor.user.id), updated: true };
     });
   }
 }

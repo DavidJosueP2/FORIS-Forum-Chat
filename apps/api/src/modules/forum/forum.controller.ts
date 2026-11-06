@@ -1,9 +1,9 @@
-import { Body, Controller, Get, Header, Inject, Param, Post, Query, Req, Res } from '@nestjs/common';
+import { Body, Controller, Get, Header, Inject, Param, Patch, Post, Query, Req, Res } from '@nestjs/common';
 import type { Response } from 'express';
 import { SessionService } from '../auth/session.service.js';
 import type { AuthRequest } from '../auth/auth.types.js';
 import { ForumRepository } from './forum.repository.js';
-import { createPostInput, createReplyInput, forumFilters, forumId } from './forum-validation.js';
+import { createPostInput, createReplyInput, updatePostInput, forumFilters, forumId } from './forum-validation.js';
 import { pageInput } from '../../common/validation/input.js';
 
 @Controller()
@@ -25,5 +25,9 @@ export class ForumController {
     const actor = await this.sessions.required(request);
     const result = await this.repository.createReply(forumId(id), createReplyInput(body), actor);
     response.set('Cache-Control','no-store').status(result.created ? 201 : 200).json(result);
+  }
+  @Patch('posts/:id') @Header('Cache-Control', 'no-store') async update(@Param('id') id: string, @Body() body: unknown, @Req() request: AuthRequest) {
+    const actor = await this.sessions.required(request);
+    return this.repository.updatePost(forumId(id), updatePostInput(body), actor);
   }
 }

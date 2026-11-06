@@ -14,7 +14,7 @@ export function returnTarget(value: unknown): string {
     }
     return '/publicar' + (params.size ? '?' + params.toString() : '')
   }
-  if (/^\/publicaciones\/[\da-fA-F]{8}-(?:[\da-fA-F]{4}-){3}[\da-fA-F]{12}(?:#responder)?$/u.test(value)) return value
+  if (/^\/publicaciones\/[\da-fA-F]{8}-(?:[\da-fA-F]{4}-){3}[\da-fA-F]{12}(?:\/editar|#responder)?$/u.test(value)) return value
   return '/'
 }
 export function loginLink(next: string, register = false): string {

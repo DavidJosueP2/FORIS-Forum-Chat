@@ -184,3 +184,65 @@ test('paginación con fechas iguales usa el UUID como desempate sin omitir ni du
   assert.equal(second.nextCursor, null);
   await api.get('/api/posts?before=' + ids[0]).expect(400);
 });
+
+test('publica y recupera documentos con formato; el texto y los medios los deriva el servidor', async t => {
+  const { api, member } = await fixture(t);
+  const user = await member();
+  const input = { title: 'Un proceso creativo', requestId: randomUUID(), content: { version: 1, content: [
+    { type: 'paragraph', content: [{ type: 'text', text: 'Una idea con formato', marks: [{ type: 'bold' }] }] },
+    { type: 'taskList', content: [{ type: 'taskItem', attrs: { checked: true }, content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Publicar' }] }] }] },
+  ] } };
+  const first = await api.post('/api/posts').set('Origin', origin).set('Cookie', user.cookie).send(input).expect(201);
+  const id = first.body.post.id as string;
+  assert.equal(first.body.post.body, 'Una idea con formato\nPublicar');
+  assert.equal((await api.get('/api/posts/' + id).expect(200)).body.content.version, 1);
+  const retry = await api.post('/api/posts').set('Origin', origin).set('Cookie', user.cookie).send(input).expect(200);
+  assert.equal(retry.body.post.id, id);
+  await api.post('/api/posts').set('Origin', origin).set('Cookie', user.cookie).send({ ...input, content: { version: 1, content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Una idea con formato', marks: [{ type: 'italic' }] }] }] } }).expect(409);
+  await api.post('/api/posts').set('Origin', origin).set('Cookie', user.cookie).send({ ...input, body: 'Texto manipulado' }).expect(400);
+});
+
+test('solo el autor edita; versiones y solicitudes impiden sobrescrituras y reintentos duplicados', async t => {
+  const { api, member, database } = await fixture(t);
+  const author = await member(); const other = await member();
+  const created = (await api.post('/api/posts').set('Origin', origin).set('Cookie', author.cookie).send(postInput()).expect(201)).body.post as ForumPostSummary & { revision: number };
+  const path = '/api/posts/' + created.id;
+  const input = { title: 'Una idea revisada', revision: created.revision, requestId: randomUUID(), tags: ['feedback'], content: { version: 1, content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Mi revisión' }] }] } };
+  await api.patch(path).set('Origin', origin).send(input).expect(401);
+  await api.patch(path).set('Origin', origin).set('Cookie', other.cookie).send(input).expect(404);
+  await api.patch(path).set('Origin', 'https://otro.example').set('Cookie', author.cookie).send(input).expect(403);
+  await api.patch(path).set('Origin', origin).set('Cookie', author.cookie).send({ ...input, communityId: '1' }).expect(400);
+  const saved = await api.patch(path).set('Origin', origin).set('Cookie', author.cookie).send(input).expect(200);
+  assert.equal(saved.body.post.id, created.id);
+  assert.equal(saved.body.post.revision, 2);
+  assert.equal(saved.body.post.createdAt, created.createdAt);
+  assert.equal(saved.body.post.replyCount, 0);
+  assert.ok(saved.body.post.updatedAt);
+  assert.deepEqual(saved.body.post.tags.map((tag: { name: string }) => tag.name), ['feedback']);
+  const retry = await api.patch(path).set('Origin', origin).set('Cookie', author.cookie).send(input).expect(200);
+  assert.equal(retry.body.updated, false);
+  assert.equal(retry.body.post.revision, 2);
+  await api.patch(path).set('Origin', origin).set('Cookie', author.cookie).send({ ...input, title: 'Otra intención' }).expect(409);
+  const stale = await api.patch(path).set('Origin', origin).set('Cookie', author.cookie).send({ ...input, requestId: randomUUID() }).expect(409);
+  assert.equal(stale.body.error.code, 'POST_VERSION_CONFLICT');
+  const newer = await api.patch(path).set('Origin', origin).set('Cookie', author.cookie).send({ ...input, revision: 2, requestId: randomUUID(), title: 'Versión nueva' }).expect(200);
+  assert.equal(newer.body.post.revision, 3);
+  const oldRetry = await api.patch(path).set('Origin', origin).set('Cookie', author.cookie).send(input).expect(200);
+  assert.equal(oldRetry.body.post.title, 'Versión nueva');
+  assert.equal((await database.query('SELECT id FROM forum_post_edits WHERE post_id=$1', [created.id])).rows.length, 2);
+});
+
+test('editar una publicación de comunidad no duplica avisos ni permite editar después de salir', async t => {
+  const { api, member } = await fixture(t);
+  const owner = await member(); const author = await member();
+  const community = await api.post('/api/communities').set('Origin', origin).set('Cookie', owner.cookie).send({ name: 'Taller abierto', description: 'Compartimos ideas.', requestId: randomUUID() }).expect(201);
+  const id = community.body.community.id as string;
+  await api.post('/api/communities/' + id + '/membership').set('Origin', origin).set('Cookie', author.cookie).send({}).expect(200);
+  const post = await api.post('/api/posts').set('Origin', origin).set('Cookie', author.cookie).send({ ...postInput(), communityId: id }).expect(201);
+  const input = { title: 'Una revisión', revision: 1, requestId: randomUUID(), content: { version: 1, content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Más contexto' }] }] } };
+  await api.patch('/api/posts/' + post.body.post.id).set('Origin', origin).set('Cookie', author.cookie).send(input).expect(200);
+  assert.equal((await api.get('/api/communities/' + id).set('Cookie', owner.cookie)).body.postCount, 1);
+  assert.equal((await api.get('/api/notifications/count').set('Cookie', owner.cookie)).body.unreadCount, 1);
+  await api.delete('/api/communities/' + id + '/membership').set('Origin', origin).set('Cookie', author.cookie).send({}).expect(200);
+  await api.patch('/api/posts/' + post.body.post.id).set('Origin', origin).set('Cookie', author.cookie).send({ ...input, revision: 2, requestId: randomUUID() }).expect(403);
+});

@@ -1,0 +1,47 @@
+.foris-document { max-width: 72ch; line-height: 1.9; overflow-wrap: anywhere; caret-color: var(--foreground); }
+.foris-document::selection, .foris-document ::selection { background: var(--accent); color: var(--foreground); }
+.foris-document > * + * { margin-top: 1.25rem; }
+.foris-document p { min-height: 1.9em; white-space: pre-wrap; }
+.foris-document h2, .foris-document h3 { font-family: var(--font-heading); font-weight: 600; line-height: 1.4; margin-block: 2rem 1rem; }
+.foris-document h2 { font-size: 1.5rem; }
+.foris-document h3 { font-size: 1.25rem; }
+.foris-document strong { font-weight: 700; }
+.foris-document em { font-style: italic; }
+.foris-document a { text-decoration: underline; text-underline-offset: .2em; overflow-wrap: anywhere; }
+.foris-document mark { background: var(--accent); color: var(--foreground); border-radius: 4px; padding-inline: 2px; }
+.foris-document sub, .foris-document sup { font-size: .75em; }
+.foris-document blockquote { background: var(--secondary); border: 0; border-radius: 14px; padding: 1rem 1.25rem; }
+.foris-document blockquote > * + * { margin-top: .75rem; }
+.foris-document code { font-family: ui-monospace, monospace; font-size: .9em; background: var(--secondary); padding: .15em .35em; border-radius: 4px; }
+.foris-document pre { overflow-x: auto; padding: 1.25rem; background: var(--secondary); border-radius: 14px; white-space: pre; line-height: 1.7; tab-size: 2; }
+.foris-document pre code { padding: 0; background: transparent; border-radius: 0; }
+.foris-document ul:not([data-type="taskList"]) { list-style: disc; padding-left: 1.5rem; }
+.foris-document ol { list-style: decimal; padding-left: 1.5rem; }
+.foris-document li + li { margin-top: .4rem; }
+.foris-document li > ul, .foris-document li > ol { margin-top: .5rem; }
+.foris-document [data-type="taskList"] { list-style: none; padding: 0; }
+.foris-document [data-type="taskItem"] { display: flex; gap: .75rem; align-items: flex-start; }
+.foris-document [data-type="taskItem"] > label { display: flex; min-height: 1.9em; align-items: center; }
+.foris-document [data-type="taskItem"] input { width: 18px; height: 18px; flex-shrink: 0; margin-top: .4rem; accent-color: var(--primary); }
+.foris-document [data-type="taskItem"] > div { flex: 1; min-width: 0; }
+.foris-document [data-type="taskItem"][data-checked="true"] > div > p { text-decoration: line-through; }
+.foris-document hr { border: 0; height: 2px; background: var(--secondary); margin-block: 2rem; }
+.foris-document .document-table { overflow-x: auto; width: 100%; scrollbar-color: var(--muted-foreground) var(--secondary); }
+.foris-document table { width: 100%; min-width: 400px; border-collapse: separate; border-spacing: 3px; table-layout: fixed; }
+.foris-document td, .foris-document th { position: relative; min-width: 80px; vertical-align: top; padding: .75rem; background: var(--secondary); border: 0; text-align: left; }
+.foris-document th { font-weight: 600; background: var(--accent); }
+.foris-document .selectedCell { background: var(--accent); outline: 2px solid var(--foreground); outline-offset: -2px; }
+.foris-document [data-align="center"] { text-align: center; }
+.foris-document [data-align="right"] { text-align: right; }
+.foris-document [data-align="left"] { text-align: left; }
+.foris-document [data-align="justify"] { text-align: justify; }
+.foris-document .document-image, .foris-document .canvas-image-node { margin-block: 1.75rem; }
+.foris-document figcaption { color: var(--muted-foreground); font-size: .875rem; line-height: 1.7; margin-top: .75rem; }
+.foris-document .media-image img { width: 100%; height: auto; max-height: none; object-fit: contain; border-radius: 14px; }
+.foris-document .ProseMirror-selectednode { outline: 2px solid var(--foreground); outline-offset: 4px; border-radius: 14px; }
+.forum-publication > .foris-document { margin-top: 2rem; }
+@media (max-width: 767px) {
+  .foris-document h2 { font-size: 1.25rem; }
+  .foris-document h3 { font-size: 1rem; }
+  .foris-document blockquote, .foris-document pre { padding: 1rem; }
+}

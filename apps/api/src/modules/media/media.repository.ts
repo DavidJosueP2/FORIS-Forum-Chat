@@ -209,15 +209,28 @@ export class MediaRepository {
     const result = await this.database.query<{ used_bytes: string; reserved_bytes: string }>('SELECT used_bytes,reserved_bytes FROM media_quotas WHERE scope=$1', ['user:' + ownerId]);
     return { usedBytes: Number(result.rows[0]?.used_bytes ?? 0), reservedBytes: Number(result.rows[0]?.reserved_bytes ?? 0), limitBytes: this.config.userBytes };
   }
-  async attach(client: SqlClient, ids: string[], ownerId: string, postId: string): Promise<void> {
+  private validatePostImages(rows: MediaRow[], ids: string[], ownerId: string, postId: string): void {
     if (ids.length > this.config.maxPerPost) throw new HttpError(400, 'MEDIA_TOO_MANY', 'Esta publicación tiene demasiadas imágenes.');
-    if (!ids.length) return;
-    const rows = await client.query<MediaRow>('SELECT * FROM media WHERE id=ANY($1::uuid[]) ORDER BY id FOR UPDATE', [ids]);
-    if (rows.rows.length !== ids.length) throw new HttpError(400, 'MEDIA_NOT_READY', 'Una de las imágenes no está disponible.');
-    for (const row of rows.rows) {
+    if (rows.length !== ids.length) throw new HttpError(400, 'MEDIA_NOT_READY', 'Una de las imágenes no está disponible.');
+    for (const row of rows) {
       this.owned(row, ownerId);
       if (row.purpose !== 'post' || row.community_id || row.avatar_user_id || row.state !== 'READY' || (row.post_id && String(row.post_id) !== postId)) throw new HttpError(409, 'MEDIA_NOT_READY', 'La imagen no está lista o ya pertenece a otro recurso.');
     }
+  }
+  async attach(client: SqlClient, ids: string[], ownerId: string, postId: string): Promise<void> {
+    if (!ids.length) return;
+    const rows = await client.query<MediaRow>('SELECT * FROM media WHERE id=ANY($1::uuid[]) ORDER BY id FOR UPDATE', [ids]);
+    this.validatePostImages(rows.rows, ids, ownerId, postId);
+    for (const [position, id] of ids.entries()) await client.query('UPDATE media SET post_id=$2,position=$3 WHERE id=$1', [id, postId, position]);
+  }
+  /** Reordena, adjunta y retira en la misma transacción del documento; nunca cambia de propietario. */
+  async replacePostImages(client: SqlClient, ids: string[], ownerId: string, postId: string): Promise<void> {
+    const rows = await client.query<MediaRow>('SELECT * FROM media WHERE post_id=$1 OR id=ANY($2::uuid[]) ORDER BY id FOR UPDATE', [postId, ids]);
+    this.validatePostImages(rows.rows.filter(row => ids.includes(row.id)), ids, ownerId, postId);
+    // Libera primero los ordinales: intercambiar 0 y 1 no debe chocar con UNIQUE(post_id,position).
+    await client.query('UPDATE media SET position=NULL WHERE post_id=$1', [postId]);
+    await client.query(`UPDATE media SET post_id=NULL,position=NULL,state='DELETING',cleanup_after=CURRENT_TIMESTAMP
+      WHERE post_id=$1 AND NOT(id=ANY($2::uuid[])) AND state='READY'`, [postId, ids]);
     for (const [position, id] of ids.entries()) await client.query('UPDATE media SET post_id=$2,position=$3 WHERE id=$1', [id, postId, position]);
   }
   async images(postIds: string[], client: SqlClient = this.database): Promise<Map<string, MediaImage[]>> {

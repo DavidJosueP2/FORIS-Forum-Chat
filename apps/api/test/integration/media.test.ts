@@ -61,6 +61,25 @@ test('flujo local completo: subida privada, asociación y lectura pública por p
   assert.equal(retry.body.post.id, post.body.post.id);
   await api.get(read.body.url as string).expect(404);
 });
+
+test('editar reordena imágenes, rechaza medios ajenos y retira solo las imágenes omitidas', async t => {
+  const { api, user, upload } = await fixture(t);
+  const author = await user(); const other = await user();
+  const first = (await upload(author.cookie)).body.id as string;
+  const second = (await upload(author.cookie)).body.id as string;
+  const replacement = (await upload(author.cookie)).body.id as string;
+  const foreign = (await upload(other.cookie)).body.id as string;
+  const created = await api.post('/api/posts').set('Origin', origin).set('Cookie', author.cookie).send({ title: 'Proceso', body: 'Dos imágenes', mediaIds: [first, second], requestId: randomUUID() }).expect(201);
+  const path = '/api/posts/' + created.body.post.id;
+  const document = (ids: string[]) => ({ version: 1, content: ids.map(mediaId => ({ type: 'mediaImage', attrs: { mediaId } })) });
+  const reordered = await api.patch(path).set('Origin', origin).set('Cookie', author.cookie).send({ title: 'Proceso', content: document([second, first]), revision: 1, requestId: randomUUID() }).expect(200);
+  assert.deepEqual(reordered.body.post.images.map((image: { id: string }) => image.id), [second, first]);
+  await api.patch(path).set('Origin', origin).set('Cookie', author.cookie).send({ title: 'Proceso', content: document([foreign]), revision: 2, requestId: randomUUID() }).expect(404);
+  const saved = await api.patch(path).set('Origin', origin).set('Cookie', author.cookie).send({ title: 'Proceso', content: document([second, replacement]), revision: 2, requestId: randomUUID() }).expect(200);
+  assert.deepEqual(saved.body.post.images.map((image: { id: string }) => image.id), [second, replacement]);
+  await api.get('/api/media/' + first + '/read-url').expect(404);
+  await api.get('/api/media/' + second + '/read-url').expect(200);
+});
 test('invitados y otros propietarios no pueden subir, confirmar, asociar ni borrar imágenes ajenas', async t => {
   const { api, user, authorize, upload, bytes } = await fixture(t);
   await api.post('/api/media/uploads').set('Origin', origin).send({}).expect(401);

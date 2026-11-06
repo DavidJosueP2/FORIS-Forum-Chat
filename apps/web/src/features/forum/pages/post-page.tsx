@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
-import { ArrowLeft, LoaderCircle } from 'lucide-react'
+import { ArrowLeft, LoaderCircle, PencilLine } from 'lucide-react'
 import type { CreatedForumReply, ForumPost, ForumReply } from '@messages/contracts'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -12,6 +12,7 @@ import { useForumPage, useResource } from '../hooks/use-forum'
 import { useDraft } from '../hooks/use-draft'
 import { CommunityWritingGate } from '@/features/communities/components/community-writing-gate'
 import { PostImages } from '@/features/media/components/post-images'
+import { DocumentView } from '../editor/document-view'
 
 function ReplyForm({ postId, userId, onSaved }: { postId: string; userId: string; onSaved: (result: CreatedForumReply) => void }) {
   const { draft, stored, change, clear, alive } = useDraft('foris.forum.reply.' + userId + '.' + postId)
@@ -86,9 +87,8 @@ function PostContent({ id }: { id: string }) {
   const item = post.data
   return <>
     <article className="forum-publication">
-      <header><div className="forum-meta"><Link to={'/?topico=' + item.topic.id} className="forum-topic-label">{item.topic.name}</Link>{item.community && <Link to={'/comunidades/' + item.community.id}>{item.community.name}</Link>}</div><h1>{item.title}</h1><div className="forum-meta"><span>Por {item.author.displayName}</span><ForumTime value={item.createdAt} /></div></header>
-      <p className="forum-prose">{item.body}</p>
-      <PostImages images={item.images} canDelete={auth.session.user?.id === item.author.id} />
+      <header><div className="forum-meta"><Link to={'/?topico=' + item.topic.id} className="forum-topic-label">{item.topic.name}</Link>{item.community && <Link to={'/comunidades/' + item.community.id}>{item.community.name}</Link>}</div><h1>{item.title}</h1><div className="forum-meta"><span>Por {item.author.displayName}</span><ForumTime value={item.createdAt} />{item.updatedAt && <span>Editado <ForumTime value={item.updatedAt} /></span>}{auth.session.user?.id === item.author.id && <Button asChild variant="secondary" className="h-11"><Link to={'/publicaciones/' + item.id + '/editar'}><PencilLine aria-hidden="true" />Editar publicación</Link></Button>}</div></header>
+      {item.content ? <DocumentView document={item.content} images={item.images} canDelete={auth.session.user?.id === item.author.id} /> : <><p className="forum-prose">{item.body}</p><PostImages images={item.images} canDelete={auth.session.user?.id === item.author.id} /></>}
     </article>
     <Replies key={item.id} post={item} onCount={count => post.setData({ ...item, replyCount: count })} />
   </>

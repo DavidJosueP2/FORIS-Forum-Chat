@@ -4,6 +4,7 @@ import { LoginPage } from '@/features/account/pages/login-page'
 import { ProfilePage } from '@/features/account/pages/profile-page'
 import { ForumPage } from '@/features/forum/pages/forum-page'
 import { CreatePostPage } from '@/features/forum/pages/create-post-page'
+import { EditPostPage } from '@/features/forum/pages/edit-post-page'
 import { PostPage } from '@/features/forum/pages/post-page'
 import { RouteFocus } from '@/components/route-focus'
 import { CommunitiesPage } from '@/features/communities/pages/communities-page'
@@ -21,6 +22,7 @@ function App() {
         <Route path="/chat" element={<ChatHome />} />
         <Route path="/publicar" element={<CreatePostPage />} />
         <Route path="/publicaciones/:postId" element={<PostPage />} />
+        <Route path="/publicaciones/:postId/editar" element={<EditPostPage />} />
         <Route path="/comunidades" element={<CommunitiesPage />} />
         <Route path="/comunidades/crear" element={<CreateCommunityPage />} />
         <Route path="/comunidades/:communityId" element={<CommunityPage />} />

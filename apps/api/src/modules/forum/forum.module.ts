@@ -17,7 +17,7 @@ import { TaxonomyRepository } from './taxonomy.repository.js';
 })
 export class ForumModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(ForumWriteMiddleware, json({ limit: '64kb', strict: true }))
-      .forRoutes({ path: 'posts', method: RequestMethod.POST }, { path: 'posts/:id/replies', method: RequestMethod.POST });
+    consumer.apply(ForumWriteMiddleware, json({ limit: '256kb', strict: true }))
+      .forRoutes({ path: 'posts', method: RequestMethod.POST }, { path: 'posts/:id/replies', method: RequestMethod.POST }, { path: 'posts/:id', method: RequestMethod.PATCH });
   }
 }

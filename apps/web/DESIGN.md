@@ -15,6 +15,12 @@ colors:
   destructive: "#a13932"
   dark-canvas: "#181b16"
   dark-ink: "#eef0e8"
+  canvas-tag-background: "#c5eee6"
+  canvas-tag-foreground: "#134e46"
+  canvas-tag-hover: "#afe4da"
+  dark-canvas-tag-background: "#164e46"
+  dark-canvas-tag-foreground: "#c5eee6"
+  dark-canvas-tag-hover: "#21685c"
 typography:
   title:
     fontFamily: "Axiforma, Plus Jakarta Sans, sans-serif"
@@ -87,6 +93,20 @@ components:
     textColor: "{colors.ink}"
     rounded: "{rounded.control}"
     padding: "4px 10px"
+  canvas-tag:
+    backgroundColor: "{colors.canvas-tag-background}"
+    textColor: "{colors.canvas-tag-foreground}"
+    rounded: "{rounded.button}"
+  canvas-tag-hover:
+    backgroundColor: "{colors.canvas-tag-hover}"
+    textColor: "{colors.canvas-tag-foreground}"
+  canvas-tag-dark:
+    backgroundColor: "{colors.dark-canvas-tag-background}"
+    textColor: "{colors.dark-canvas-tag-foreground}"
+    rounded: "{rounded.button}"
+  canvas-tag-dark-hover:
+    backgroundColor: "{colors.dark-canvas-tag-hover}"
+    textColor: "{colors.dark-canvas-tag-foreground}"
   message-composer:
     backgroundColor: "{colors.secondary}"
     textColor: "{colors.ink}"
@@ -107,7 +127,7 @@ components:
 
 Base visual de Foris para conversar en comunidades públicas o privadas. La lectura manda; las formas suaves y los personajes aportan cercanía en momentos concretos. El contenido se organiza por tipografía, espacio y superficies sólidas. El inicio abre Foros con las publicaciones organizadas por tópico; Comunidades permite explorar espacios públicos y acceder a los privados de los que se forma parte. El chat global conserva la conversación inmediata y la escritura como invitado en /chat.
 
-El nombre, las cuatro familias tipográficas y el lenguaje de personajes forman la identidad actual. La dirección del foro se recoge en .impeccable/forum-direction.md, la de comunidades en .impeccable/communities-direction.md y su extensión de privacidad y fotos en .impeccable/communities-privacy-direction.md, la del chat global en .impeccable/surfaces/apps-web-src-app-tsx.md y la de acceso y perfil en .impeccable/surfaces/apps-web-src-features-account-pages-login-page-tsx.md; las restricciones de estilo del usuario se conservan en el PRODUCT.md de la raíz.
+El nombre, las cuatro familias tipográficas y el lenguaje de personajes forman la identidad actual. La dirección del foro se recoge en .impeccable/forum-direction.md, la de comunidades en .impeccable/communities-direction.md y su extensión de privacidad y fotos en .impeccable/communities-privacy-direction.md, la del chat global en .impeccable/surfaces/apps-web-src-app-tsx.md, la de acceso y perfil en .impeccable/surfaces/apps-web-src-features-account-pages-login-page-tsx.md y la del lienzo en .impeccable/surfaces/src-features-forum-pages-create-post-page-tsx.md; las restricciones de estilo del usuario se conservan en el PRODUCT.md de la raíz.
 
 **Key Characteristics:**
 
@@ -121,7 +141,9 @@ El nombre, las cuatro familias tipográficas y el lenguaje de personajes forman 
 
 ## Colors
 
-Paleta de neutros cálidos con un matiz vegetal discreto. Los valores de la cabecera corresponden a los tokens de src/index.css; ese archivo contiene también sus equivalentes oscuros y estados funcionales.
+Paleta de neutros cálidos con un matiz vegetal discreto. Los valores generales de la cabecera corresponden a los tokens de src/index.css; ese archivo contiene también sus equivalentes oscuros y estados funcionales. Los tokens canvas-tag y dark-canvas-tag proceden de src/features/forum/editor/canvas.css y se limitan a las etiquetas seleccionadas del lienzo.
+
+El turquesa aprobado distingue esos chips en ambos temas: fondo suave, texto contrastado y un tono de interacción para quitar una etiqueta. Es un papel de color local; conserva los neutros de las demás acciones y no sustituye secondary ni su variante oscura. Las comprobaciones de contraste de los pares declarados son 7.59:1 en claro y 7.57:1 en oscuro; el fondo de interacción mantiene 6.77:1 y 5.23:1, respectivamente. Son cálculos de colores de fuente, sin validación visual en navegador.
 
 Los personajes añaden turquesa, naranja, azul, salvia, dorado, lavanda, rosa, cacao y tinta. Estos colores pertenecen a los SVG de marca y no sustituyen los tokens semánticos de la interfaz. Una emoción o un color de personaje no implica un estado del usuario, del mensaje ni de la conexión.
 
@@ -142,15 +164,17 @@ html y el texto general usan Jakarta. h1–h6 usan Axiforma por defecto; las uti
 
 La escala usada en General corresponde a 12, 14, 16, 20, 24, 30 y 32 píxeles mediante rem. El texto de lectura parte de 1rem; el cuerpo de los mensajes usa interlineado 1.65 y un máximo de 70 caracteres de ancho. Las etiquetas usan el rol label y las horas, fechas, estados y ayudas el rol caption. General usa heading, con heading-compact en móvil; el nombre Foris usa title. La bienvenida usa Fraunces con el rol serif, reducido al tamaño de title en móvil. La serif es un acento, no una fuente para toda la conversación; SF Pro es una alternativa preparada, no una cuarta voz obligatoria en cada pantalla.
 
-El foro reutiliza esta escala: títulos de página entre 1.875rem y 2rem, títulos de publicaciones en el índice a 1.5rem y a 1.25rem en móvil, y encabezados de sección a 1.25rem. Los metadatos y las ayudas usan 0.875rem; el cuerpo de publicaciones y respuestas conserva los saltos de línea, un máximo de 70ch e interlineado 1.9. Las comunidades y la bandeja reutilizan los títulos de fila de 1.5rem y 1.25rem en móvil; las descripciones conservan saltos de línea, hasta 70ch e interlineado 1.8. No añadir una escala tipográfica distinta para estas superficies.
+El foro reutiliza esta escala: títulos de página entre 1.875rem y 2rem, títulos de publicaciones en el índice a 1.5rem y a 1.25rem en móvil, y encabezados de sección a 1.25rem. Los metadatos y las ayudas usan 0.875rem; las publicaciones anteriores de texto y las respuestas conservan los saltos de línea, un máximo de 70ch e interlineado 1.9. El documento enriquecido conserva ese interlineado y un ancho de hasta 72ch, con encabezados, listas, tablas y pies de imagen que comparten la escala. En el lienzo, Crear publicación usa el encabezado compacto; el título editable usa 2rem, reducido a 1.5rem en móvil, y el estado del borrador usa caption. El código emplea la familia monoespaciada del sistema solo para contenido técnico. Las comunidades y la bandeja reutilizan los títulos de fila de 1.5rem y 1.25rem en móvil; las descripciones conservan saltos de línea, hasta 70ch e interlineado 1.8. No añadir una escala tipográfica distinta para estas superficies.
 
 Evitar texto principal en mayúsculas, espaciados exagerados o tipografía monoespaciada decorativa. La conversación tiene prioridad.
 
 ## Layout
 
-Usar el ritmo de espaciado de Tailwind, con grupos próximos y separación clara entre tareas. El índice del foro en / organiza búsqueda, filtros por tópico y filas abiertas de publicaciones dentro de un máximo de 1040px. La cabecera compartida entre foro, comunidades y cuenta, con un máximo de 1280px, reúne Foris y los enlaces Foros, Comunidades y Chat global en ese orden; después ofrece notificaciones para la cuenta activa, tema y cuenta. /publicar y /publicaciones/:postId comparten un ancho máximo de 840px para el formulario o la lectura; las respuestas siguen una lista vertical. La estructura se sostiene con espacio y tipografía, sin tarjetas repetidas.
+Usar el ritmo de espaciado de Tailwind, con grupos próximos y separación clara entre tareas. El índice del foro en / organiza búsqueda, filtros por tópico y filas abiertas de publicaciones dentro de un máximo de 1040px. La cabecera compartida entre foro, comunidades y cuenta, con un máximo de 1280px, reúne Foris y los enlaces Foros, Comunidades y Chat global en ese orden; después ofrece notificaciones para la cuenta activa, tema y cuenta. /publicaciones/:postId conserva un ancho máximo de 840px para la lectura y una lista vertical de respuestas. /publicar y /publicaciones/:postId/editar amplían el espacio hasta 1040px: Volver se alinea con un título de tarea pequeño y Vista previa y Publicar o Guardar cambios quedan a la derecha; debajo aparecen el estado discreto del borrador, el título editable y el contenido. La comunidad, la temática y las etiquetas se muestran al final; la comunidad permanece fija al editar. La estructura se sostiene con espacio y tipografía, sin tarjetas repetidas.
 
 Por debajo de 1024px, la cabecera compartida pasa la navegación a una fila completa y permite que los enlaces se ajusten sin ocultarlos. Por debajo de 768px, la introducción y su acción se apilan y el contenido usa márgenes laterales de 20px. Los filtros por tópico se ajustan a varias líneas. Búsqueda, formularios y acciones conservan etiquetas visibles y controles de 44px o más. No trasladar al foro el desplazamiento interno ni el compositor fijo del chat.
+
+El lienzo abre directamente la escritura, sin portada introductoria ni clasificación obligatoria. Su barra de herramientas compacta usa una superficie sólida y permanece junto al contenido al desplazar la página. En móvil, las acciones pasan a una fila completa, las herramientas se ajustan en varias líneas y las opciones finales se apilan cuando falta espacio; conservan áreas de al menos 44px. Las tablas disponen de desplazamiento horizontal dentro del documento.
 
 /comunidades y /comunidades/:communityId reutilizan el ancho de 1040px. El directorio presenta búsqueda, filtros Explorar, Mis comunidades y Favoritas, y filas abiertas con descripción y recuentos reales; una acción explícita amplía la lista. El detalle coloca propósito, pertenencia, favorita y avisos antes de las publicaciones. /comunidades/crear usa el formulario abierto de 840px; /notificaciones mantiene una lista vertical con acciones de lectura. Las filas separan contenido con 28px de espacio vertical, reducidos a 24px por debajo de 768px. Las acciones se ajustan en varias líneas; las preferencias mantienen su texto junto al control.
 
@@ -188,7 +212,17 @@ Los estilos comunes se centralizan en src/index.css para que las primitivas cons
 
 **Publicaciones.** ForumShell reúne la navegación principal y los accesos de tema y cuenta; forum.css aplica los tokens compartidos sin otra paleta, tipografía ni sistema de formas. ForumPage presenta búsqueda de título o cuerpo, filtros por tópico o autor y filas con tópico, autor, fecha, título, extracto y número real de respuestas. Los tópicos son General, Tecnología, Aprendizaje, Creatividad y Proyectos; son filtros, no comunidades creadas por usuarios. Las páginas de 20 elementos se ordenan de más recientes a anteriores y se amplían con una acción explícita. El foro no incorpora SSE ni sondeo periódico.
 
-**Crear y responder.** CreatePostPage usa tópico, título de hasta 160 caracteres y cuerpo de hasta 10000; PostPage conserva el texto literal y presenta respuestas de hasta 5000 caracteres. React muestra el texto sin interpretar HTML ni Markdown. ParticipationGate permite leer sin cuenta y explica que publicar o responder requiere una sesión vigente de una cuenta verificada, requisito que también impone la API. El enlace de acceso conserva la publicación o tarea de retorno; el chat global sigue al alcance para escribir como invitado. Los borradores del foro se guardan en sessionStorage de la pestaña por cuenta y, en respuestas, por publicación. Un fallo conserva el texto y permite reintentar; un fallo del almacenamiento se comunica con una ayuda visible.
+**Crear, editar y responder.** CreatePostPage y EditPostPage cargan el mismo lienzo enriquecido bajo demanda y mantienen título y escritura como tarea principal. La barra agrupa formato, encabezados, listas y tareas, citas, código, enlaces HTTP(S), alineación, tablas, imágenes y deshacer o rehacer. Los controles reutilizan botones píldora, menús opacos y foco del sistema; la selección de herramientas usa los tonos semánticos existentes. Vista previa muestra el mismo documento que la lectura y permite volver al lienzo. El lienzo no muestra contadores ni limita la escritura con un corte automático: al superar los 160 caracteres del título o los 10000 del texto aparece el error junto al contenido afectado y se exige corregirlo para publicar o guardar. Durante el envío se bloquean la edición y las opciones para conservar el contenido enviado.
+
+Las imágenes se insertan donde se escribe y conservan descripción alternativa y pie. Elegir archivos, pegar o arrastrar comparte progreso, verificación, cancelación y reintento reales; una subida pendiente o fallida exige resolverla antes de publicar. Quitar o arrastrar una imagen actúa sobre su bloque. La descripción y el pie se despliegan junto a ella y solo muestran errores al superar sus límites. El documento usa listas, citas y tablas mediante espacio y superficies tonales; los indicadores de selección y foco tienen una función de edición. La lectura conserva el formato con elementos React, sin ejecutar HTML del autor. Las publicaciones anteriores siguen usando texto literal e imágenes; las respuestas continúan como texto de hasta 5000 caracteres.
+
+Comunidad, temática jerárquica y etiquetas son opciones al final del lienzo. Sus selectores permiten buscar, explorar niveles y quitar selecciones; la comunidad ofrece los espacios de los que se forma parte y expresa si la publicación será pública o seguirá el acceso de esa comunidad. Al crear, el botón vacío dice «Seleccionar comunidad»; dentro del selector, «Sin comunidad» permite elegir una publicación pública general. Al editar, el destino se muestra como texto fijo con su icono. ParticipationGate permite leer sin cuenta y explica que publicar, editar o responder requiere una sesión vigente de una cuenta verificada, requisito que también impone la API. El enlace de acceso conserva la publicación o tarea de retorno; el chat global sigue al alcance para escribir como invitado.
+
+**Etiquetas del lienzo.** Los chips seleccionados usan los tokens turquesa canvas-tag en ambos temas, con forma de píldora, texto de 0.875rem e interlineado 1.5, altura mínima de 44px y 16px de espacio a la izquierda. La acción de quitar conserva un área de 44 × 44px, nombre accesible con la etiqueta y foco del sistema; solo su fondo cambia a canvas-tag-hover al pasar el cursor. Los tokens viven en el lienzo y no cambian las etiquetas de lectura ni los botones secundarios.
+
+**Edición de publicaciones.** El detalle ofrece Editar publicación a su autor y muestra Editado con fecha cuando corresponde. El mismo lienzo permite cambiar título, documento, imágenes, temática y etiquetas; Guardar cambios mantiene la comunidad y su acceso. La autorización exige autoría, cuenta verificada y pertenencia vigente a la comunidad. Una revisión incompatible conserva el borrador y ofrece Ver versión publicada en otra pestaña o Cargar versión publicada; reemplazarlo requiere confirmar el descarte, con texto para copiar antes los cambios que se quieran conservar. La carga vuelve a consultar el servidor y bloquea temporalmente el lienzo. Guardar mantiene la fecha de creación, los contadores y el orden cronológico, sin avisos de publicación nueva.
+
+El lienzo guarda automáticamente el borrador en sessionStorage de la pestaña: al crear, por cuenta y contexto de comunidad; al editar, por cuenta y publicación con una clave independiente y la revisión de partida. Recupera el formato anterior de texto e imágenes. Las respuestas conservan su propio borrador por cuenta y publicación. El estado discreto comunica guardando, guardado o fallo del almacenamiento; un fallo de envío conserva el contenido y permite reintentar. Solo la creación o edición confirmada limpia su borrador. Los documentos y borradores guardan referencias de imagen por UUID, sin binarios ni URLs firmadas. Los permisos de comunidad y medios se conservan; el contrato y los límites estructurales están en [docs/editor.md](../../docs/editor.md).
 
 **Estados del foro.** Carga, errores con reintento, tópico o búsqueda sin resultados, publicación inexistente y ausencia de respuestas tienen texto específico. ForumEmpty usa Lupa únicamente después de resolver una colección vacía. El bloque de acceso usa una superficie tonal con el radio surface; no convierte cada publicación o respuesta en tarjeta. Ningún estado vacío introduce publicaciones, autores o recuentos ficticios.
 

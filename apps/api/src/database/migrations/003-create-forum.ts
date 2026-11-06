@@ -34,7 +34,7 @@ export const createForum: Migration = {
       category_id UUID REFERENCES forum_categories(id),
       author_id UUID NOT NULL REFERENCES users(id),
       title VARCHAR(160) NOT NULL CHECK (char_length(title) > 0),
-      body VARCHAR(10000) NOT NULL CHECK (char_length(body) > 0),
+      body VARCHAR(10000) NOT NULL CONSTRAINT forum_posts_body_check CHECK (char_length(body) > 0),
       request_id UUID NOT NULL,
       tag_request_names TEXT[] NOT NULL DEFAULT '{}',
       reply_count INTEGER NOT NULL DEFAULT 0 CHECK (reply_count >= 0),
