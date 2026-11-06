@@ -4,6 +4,7 @@ import type { MediaUploadIntent } from '@messages/contracts';
 import { APP_CONFIG, APP_LOGGER } from '../../config/app-config.js';
 import type { AppConfig, AppLogger } from '../../config/app-config.js';
 import { HttpError } from '../../common/errors/http-error.js';
+import { errorDiagnostics } from '../../common/errors/error-diagnostics.js';
 import type { AuthContext } from '../auth/auth.types.js';
 import { OBJECT_STORAGE, InvalidStorageObject } from './storage.port.js';
 import type { ObjectStoragePort } from './storage.port.js';
@@ -24,7 +25,7 @@ export class MediaService implements OnModuleInit, BeforeApplicationShutdown {
   onModuleInit() {
     this.timer = setInterval(() => {
       if (this.cleanupWork) return;
-      this.cleanupWork = this.cleanup().catch(() => { this.logger.error('media_cleanup_failed'); }).finally(() => { this.cleanupWork = undefined; });
+      this.cleanupWork = this.cleanup().catch(error => { this.logger.error('media_cleanup_failed', { error: errorDiagnostics(error) }); }).finally(() => { this.cleanupWork = undefined; });
     }, this.config.media.cleanupSeconds * 1000);
     this.timer.unref();
   }
@@ -34,7 +35,15 @@ export class MediaService implements OnModuleInit, BeforeApplicationShutdown {
   }
   private async operation<T>(name: string, action: () => Promise<T>): Promise<T> {
     await this.repository.metric(name);
-    return action();
+    try { return await action(); }
+    catch (cause) {
+      if (cause instanceof InvalidStorageObject || cause instanceof HttpError) throw cause;
+      this.logger.error('media_operation_failed', {
+        operation: name, driver: this.config.media.driver, provider: this.config.media.provider,
+        error: errorDiagnostics(cause),
+      });
+      throw new HttpError(503, 'MEDIA_PROVIDER_UNAVAILABLE', 'El almacenamiento de imágenes no pudo completar la operación. Inténtalo de nuevo.', { cause });
+    }
   }
   async authorize(body: unknown, actor: AuthContext): Promise<MediaUploadIntent> {
     const row = await this.repository.authorize(uploadInput(body, this.config.media), actor);
@@ -65,10 +74,10 @@ export class MediaService implements OnModuleInit, BeforeApplicationShutdown {
       await this.operation('object_write', () => this.storage.put(current.object_key, normalized.bytes, normalized.mime));
       return mediaMetadata(await this.repository.confirmed(row, normalized, actor));
     } catch (cause) {
-      if (row?.state === 'VERIFYING') await this.repository.verificationFailed(row, cause instanceof InvalidStorageObject || (cause instanceof HttpError && cause.code === 'MEDIA_INVALID_CONTENT')).catch(() => this.logger.error('media_state_update_failed'));
+      if (row?.state === 'VERIFYING') await this.repository.verificationFailed(row, cause instanceof InvalidStorageObject || (cause instanceof HttpError && cause.code === 'MEDIA_INVALID_CONTENT')).catch(error => this.logger.error('media_state_update_failed', { error: errorDiagnostics(error) }));
       if (cause instanceof InvalidStorageObject) throw new HttpError(400, 'MEDIA_INVALID_CONTENT', 'El archivo supera el tamaño permitido.');
       if (cause instanceof HttpError) throw cause;
-      throw new HttpError(503, 'MEDIA_PROVIDER_UNAVAILABLE', 'No pudimos verificar la imagen. Puedes volver a intentarlo.');
+      throw new HttpError(503, 'MEDIA_PROVIDER_UNAVAILABLE', 'No pudimos verificar la imagen. Puedes volver a intentarlo.', { cause });
     } finally { this.validating = false; }
   }
   async readUrl(id: string, userId: string | null) {
@@ -88,7 +97,7 @@ export class MediaService implements OnModuleInit, BeforeApplicationShutdown {
       await this.repository.finishCleanup(row, true);
       return { state: 'DELETED' as const };
     } catch {
-      await this.repository.cleanupFailed(row).catch(() => this.logger.error('media_cleanup_schedule_failed'));
+      await this.repository.cleanupFailed(row).catch(error => this.logger.error('media_cleanup_schedule_failed', { error: errorDiagnostics(error) }));
       return { state: 'DELETING' as const };
     }
   }
@@ -123,9 +132,9 @@ export class MediaService implements OnModuleInit, BeforeApplicationShutdown {
         if (all) await this.operation('object_delete', () => this.storage.remove(row.object_key));
         await this.operation('object_delete', () => this.storage.remove(row.staging_key));
         await this.repository.finishCleanup(row, all);
-      } catch {
+      } catch (cause) {
         await this.repository.cleanupFailed(row);
-        this.logger.error('media_object_cleanup_failed', { mediaId: row.id });
+        this.logger.error('media_object_cleanup_failed', { mediaId: row.id, error: errorDiagnostics(cause) });
       }
     }
     await this.repository.pruneAudit();
