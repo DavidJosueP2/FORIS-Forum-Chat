@@ -164,7 +164,12 @@ export function MessageFeed({
                 <li key={message.id}>
                   {startDay && <p className="message-day">{messageDay(message)}</p>}
                   <article data-message-id={message.id} className={'message-row' + (own ? ' message-own' : '')}>
-                    <IdentityImage fallbackKey={message.accountId ? 'user:' + message.accountId : 'guest:' + message.senderId} userId={message.accountId} name={message.author} className="message-avatar" />
+                    <IdentityImage
+                      fallbackKey={message.accountId ? 'user:' + message.accountId : 'guest:' + message.senderId}
+                      userId={message.accountId ?? undefined}
+                      name={message.author}
+                      className="message-avatar"
+                    />
                     <div className="message-text">
                       <header className="message-meta">
                         {message.accountId ? <Link to={publicProfileLink(message.accountId)} className="message-author">{message.author}</Link> : <span className="message-author">{message.author}</span>}
