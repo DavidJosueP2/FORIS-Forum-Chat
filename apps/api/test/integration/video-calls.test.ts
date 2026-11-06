@@ -18,8 +18,7 @@ async function fixture(t: TestContext) {
     await instance.database.query('INSERT INTO auth_sessions(id,user_id,token_hash,expires_at) VALUES($1,$2,$3,$4)', [randomUUID(), id, tokenHash(token), new Date(Date.now() + 3600000)]);
     return 'foris_session=' + token;
   };
-  const post = (path: string, cookie: string, body: unknown = {}) => api.post('/api/video-call/' + path).set('Origin', origin).set('Cookie', cookie).send(body);
-  const join = (cookie: string, requestId = randomUUID()) => post('join', cookie, { requestId });
+  const post = (path: string, cookie: string, body: unknown = {}) => api.post('/api/video-call/' + path).set('Origin', origin).set('Cookie', cookie).send(body as string | object);const join = (cookie: string, requestId = randomUUID()) => post('join', cookie, { requestId });
   return { ...instance, api, account, post, join };
 }
 test('videollamadas exigen sesión y origen; plazas, reintentos y una participación por cuenta', async t => {

@@ -50,7 +50,16 @@ export class VideoCallClient {
   private watchdog: ReturnType<typeof setTimeout> | undefined
   private duration: ReturnType<typeof setTimeout> | undefined
   private cursor = '0'
-  constructor(private readonly changed: (view: CallView) => void, private readonly ended: (message: string | null) => void) {}
+  private readonly changed: (view: CallView) => void;
+  private readonly ended: (message: string | null) => void;
+
+  constructor(
+    changed: (view: CallView) => void,
+    ended: (message: string | null) => void
+  ) {
+    this.changed = changed;
+    this.ended = ended;
+  }
   private publish() {
     if (!this.stopped) this.changed({ local: this.local, peers: [...this.peers.values()].map(peer => ({ ...peer.profile, stream: peer.stream, state: peer.connection.connectionState })) })
   }

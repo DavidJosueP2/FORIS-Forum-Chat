@@ -1,7 +1,16 @@
-import { createApplication, startServer } from './application.js';
+
+import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
+import { AppModule } from './app.module.js';
+import { configureApplication, startServer } from './application.js';
 
 async function bootstrap() {
-  const app = await createApplication();
+  const app = await NestFactory.create<NestExpressApplication>(
+    AppModule,
+    { bodyParser: false, abortOnError: false },
+  );
+
+  configureApplication(app);
   app.enableShutdownHooks();
   await startServer(app);
 }
