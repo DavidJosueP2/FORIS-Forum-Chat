@@ -8,7 +8,7 @@ web
 
 ## Product Purpose
 
-Compartir preguntas, ideas y proyectos en publicaciones organizadas por tópicos, con respuestas que se pueden leer con calma. Mantener un chat global para conversar al instante, también como invitado.
+Compartir preguntas, ideas y proyectos en publicaciones organizadas por temáticas jerárquicas y etiquetas, con respuestas que se pueden leer con calma. Mantener un chat global para conversar al instante, también como invitado.
 
 ## Users
 
@@ -16,7 +16,7 @@ Participantes de comunidades públicas o privadas por invitación. Cualquiera pu
 
 ## Capabilities and Constraints
 
-- Foros de publicaciones con título, cuerpo y tópico. Los tópicos predeterminados son General, Tecnología, Aprendizaje, Creatividad y Proyectos.
+- Publicaciones identificadas por UUID, con clasificación opcional en un catálogo de temáticas con niveles y subniveles y hasta ocho etiquetas transversales. Las raíces son General, Tecnología, Aprendizaje, Creatividad y Proyectos. El inicio y el formulario conservan temporalmente sus cinco tópicos mediante una proyección de compatibilidad; el lienzo y editor enriquecido se implementarán después, según la elección del usuario. Esta etapa redefine solo lógica y contratos sobre una base local nueva.
 - La navegación muestra Foros, Comunidades y Chat global en ese orden. Comunidades permite crear espacios públicos o privados, explorar los públicos y los privados de los que se es miembro, unirse, salir y guardar favoritas. Las privadas solo admiten nuevos miembros mediante invitación.
 - Cada comunidad tiene publicaciones asociadas. Sus miembros pueden publicar y responder. La lectura es pública en las comunidades públicas y exclusiva de miembros en las privadas. El creador pertenece a su comunidad y no puede abandonarla en esta etapa.
 - Las preferencias por comunidad permiten recibir o silenciar avisos de nuevas publicaciones. El usuario confirmó notificaciones solo dentro de Foris, con bandeja privada y estado leído. No se notifica al autor su propia publicación ni se envían avisos a quien no pertenece a la comunidad.

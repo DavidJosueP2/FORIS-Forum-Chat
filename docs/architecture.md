@@ -42,6 +42,10 @@ apps/api/
         forum.repository.ts
         forum-validation.ts
         forum-write.middleware.ts
+        forum-cursor.ts      Paginación cronológica de publicaciones UUID
+        taxonomy.controller.ts
+        taxonomy.repository.ts
+        taxonomy-validation.ts
       media/                Imágenes, cuotas, verificación y limpieza recuperable
         storage.port.ts     Contrato de almacenamiento de objetos
         adapters/           Adaptadores local y S3 compatible con R2
@@ -217,7 +221,9 @@ Al inicializarse, la API adquiere una conexión y ejecuta las migraciones pendie
 
 La migración 002 añade `users`, `user_google_identities`, `auth_sessions`, `auth_otp_challenges`, `auth_google_flows`, `auth_mail_outbox` y `auth_login_attempts`, además de una asociación opcional `messages.user_id`. Los mensajes previos se conservan como invitados. La cola cifrada comparte PostgreSQL con las solicitudes OTP y sus plazos. La migración y su fixture se actualizaron mediante revisión estática; no se aplicaron ni ejecutaron durante esta entrega.
 
-La migración 003 añade `forum_topics`, `forum_posts` y `forum_replies`, sus índices de paginación y los cinco tópicos iniciales. Añade también `auth_google_flows.return_to` para conservar el destino tras OAuth. Es aditiva: conserva cuentas, sesiones y el historial de mensajes existente. No se aplicó durante este trabajo.
+La migración 003 crea `forum_categories`, `forum_tags`, `forum_post_tags`, `forum_posts` y `forum_replies`. El catálogo jerárquico se carga desde `database/seeds/forum-catalog.ts`; el modelo tiene una categoría opcional y varias etiquetas por publicación. `forum_posts.id` y todas sus referencias son UUID, independientes de `request_id`. La paginación combina fecha con precisión de milisegundos y UUID; los IDs de respuestas siguen siendo BIGINT. `GET /api/topics` proyecta las cinco raíces para conservar el inicio actual. Los contratos y rutas de taxonomía se describen en [forum.md](forum.md). Añade también `auth_google_flows.return_to` para conservar el destino tras OAuth.
+
+Por solicitud del usuario, que eliminó su base local, las versiones iniciales 003, 004 y 005 se redefinieron para este modelo. Requieren una base nueva; no convierten versiones antiguas ya registradas. No se borró ninguna base ni se aplicaron migraciones durante este trabajo.
 
 La migración 004 añade `communities`, `community_memberships`, `community_preferences`, `community_notifications` y `forum_posts.community_id` opcional. Conserva las cuentas, publicaciones y mensajes existentes; las publicaciones generales mantienen la comunidad nula. Usa el mismo mecanismo versionado de arranque y no se aplicó durante este trabajo.
 

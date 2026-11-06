@@ -4,6 +4,7 @@ import { SessionService } from '../auth/session.service.js';
 import type { AuthRequest } from '../auth/auth.types.js';
 import { ForumRepository } from './forum.repository.js';
 import { createPostInput, createReplyInput, forumFilters, forumId } from './forum-validation.js';
+import { pageInput } from '../../common/validation/input.js';
 
 @Controller()
 export class ForumController {
@@ -12,7 +13,7 @@ export class ForumController {
   @Get('posts') @Header('Cache-Control', 'no-store') async list(@Query() query: Record<string, unknown>, @Req() request: AuthRequest) { return this.repository.list(forumFilters(query), (await this.sessions.optional(request))?.user.id ?? null); }
   @Get('posts/:id') @Header('Cache-Control', 'no-store') async post(@Param('id') id: string, @Req() request: AuthRequest) { return this.repository.getPost(forumId(id), undefined, (await this.sessions.optional(request))?.user.id ?? null); }
   @Get('posts/:id/replies') @Header('Cache-Control', 'no-store') async replies(@Param('id') id: string, @Query() query: Record<string, unknown>, @Req() request: AuthRequest) {
-    const pagination = forumFilters(query);
+    const pagination = pageInput(query);
     return this.repository.listReplies(forumId(id), pagination.before, pagination.limit, (await this.sessions.optional(request))?.user.id ?? null);
   }
   @Post('posts') async create(@Body() body: unknown, @Req() request: AuthRequest, @Res() response: Response) {

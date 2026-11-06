@@ -7,11 +7,13 @@ import { MediaModule } from '../media/media.module.js';
 import { ForumController } from './forum.controller.js';
 import { ForumRepository } from './forum.repository.js';
 import { ForumWriteMiddleware } from './forum-write.middleware.js';
+import { TaxonomyController } from './taxonomy.controller.js';
+import { TaxonomyRepository } from './taxonomy.repository.js';
 
 @Module({
   imports: [AuthModule, CommunitiesModule, MediaModule],
-  controllers: [ForumController],
-  providers: [ForumRepository, ForumWriteMiddleware],
+  controllers: [ForumController, TaxonomyController],
+  providers: [ForumRepository, ForumWriteMiddleware, TaxonomyRepository],
 })
 export class ForumModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {

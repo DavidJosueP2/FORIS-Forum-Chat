@@ -15,6 +15,6 @@ export function returnTarget(value: unknown): string {
     }
     return '/publicar' + (params.size ? '?' + params.toString() : '');
   }
-  if (/^\/publicaciones\/[1-9]\d{0,18}(?:#responder)?$/u.test(value)) return value;
+  if (/^\/publicaciones\/[\da-fA-F]{8}-(?:[\da-fA-F]{4}-){3}[\da-fA-F]{12}(?:#responder)?$/u.test(value)) return value;
   return '/';
 }

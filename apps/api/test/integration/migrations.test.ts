@@ -6,6 +6,7 @@ import { createMessages } from '../../src/database/migrations/001-create-message
 import { runMigrations } from '../../src/database/migrations/run-migrations.js';
 import { MessagesRepository } from '../../src/modules/messages/messages.repository.js';
 import { testDatabase } from '../support/database.js';
+import { forumCatalog, forumSeedTags } from '../../src/database/seeds/forum-catalog.js';
 
 test('adopta la tabla anterior sin perder mensajes y registra cada migración una vez', async t => {
   const { pool } = await testDatabase();
@@ -25,6 +26,8 @@ test('adopta la tabla anterior sin perder mensajes y registra cada migración un
   assert.deepEqual(page.messages, [{ ...input, id: String(legacy.rows[0].id), createdAt: new Date(legacy.rows[0].created_at).toISOString() }]);
   const versions = await pool.query('SELECT version FROM app_schema_migrations ORDER BY version');
   assert.deepEqual(versions.rows, [{ version: 1 }, { version: 2 }, { version: 3 }, { version: 4 }, { version: 5 }, { version: 6 }, { version: 7 }]);
-  assert.equal((await pool.query('SELECT id FROM forum_topics')).rows.length, 5);
+  assert.equal((await pool.query('SELECT id FROM forum_categories WHERE parent_id IS NULL')).rows.length, 5);
+  assert.equal((await pool.query('SELECT id FROM forum_categories')).rows.length, forumCatalog.length);
+  assert.equal((await pool.query('SELECT id FROM forum_tags WHERE is_seeded=TRUE')).rows.length, forumSeedTags.length);
   assert.equal((await pool.query('SELECT id FROM forum_posts')).rows.length, 0);
 });

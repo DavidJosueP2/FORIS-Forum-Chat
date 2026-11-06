@@ -96,7 +96,7 @@ function PostContent({ id }: { id: string }) {
 export function PostPage() {
   const auth = useAuth()
   const { postId = '' } = useParams()
-  const valid = /^[1-9]\d{0,18}$/u.test(postId) && BigInt(postId) <= 9223372036854775807n
+  const valid = /^[\da-f]{8}-(?:[\da-f]{4}-){3}[\da-f]{12}$/iu.test(postId)
   return <ForumShell><main id="forum-content" className="forum-main forum-reading" tabIndex={-1}>
     <Link to="/" className="forum-back"><ArrowLeft aria-hidden="true" />Foros</Link>
     {valid ? <PostContent key={postId + (auth.session.user?.id ?? 'guest') + auth.status} id={postId} /> : <ForumEmpty title="Esta publicación no existe"><p>Vuelve al foro para encontrar otra conversación.</p><Link to="/">Ver publicaciones</Link></ForumEmpty>}

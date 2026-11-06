@@ -223,7 +223,7 @@ export class MediaRepository {
   async images(postIds: string[], client: SqlClient = this.database): Promise<Map<string, MediaImage[]>> {
     const images = new Map<string, MediaImage[]>();
     if (!postIds.length) return images;
-    const rows = await client.query<MediaRow>("SELECT * FROM media WHERE post_id=ANY($1::bigint[]) AND state='READY' ORDER BY post_id,position", [postIds]);
+    const rows = await client.query<MediaRow>("SELECT * FROM media WHERE post_id=ANY($1::uuid[]) AND state='READY' ORDER BY post_id,position", [postIds]);
     for (const row of rows.rows) images.set(String(row.post_id), [...(images.get(String(row.post_id)) ?? []), mediaImage(row)]);
     return images;
   }

@@ -33,7 +33,7 @@ export const createMedia: Migration = {
       staging_deleted_at TIMESTAMPTZ,
       created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
       confirmed_at TIMESTAMPTZ, deleted_at TIMESTAMPTZ,
-      post_id BIGINT REFERENCES forum_posts(id) ON DELETE SET NULL,
+      post_id UUID REFERENCES forum_posts(id) ON DELETE SET NULL,
       position INTEGER CHECK(position>=0),
       UNIQUE(owner_id,request_id),
       UNIQUE(post_id,position)

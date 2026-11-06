@@ -158,16 +158,22 @@ test('una comunidad privada no filtra contenido en búsquedas, detalle, respuest
   await api.post('/api/community-invitations/accept').set('Origin', origin).set('Cookie', invited.cookie).send({ token }).expect(201);
   await api.post('/api/community-invitations/accept').set('Origin', origin).set('Cookie', invited.cookie).send({ token }).expect(201);
   await api.post('/api/community-invitations/accept').set('Origin', origin).set('Cookie', outsider.cookie).send({ token }).expect(410);
-  const post = await api.post('/api/posts').set('Origin', origin).set('Cookie', owner.cookie).send(postInput(id, 'Una conversación privada')).expect(201);
+  const post = await api.post('/api/posts').set('Origin', origin).set('Cookie', owner.cookie)
+    .send({ ...postInput(id, 'Una conversación privada'), tags: ['reserva confidencial'] }).expect(201);
   const postId = post.body.post.id as string;
   await api.get('/api/posts/' + postId).expect(404);
   await api.get('/api/posts/' + postId + '/replies').set('Cookie', outsider.cookie).expect(404);
   await api.get('/api/posts?community=' + id).set('Cookie', outsider.cookie).expect(404);
   assert.equal((await api.get('/api/posts?search=privada').set('Cookie', outsider.cookie)).body.items.length, 0);
+  const suggestion = '/api/taxonomy/tags?search=reserva';
+  assert.deepEqual((await api.get(suggestion).expect(200)).body, []);
+  assert.deepEqual((await api.get(suggestion).set('Cookie', outsider.cookie).expect(200)).body, []);
+  assert.equal((await api.get(suggestion).set('Cookie', invited.cookie).expect(200)).body.length, 1);
   await api.get('/api/posts/' + postId).set('Cookie', invited.cookie).expect(200);
   assert.equal((await api.get('/api/notifications/count').set('Cookie', invited.cookie)).body.unreadCount, 1);
   await api.delete('/api/communities/' + id + '/membership').set('Origin', origin).set('Cookie', invited.cookie).send({}).expect(200);
   await api.get('/api/posts/' + postId).set('Cookie', invited.cookie).expect(404);
+  assert.deepEqual((await api.get(suggestion).set('Cookie', invited.cookie).expect(200)).body, []);
   assert.equal((await api.get('/api/notifications/count').set('Cookie', invited.cookie)).body.unreadCount, 0);
   await api.post('/api/community-invitations/accept').set('Origin', origin).set('Cookie', invited.cookie).send({ token }).expect(410);
 });
