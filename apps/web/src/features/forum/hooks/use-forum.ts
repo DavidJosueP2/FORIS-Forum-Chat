@@ -14,26 +14,27 @@ export function useResource<T>(path: string | null) {
     return () => controller.abort()
   }, [path, attempt])
   const current = path !== null && state.path === path
-  return { data: current ? state.data : null, error: current ? state.error : null, loading: path !== null && (!current || state.loading), setData: (data: T) => setState({ path, data, error: null, loading: false }), retry: () => {
+  return { data: current ? state.data : null, error: current ? state.error : null, loading: path !== null && (!current || state.loading), setData: (data: T | ((previous: T | null) => T | null)) => setState(previous => ({ path, data: typeof data === 'function' ? (data as (previous: T | null) => T | null)(previous.path === path ? previous.data : null) : data, error: null, loading: false })), retry: () => {
     setState(previous => ({ path, data: previous.path === path ? previous.data : null, error: null, loading: Boolean(path) }))
     setAttempt(current => current + 1)
   } }
 }
 
 /** El consumidor se monta con key=path: una consulta nueva no hereda la página anterior. */
-export function useForumPage<T extends { id: string }>(path: string) {
+export function useForumPage<T extends { id: string }>(path: string, incoming: T[] = []) {
   const initial = useResource<ForumPage<T>>(path)
   const [more, setMore] = useState<T[]>([])
   const [cursor, setCursor] = useState<{ hasMore: boolean; nextCursor: string | null } | null>(null)
   const [loadingMore, setLoadingMore] = useState(false)
   const [moreError, setMoreError] = useState<string | null>(null)
   const [added, setAdded] = useState<T[]>([])
+  const [changed, setChanged] = useState<Record<string, T>>({})
   const guard = useRef(false)
   const alive = useRef(true)
   const moreRequest = useRef<AbortController | null>(null)
   useEffect(() => { alive.current = true; return () => { alive.current = false; moreRequest.current?.abort() } }, [])
   const pagination = cursor ?? initial.data
-  const items = [...added, ...(initial.data?.items ?? []), ...more].filter((item, index, all) => all.findIndex(other => other.id === item.id) === index)
+  const items = [...incoming, ...added, ...(initial.data?.items ?? []), ...more].filter((item, index, all) => all.findIndex(other => other.id === item.id) === index).map(item => changed[item.id] ?? item)
   async function loadMore() {
     if (guard.current || !pagination?.hasMore || !pagination.nextCursor) return
     guard.current = true
@@ -51,5 +52,6 @@ export function useForumPage<T extends { id: string }>(path: string) {
   }
   return { items, ready: initial.data !== null, loading: initial.loading, error: initial.error, retry: initial.retry,
     hasMore: pagination?.hasMore ?? false, loadingMore, moreError, loadMore,
-    prepend: (item: T) => setAdded(current => [item, ...current]) }
+    prepend: (item: T) => setAdded(current => [item, ...current]),
+    update: (item: T) => setChanged(current => ({ ...current, [item.id]: item })) }
 }

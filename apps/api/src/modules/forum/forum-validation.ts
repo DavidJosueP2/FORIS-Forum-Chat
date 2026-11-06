@@ -25,8 +25,27 @@ export function createPostInput(value: unknown): ValidatedPost {
     communityId: fields.communityId === undefined ? undefined : resourceId(fields.communityId), mediaIds: rich ? imageIds(rich.mediaIds) : imageIds(fields.mediaIds) };
 }
 export function createReplyInput(value: unknown): CreateForumReply {
-  const fields = inputRecord(value, ['body','requestId']);
-  return { body: inputText(fields.body, 'La respuesta', 5000, true), requestId: requestId(fields.requestId) };
+  const fields = inputRecord(value, ['body','requestId','parentId']);
+  return { body: inputText(fields.body, 'El comentario', 5000, true), requestId: requestId(fields.requestId), parentId: fields.parentId === undefined || fields.parentId === null ? null : resourceId(fields.parentId) };
+}
+export function replyRevision(value: unknown): number {
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < 1 || value >= 2147483647) invalidInput('La versión del comentario no es válida.');
+  return value;
+}
+export function updateReplyInput(value: unknown) {
+  const fields = inputRecord(value, ['body', 'revision']);
+  return { body: inputText(fields.body, 'El comentario', 5000, true), revision: replyRevision(fields.revision) };
+}
+export function deleteReplyInput(value: unknown) { return replyRevision(inputRecord(value, ['revision']).revision); }
+export function voteInput(value: unknown): -1 | 0 | 1 {
+  const vote = inputRecord(value, ['value']).value;
+  if (vote !== -1 && vote !== 0 && vote !== 1) invalidInput('El voto no es válido.');
+  return vote;
+}
+export function pinInput(value: unknown): boolean {
+  const pinned = inputRecord(value, ['pinned']).pinned;
+  if (typeof pinned !== 'boolean') invalidInput('La opción de anclado no es válida.');
+  return pinned;
 }
 export type ValidatedPostUpdate = ValidatedPost & { revision: number };
 export function updatePostInput(value: unknown): ValidatedPostUpdate {

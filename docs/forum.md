@@ -4,6 +4,8 @@ Foris organiza publicaciones mediante un catálogo jerárquico de temáticas y e
 
 El inicio abre un flujo de publicaciones con títulos serif, texto e imágenes, búsqueda automática y Crear publicación en el navbar, y filtros por temáticas jerárquicas y etiquetas. En escritorio se exploran a un lado del contenido y en móvil desde Filtrar. La experiencia y sus límites están en [discovery.md](discovery.md). La creación y edición usan el lienzo descrito en [editor.md](editor.md).
 
+El detalle compacto incorpora votos, comentarios en hilos, edición y eliminación propias, un comentario principal anclado y enlaces directos. El contrato, los permisos, los borradores y la migración de esta participación están en [discussion.md](discussion.md). Todas sus escrituras exigen sesión verificada y pertenencia vigente si la publicación tiene comunidad.
+
 | Acción | Invitado | Cuenta verificada con sesión vigente |
 | --- | --- | --- |
 | Leer publicaciones y respuestas públicas | Sí | Sí |
@@ -26,6 +28,7 @@ El chat global se conserva con su historial y sus eventos en tiempo real. Sus pe
 | /publicar | Lienzo de publicación o acceso a una cuenta |
 | /publicar?topico=proyectos | Lienzo con esa raíz preseleccionada si no existe un borrador |
 | /publicaciones/:postId | Publicación y respuestas; postId es un UUID |
+| /publicaciones/:postId?comentario=ID | Comentario directo, sus respuestas y enlace al padre, aunque quede fuera de la primera página |
 | /publicaciones/:postId/editar | Lienzo de edición reservado al autor |
 | /chat | Chat global; invitados pueden escribir |
 | /login | Acceso, registro, verificación y recuperación |
@@ -47,16 +50,21 @@ Los enlaces para participar conservan un destino next al pasar por el acceso. El
 | POST | /api/posts | Sesión verificada |
 | POST | /api/posts/:id/replies | Sesión verificada |
 | PATCH | /api/posts/:id | Autor con sesión verificada; pertenencia vigente si hay comunidad |
+| PUT | /api/posts/:id/vote | Sesión verificada; pertenencia vigente si hay comunidad |
+| GET | /api/posts/:id/replies/:replyId | Mismo acceso de lectura que la publicación |
+| PATCH / DELETE | /api/posts/:id/replies/:replyId | Autor del comentario con sesión verificada; pertenencia vigente si hay comunidad |
+| PUT | /api/posts/:id/replies/:replyId/vote | Sesión verificada; pertenencia vigente si hay comunidad |
+| PUT | /api/posts/:id/replies/:replyId/pin | Autor de la publicación con sesión verificada; pertenencia vigente si hay comunidad |
 | GET / POST | /api/messages | Chat global, conserva acceso invitado |
 | GET | /api/events | Eventos del chat global |
 
 GET /api/posts admite topic (raíz por slug, compatibilidad), category (UUID, incluye descendientes), tag (UUID de una etiqueta), tags (hasta ocho UUID separados por comas), author, community, search, before y limit. Todas las etiquetas elegidas deben estar presentes. Los filtros se combinan con AND y se aplican después de comprobar acceso en SQL. La búsqueda compara texto literal sin interpretar % o _ como comodines. Las páginas se ordenan por created_at e id descendentes; before es un cursor opaco base64url con versión, fecha y UUID. El cliente debe reenviar nextCursor sin interpretarlo. Las fechas de publicaciones usan TIMESTAMPTZ(3) para conservar exactamente la precisión de milisegundos del cursor. El UUID solo desempata fechas iguales: su orden no representa antigüedad.
 
-GET de respuestas conserva before numérico y orden de ID descendente. En ambos casos el límite predeterminado es 20, el máximo 50 y la respuesta usa items, hasMore y nextCursor. Los IDs de publicaciones son UUID; los de respuestas, comunidades y avisos siguen siendo BIGINT representados como cadenas. Las referencias a publicaciones en respuestas, medios y notificaciones también son UUID.
+GET de respuestas recibe parentId opcional: sin él devuelve comentarios principales; con él, los hijos directos de ese comentario. Conserva before numérico, exclusivo de la rama consultada, y ordena el único anclado primero y después por ID descendente. En ambos casos el límite predeterminado es 20, el máximo 50 y la respuesta usa items, hasMore y nextCursor. Los IDs de publicaciones son UUID; los de respuestas, comunidades y avisos siguen siendo BIGINT representados como cadenas. Las referencias a publicaciones en respuestas, medios y notificaciones también son UUID.
 
 Crear publicación recibe title (1–160 caracteres), content como documento estructurado versionado, requestId UUID, categoryId opcional o nulo, tags opcional y communityId opcional. El servidor deriva body y las imágenes del documento. El contrato anterior con body (1–10000), topicId opcional y mediaIds opcional sigue disponible para clientes anteriores, sin mezclarlo con content. El servidor genera el UUID de la publicación: requestId es independiente y sirve para reconocer reintentos. Sin categoryId ni topicId se permite publicar sin clasificación; category es null y la proyección temporal topic devuelve General. No se guarda una categoría ficticia para ese caso.
 
-Solo admite imágenes READY del autor, sin asociarlas a otra publicación. Publicación, etiquetas, asociación de imágenes y avisos se confirman en una sola transacción. Crear respuesta recibe body (1–5000) y requestId UUID. El servidor normaliza CRLF, Unicode NFC y espacios exteriores, rechaza campos desconocidos y asigna al autor desde la sesión. Nunca acepta un autor ni una condición de miembro enviados por el cliente. En publicaciones de comunidad también exige pertenecer a ella.
+Solo admite imágenes READY del autor, sin asociarlas a otra publicación. Publicación, etiquetas, asociación de imágenes y avisos se confirman en una sola transacción. Crear respuesta recibe body (1–5000), requestId UUID y parentId opcional o nulo para responder a un comentario de esa publicación. El servidor normaliza CRLF, Unicode NFC y espacios exteriores, rechaza campos desconocidos y asigna al autor desde la sesión. Nunca acepta un autor ni una condición de miembro enviados por el cliente. En publicaciones de comunidad también exige pertenecer a ella.
 
 ## Temáticas y etiquetas
 
@@ -87,9 +95,9 @@ Los reintentos con el mismo autor y requestId devuelven el recurso guardado (200
 
 ## Borradores y lectura
 
-Los borradores del foro usan sessionStorage, separados por cuenta y, para respuestas, por publicación. Se conservan ante errores y se limpian al confirmar el envío. El chat conserva su almacenamiento independiente. Se informa si el navegador impide guardar el borrador. Salir de la pestaña o borrar los datos del navegador puede eliminarlo.
+Los borradores del foro usan sessionStorage, separados por cuenta y contexto: publicación para comentarios principales, comentario padre para respuestas y comentario con revisión de partida para edición. Se conservan ante errores y se limpian al confirmar el envío o confirmar el descarte para cargar la versión publicada. El chat conserva su almacenamiento independiente. Se informa si el navegador impide guardar el borrador. Salir de la pestaña o borrar los datos del navegador puede eliminarlo.
 
-Los documentos se renderizan con elementos React desde su estructura validada; el contenido anterior y las respuestas se muestran como texto literal, sin HTML ni Markdown ejecutable. Las respuestas se muestran de más recientes a anteriores y se cargan bajo petición; no hay presencia, sondeo ni SSE en el foro.
+Los documentos se renderizan con elementos React desde su estructura validada; el contenido anterior y las respuestas se muestran como texto literal, sin HTML ni Markdown ejecutable. Los comentarios muestran el anclado primero y los restantes de más recientes a anteriores, con carga bajo petición por rama y hasta cinco niveles bajo el principal; no hay presencia, sondeo ni SSE en el foro.
 
 El lienzo permite seleccionar, pegar, arrastrar, subir, reintentar y retirar imágenes, y añadir descripción alternativa y pie. No permite publicar mientras quedan archivos sin confirmar. El borrador guarda IDs de medios, nunca los binarios ni URLs temporales. Al restaurarlo se comprueba su disponibilidad. El índice conserva la primera imagen y el detalle las muestra en su ubicación dentro del documento; cada lectura solicita un permiso temporal renovable. El propietario puede eliminar una imagen desde el detalle. El autor también puede editar título, contenido, clasificación, etiquetas e imágenes desde el mismo lienzo, con comunidad fija, control de versión y reintentos idempotentes. Los detalles están en [editor.md](editor.md) y el almacenamiento en [media.md](media.md).
 
@@ -98,6 +106,8 @@ El lienzo permite seleccionar, pegar, arrastrar, subir, reintentar y retirar im�
 Como el usuario eliminó su base local para redefinir este modelo, se actualizaron las migraciones iniciales 003, 004 y 005. La 003 crea forum_categories, forum_tags, forum_post_tags, forum_posts y forum_replies, carga el catálogo y añade return_to a auth_google_flows. La 004 y la 005 usan referencias UUID a publicaciones. Se aplican por el mecanismo existente al iniciar la API sobre una base nueva.
 
 Estos archivos no convierten una base que ya tenga registrada la antigua migración 003: el ejecutor no repite versiones aplicadas. No se borró ni reinició ninguna base durante este trabajo. Un entorno con datos previos necesitaría una migración de conversión separada antes de actualizar.
+
+La migración aditiva 010-forum-discussion.ts, registrada como versión 10, añade hilos, revisiones, eliminación lógica, anclado y votos sobre el esquema vigente; también forma parte de la secuencia de una base nueva. DatabaseService la aplica al iniciar manualmente la API. No se ejecutó durante el trabajo asistido. Los límites de comprobación de esta entrega se detallan en [discussion.md](discussion.md#base-de-datos-y-validación).
 
 Se prepararon casos para permisos, sesiones revocadas o no verificadas, autoría, reintentos, contadores, UUID, paginación con fechas iguales, jerarquía, normalización de etiquetas y privacidad de sugerencias. Se ajustó el adaptador de pruebas en memoria para cardinality de UUID[]. Por instrucción del usuario no se han ejecutado pruebas, compilaciones, comprobaciones del compilador, migraciones ni servidores. La comprobación con PostgreSQL real, en ejecución y en navegador queda pendiente; ESLint es únicamente análisis estático.
 

@@ -269,3 +269,105 @@ test('el inicio combina búsqueda, rama temática y todas las etiquetas sin perd
   assert.deepEqual((await api.get('/api/taxonomy/tags').query({ ids }).expect(200)).body.map((tag: { name: string }) => tag.name).sort(), ['feedback', 'proceso']);
   await api.get('/api/posts').query({ tags: Array.from({ length: 9 }, () => randomUUID()).join(',') }).expect(400);
 });
+
+
+test('los votos son privados por cuenta, idempotentes y reversibles', async t => {
+  const { api, member } = await fixture(t);
+  const author = await member(); const other = await member();
+  const saved = await api.post('/api/posts').set('Origin', origin).set('Cookie', author.cookie).send(postInput()).expect(201);
+  const path = '/api/posts/' + saved.body.post.id;
+  await api.put(path + '/vote').set('Origin', origin).send({ value: 1 }).expect(401);
+  await api.put(path + '/vote').set('Origin', 'https://other.test').set('Cookie', author.cookie).send({ value: 1 }).expect(403);
+  await api.put(path + '/vote').set('Origin', origin).set('Cookie', author.cookie).send({ value: 2 }).expect(400);
+  for (let retry = 0; retry < 2; retry++) {
+    assert.deepEqual((await api.put(path + '/vote').set('Origin', origin).set('Cookie', author.cookie).send({ value: 1 }).expect(200)).body, { score: 1, value: 1 });
+  }
+  assert.deepEqual((await api.get(path).expect(200)).body.votes, { score: 1, value: 0 });
+  assert.deepEqual((await api.put(path + '/vote').set('Origin', origin).set('Cookie', other.cookie).send({ value: -1 }).expect(200)).body, { score: 0, value: -1 });
+  assert.deepEqual((await api.put(path + '/vote').set('Origin', origin).set('Cookie', author.cookie).send({ value: 0 }).expect(200)).body, { score: -1, value: 0 });
+});
+
+test('los comentarios forman hilos acotados, paginables y no admiten padres de otra publicación', async t => {
+  const { api, member } = await fixture(t); const user = await member();
+  const create = async () => (await api.post('/api/posts').set('Origin', origin).set('Cookie', user.cookie).send(postInput()).expect(201)).body.post.id as string;
+  const id = await create(); const otherId = await create(); const path = '/api/posts/' + id + '/replies';
+  const root = (await api.post(path).set('Origin', origin).set('Cookie', user.cookie).send({ body: 'Raíz', requestId: randomUUID() }).expect(201)).body.reply as ForumReply;
+  const input = { body: 'Respuesta', parentId: root.id, requestId: randomUUID() };
+  const child = (await api.post(path).set('Origin', origin).set('Cookie', user.cookie).send(input).expect(201)).body.reply as ForumReply;
+  await api.post(path).set('Origin', origin).set('Cookie', user.cookie).send(input).expect(200);
+  assert.equal(child.parentId, root.id); assert.equal(child.depth, 1);
+  assert.deepEqual((await api.get(path).expect(200)).body.items.map((item: ForumReply) => item.id), [root.id]);
+  assert.deepEqual((await api.get(path + '?parentId=' + root.id).expect(200)).body.items.map((item: ForumReply) => item.id), [child.id]);
+  await api.post('/api/posts/' + otherId + '/replies').set('Origin', origin).set('Cookie', user.cookie).send({ ...input, requestId: randomUUID() }).expect(404);
+  await api.get('/api/posts/' + otherId + '/replies/' + child.id).expect(404);
+  let parent = child;
+  for (let depth = 2; depth <= 5; depth++) parent = (await api.post(path).set('Origin', origin).set('Cookie', user.cookie).send({ body: 'Nivel ' + depth, parentId: parent.id, requestId: randomUUID() }).expect(201)).body.reply as ForumReply;
+  await api.post(path).set('Origin', origin).set('Cookie', user.cookie).send({ body: 'Demasiado profundo', parentId: parent.id, requestId: randomUUID() }).expect(400);
+});
+
+test('editar exige autoría y revisión; eliminar preserva respuestas y no repite descuentos', async t => {
+  const { api, member } = await fixture(t); const user = await member(); const other = await member();
+  const id = (await api.post('/api/posts').set('Origin', origin).set('Cookie', user.cookie).send(postInput()).expect(201)).body.post.id as string;
+  const base = '/api/posts/' + id;
+  const input = { body: 'Texto anterior', requestId: randomUUID() };
+  const root = (await api.post(base + '/replies').set('Origin', origin).set('Cookie', user.cookie).send(input).expect(201)).body.reply as ForumReply;
+  const path = base + '/replies/' + root.id;
+  await api.post(base + '/replies').set('Origin', origin).set('Cookie', other.cookie).send({ body: 'Respuesta que permanece', parentId: root.id, requestId: randomUUID() }).expect(201);
+  await api.patch(path).set('Origin', origin).set('Cookie', other.cookie).send({ body: 'Ajeno', revision: 1 }).expect(403);
+  const edited = await api.patch(path).set('Origin', origin).set('Cookie', user.cookie).send({ body: 'Editado', revision: 1 }).expect(200);
+  assert.equal(edited.body.reply.revision, 2); assert.ok(edited.body.reply.updatedAt);
+  await api.patch(path).set('Origin', origin).set('Cookie', user.cookie).send({ body: 'Cambios viejos', revision: 1 }).expect(409);
+  // El reintento de creación conserva su identidad incluso después de editar.
+  assert.equal((await api.post(base + '/replies').set('Origin', origin).set('Cookie', user.cookie).send(input).expect(200)).body.reply.body, 'Editado');
+  await api.put(path + '/vote').set('Origin', origin).set('Cookie', other.cookie).send({ value: 1 }).expect(200);
+  await api.delete(path).set('Origin', origin).set('Cookie', other.cookie).send({ revision: 2 }).expect(403);
+  await api.delete(path).set('Origin', origin).set('Cookie', user.cookie).send({ revision: 1 }).expect(409);
+  for (let retry = 0; retry < 2; retry++) {
+    const removed = await api.delete(path).set('Origin', origin).set('Cookie', user.cookie).send({ revision: 2 }).expect(200);
+    assert.equal(removed.body.replyCount, 1); assert.equal(removed.body.reply.body, '');
+    assert.deepEqual(removed.body.reply.author, { id: '', displayName: 'Comentario eliminado' });
+    assert.deepEqual(removed.body.reply.votes, { score: 0, value: 0 });
+  }
+  assert.equal((await api.get(base + '/replies?parentId=' + root.id).expect(200)).body.items.length, 1);
+  await api.put(path + '/vote').set('Origin', origin).set('Cookie', other.cookie).send({ value: -1 }).expect(409);
+});
+
+test('solo el autor ancla un comentario principal y la paginación respeta el anclado', async t => {
+  const { api, member } = await fixture(t); const author = await member(); const commenter = await member();
+  const id = (await api.post('/api/posts').set('Origin', origin).set('Cookie', author.cookie).send(postInput()).expect(201)).body.post.id as string;
+  const base = '/api/posts/' + id + '/replies'; const ids: string[] = [];
+  for (let index = 0; index < 3; index++) ids.push((await api.post(base).set('Origin', origin).set('Cookie', commenter.cookie).send({ body: 'Comentario ' + index, requestId: randomUUID() }).expect(201)).body.reply.id as string);
+  await api.put(base + '/' + ids[0] + '/pin').set('Origin', origin).set('Cookie', commenter.cookie).send({ pinned: true }).expect(403);
+  await api.put(base + '/' + ids[0] + '/pin').set('Origin', origin).set('Cookie', author.cookie).send({ pinned: true }).expect(200);
+  const first = (await api.get(base + '?limit=1').expect(200)).body;
+  assert.equal(first.items[0].id, ids[0]); assert.equal(first.items[0].pinned, true);
+  const next = (await api.get(base + '?before=' + first.nextCursor).expect(200)).body;
+  assert.deepEqual(next.items.map((item: ForumReply) => item.id), ids.slice(1).reverse());
+  await api.put(base + '/' + ids[1] + '/pin').set('Origin', origin).set('Cookie', author.cookie).send({ pinned: true }).expect(200);
+  const all = (await api.get(base).expect(200)).body.items as ForumReply[];
+  assert.equal(all.filter(item => item.pinned).length, 1); assert.equal(all[0]!.id, ids[1]);
+});
+
+
+test('los hilos privados y sus votos quedan ocultos a invitados, ajenos y exmiembros', async t => {
+  const { api, member, database } = await fixture(t); const owner = await member(); const user = await member(); const outsider = await member();
+  const community = (await api.post('/api/communities').set('Origin', origin).set('Cookie', owner.cookie).send({ name: 'Lecturas privadas', description: 'Un espacio privado para conversar.', visibility: 'private', requestId: randomUUID() }).expect(201)).body.community.id as string;
+  // Preparación de membresía; no se prueba de nuevo el flujo de invitaciones aquí.
+  await database.query("INSERT INTO community_memberships(community_id,user_id,role) VALUES($1,$2,'member')", [community, user.id]);
+  await database.query('UPDATE communities SET member_count=member_count+1 WHERE id=$1', [community]);
+  const id = (await api.post('/api/posts').set('Origin', origin).set('Cookie', owner.cookie).send({ ...postInput(), communityId: community }).expect(201)).body.post.id as string;
+  const base = '/api/posts/' + id;
+  const item = (await api.post(base + '/replies').set('Origin', origin).set('Cookie', user.cookie).send({ body: 'Texto privado', requestId: randomUUID() }).expect(201)).body.reply as ForumReply;
+  const path = base + '/replies/' + item.id;
+  for (const cookie of [undefined, outsider.cookie]) {
+    let read = api.get(path); if (cookie) read = read.set('Cookie', cookie); await read.expect(404);
+    let list = api.get(base + '/replies?parentId=' + item.id); if (cookie) list = list.set('Cookie', cookie); await list.expect(404);
+  }
+  await api.put(base + '/vote').set('Origin', origin).set('Cookie', outsider.cookie).send({ value: 1 }).expect(404);
+  await api.put(path + '/vote').set('Origin', origin).set('Cookie', user.cookie).send({ value: 1 }).expect(200);
+  await api.delete('/api/communities/' + community + '/membership').set('Origin', origin).set('Cookie', user.cookie).send({}).expect(200);
+  await api.get(path).set('Cookie', user.cookie).expect(404);
+  await api.patch(path).set('Origin', origin).set('Cookie', user.cookie).send({ body: 'Cambio', revision: 1 }).expect(404);
+  await api.delete(path).set('Origin', origin).set('Cookie', user.cookie).send({ revision: 1 }).expect(404);
+  await api.put(path + '/vote').set('Origin', origin).set('Cookie', user.cookie).send({ value: -1 }).expect(404);
+});

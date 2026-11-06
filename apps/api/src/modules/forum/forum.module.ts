@@ -10,16 +10,20 @@ import { ForumWriteMiddleware } from './forum-write.middleware.js';
 import { TaxonomyController } from './taxonomy.controller.js';
 import { TaxonomyRepository } from './taxonomy.repository.js';
 import { ForumReadMiddleware } from './forum-read.middleware.js';
+import { ForumAccess } from './forum-access.service.js';
+import { ForumDiscussionRepository } from './forum-discussion.repository.js';
 
 @Module({
   imports: [AuthModule, CommunitiesModule, MediaModule],
   controllers: [ForumController, TaxonomyController],
-  providers: [ForumRepository, ForumWriteMiddleware, ForumReadMiddleware, TaxonomyRepository],
+  providers: [ForumRepository, ForumDiscussionRepository, ForumAccess, ForumWriteMiddleware, ForumReadMiddleware, TaxonomyRepository],
 })
 export class ForumModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(ForumReadMiddleware).forRoutes({ path: 'posts', method: RequestMethod.GET }, { path: 'taxonomy/tags', method: RequestMethod.GET });
+    consumer.apply(ForumReadMiddleware).forRoutes({ path: 'posts', method: RequestMethod.GET }, { path: 'posts/:id', method: RequestMethod.GET }, { path: 'posts/:id/replies', method: RequestMethod.GET }, { path: 'posts/:id/replies/:replyId', method: RequestMethod.GET }, { path: 'taxonomy/tags', method: RequestMethod.GET });
     consumer.apply(ForumWriteMiddleware, json({ limit: '256kb', strict: true }))
-      .forRoutes({ path: 'posts', method: RequestMethod.POST }, { path: 'posts/:id/replies', method: RequestMethod.POST }, { path: 'posts/:id', method: RequestMethod.PATCH });
+      .forRoutes({ path: 'posts', method: RequestMethod.POST }, { path: 'posts/:id/replies', method: RequestMethod.POST }, { path: 'posts/:id', method: RequestMethod.PATCH },
+        { path: 'posts/:id/replies/:replyId', method: RequestMethod.PATCH }, { path: 'posts/:id/replies/:replyId', method: RequestMethod.DELETE },
+        { path: 'posts/:id/vote', method: RequestMethod.PUT }, { path: 'posts/:id/replies/:replyId/vote', method: RequestMethod.PUT }, { path: 'posts/:id/replies/:replyId/pin', method: RequestMethod.PUT });
   }
 }

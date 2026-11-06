@@ -10,8 +10,13 @@ export interface ForumPostSummary {
   replyCount: number; createdAt: string; lastActivityAt: string; community: CommunityRef | null; images: MediaImage[];
   category: ForumCategory | null; tags: ForumTag[];
 }
-export interface ForumPost extends ForumPostSummary { body: string; content: ForumDocument | null; revision: number; updatedAt: string | null }
-export interface ForumReply { id: string; postId: string; body: string; author: ForumAuthor; createdAt: string }
+export interface ForumVotes { score: number; value: -1 | 0 | 1 }
+export interface ForumPost extends ForumPostSummary { body: string; content: ForumDocument | null; revision: number; updatedAt: string | null; votes: ForumVotes }
+export interface ForumReply {
+  id: string; postId: string; body: string; author: ForumAuthor; createdAt: string;
+  parentId: string | null; depth: number; replyCount: number; pinned: boolean; deleted: boolean;
+  revision: number; updatedAt: string | null; votes: ForumVotes;
+}
 export interface ForumPage<T> { items: T[]; hasMore: boolean; nextCursor: string | null }
 export interface CreateForumPost {
   title: string; body?: string; content?: ForumDocument | null; requestId: string; communityId?: string; mediaIds?: string[];
@@ -19,7 +24,9 @@ export interface CreateForumPost {
   /** Compatibilidad temporal con el formulario y los filtros actuales. */
   topicId?: string;
 }
-export interface CreateForumReply { body: string; requestId: string }
+export interface CreateForumReply { body: string; requestId: string; parentId?: string | null }
+export interface UpdateForumReply { body: string; revision: number }
+export interface ChangedForumReply { reply: ForumReply; replyCount: number }
 export interface UpdateForumPost {
   title: string; content: ForumDocument; categoryId?: string | null; tags?: string[]; requestId: string; revision: number;
 }

@@ -1,10 +1,11 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
 import { Inject, Injectable } from '@nestjs/common';
-import type { CreateForumReply, CreatedForumReply, ForumDocument, ForumPost, ForumPostSummary, ForumReply, ForumPage, ForumTopic } from '@messages/contracts';
+import type { ForumDocument, ForumPost, ForumPostSummary, ForumPage, ForumTopic } from '@messages/contracts';
 import type { QueryResultRow } from 'pg';
 import { DatabaseService } from '../../database/database.service.js';
-import { SessionService } from '../auth/session.service.js';
+import { ForumAccess } from './forum-access.service.js';
+import { postVotes } from './forum-discussion.repository.js';
 import type { AuthContext, SqlClient } from '../auth/auth.types.js';
 import { HttpError } from '../../common/errors/http-error.js';
 import type { ForumFilters, ValidatedPost, ValidatedPostUpdate } from './forum-validation.js';
@@ -26,9 +27,6 @@ interface PostRow extends PostSummaryRow {
   request_id: string; media_request_ids: string[]; tag_request_names: string[];
   content: ForumDocument | null; revision: number; updated_at: Date | null;
 }
-interface ReplyRow extends QueryResultRow {
-  id: string; post_id: string; author_id: string; display_name: string; body: string; created_at: Date; request_id: string;
-}
 const POST_CONTEXT = `COALESCE(t.slug,g.slug) AS topic_id,COALESCE(t.name,g.name) AS topic_name,
   COALESCE(t.description,g.description) AS topic_description,u.display_name,author_avatar.id AS author_avatar_id,c.name AS community_name,
   k.slug AS category_slug,k.name AS category_name,k.description AS category_description,
@@ -40,7 +38,6 @@ const POST_CONTEXT = `COALESCE(t.slug,g.slug) AS topic_id,COALESCE(t.name,g.name
   LEFT JOIN communities c ON c.id=p.community_id`;
 const POSTS = 'SELECT p.*,' + POST_CONTEXT;
 const POST_SUMMARIES = 'SELECT p.id,p.title,p.body,p.category_id,p.author_id,p.reply_count,p.created_at,p.last_activity_at,p.community_id,' + POST_CONTEXT;
-const REPLIES = 'SELECT r.*,u.display_name FROM forum_replies r JOIN users u ON u.id=r.author_id';
 function summary(row: PostSummaryRow): ForumPostSummary {
   return {
     id: String(row.id), title: row.title, excerpt: row.body.replace(/\s+/gu, ' ').slice(0, 420),
@@ -53,20 +50,12 @@ function summary(row: PostSummaryRow): ForumPostSummary {
     createdAt: new Date(row.created_at).toISOString(), lastActivityAt: new Date(row.last_activity_at).toISOString(),
   };
 }
-function detail(row: PostRow): ForumPost {
+function detail(row: PostRow): Omit<ForumPost, 'votes'> {
   return { ...summary(row), body: row.body, content: row.content, revision: row.revision, updatedAt: row.updated_at ? new Date(row.updated_at).toISOString() : null };
-}
-function reply(row: ReplyRow): ForumReply {
-  return { id: String(row.id), postId: String(row.post_id), body: row.body,
-    author: { id: row.author_id, displayName: row.display_name }, createdAt: new Date(row.created_at).toISOString() };
-}
-function page<T extends { id: string }>(items: T[], limit: number): ForumPage<T> {
-  const selected = items.slice(0, limit);
-  return { items: selected, hasMore: items.length > limit, nextCursor: items.length > limit ? selected.at(-1)!.id : null };
 }
 @Injectable()
 export class ForumRepository {
-  constructor(@Inject(DatabaseService) private readonly database: DatabaseService, @Inject(SessionService) private readonly sessions: SessionService,
+  constructor(@Inject(DatabaseService) private readonly database: DatabaseService, @Inject(ForumAccess) private readonly access: ForumAccess,
     @Inject(CommunityRepository) private readonly communities: CommunityRepository,
     @Inject(MediaRepository) private readonly media: MediaRepository,
     @Inject(TaxonomyRepository) private readonly taxonomy: TaxonomyRepository) {}
@@ -117,21 +106,7 @@ export class ForumRepository {
     if (!row) throw new HttpError(404, 'POST_NOT_FOUND', 'Esta publicación no existe.');
     const images = await this.media.images([id], client);
     const tags = await this.taxonomy.postTags([id], client);
-    return { ...detail(row), images: images.get(id) ?? [], tags: tags.get(id) ?? [] };
-  }
-  async listReplies(postId: string, before: string | undefined, limit: number, userId: string | null = null): Promise<ForumPage<ForumReply>> {
-    const exists = await this.database.query('SELECT p.id FROM forum_posts p WHERE p.id=$1 AND ' + readablePost('$2'), [postId, userId]);
-    if (!exists.rows[0]) throw new HttpError(404, 'POST_NOT_FOUND', 'Esta publicación no existe.');
-    const result = await this.database.query<ReplyRow>(
-      REPLIES + ' WHERE r.post_id=$1' + (before ? ' AND r.id<$3' : '') + ' ORDER BY r.id DESC LIMIT $2',
-      before ? [postId, limit + 1, before] : [postId, limit + 1],
-    );
-    return page(result.rows.map(reply), limit);
-  }
-  private async member(client: SqlClient, actor: AuthContext): Promise<void> {
-    const user = await client.query('SELECT id FROM users WHERE id=$1 AND email_verified_at IS NOT NULL FOR NO KEY UPDATE', [actor.user.id]);
-    if (!user.rows[0]) throw new HttpError(401, 'SESSION_REQUIRED', 'Inicia sesión para participar.');
-    await this.sessions.assertCurrent(client, actor);
+    return { ...detail(row), votes: await postVotes(client, id, userId), images: images.get(id) ?? [], tags: tags.get(id) ?? [] };
   }
   private async rate(client: SqlClient, userId: string, type: 'posts' | 'replies', maximum: number): Promise<void> {
     const table = type === 'posts' ? 'forum_posts' : 'forum_replies';
@@ -140,7 +115,7 @@ export class ForumRepository {
   }
   async createPost(input: ValidatedPost, actor: AuthContext): Promise<{ post: ForumPost; created: boolean }> {
     return this.database.transaction(async client => {
-      await this.member(client, actor);
+      await this.access.member(client, actor);
       const categoryId = await this.taxonomy.resolve(input, client);
       const existing = (await client.query<PostRow>(POSTS + ' WHERE p.author_id=$1 AND p.request_id=$2', [actor.user.id, input.requestId])).rows[0];
       if (existing) {
@@ -161,29 +136,9 @@ export class ForumRepository {
       return { post: await this.getPost(id, client, actor.user.id), created: true };
     });
   }
-  async createReply(postId: string, input: CreateForumReply, actor: AuthContext): Promise<CreatedForumReply> {
-    return this.database.transaction(async client => {
-      await this.member(client, actor);
-      const parent = (await client.query<{ community_id: string | null }>('SELECT community_id FROM forum_posts WHERE id=$1', [postId])).rows[0];
-      if (!parent) throw new HttpError(404, 'POST_NOT_FOUND', 'Esta publicación no existe.');
-      if (parent.community_id) await this.communities.authorizePublication(client, String(parent.community_id), actor.user.id);
-      const post = (await client.query<{ id: string; reply_count: number }>('SELECT id,reply_count FROM forum_posts WHERE id=$1 FOR UPDATE', [postId])).rows[0];
-      if (!post) throw new HttpError(404, 'POST_NOT_FOUND', 'Esta publicación no existe.');
-      const existing = (await client.query<ReplyRow>(REPLIES + ' WHERE r.author_id=$1 AND r.request_id=$2', [actor.user.id, input.requestId])).rows[0];
-      if (existing) {
-        if (String(existing.post_id) !== postId || existing.body !== input.body) throw new HttpError(409, 'REQUEST_CONFLICT', 'Esta solicitud ya corresponde a otra respuesta.');
-        return { reply: reply(existing), replyCount: post.reply_count, created: false };
-      }
-      await this.rate(client, actor.user.id, 'replies', 60);
-      const inserted = await client.query<{ id: string }>('INSERT INTO forum_replies(post_id,author_id,body,request_id) VALUES($1,$2,$3,$4) RETURNING id', [postId, actor.user.id, input.body, input.requestId]);
-      const saved = (await client.query<ReplyRow>(REPLIES + ' WHERE r.id=$1', [inserted.rows[0].id])).rows[0];
-      await client.query('UPDATE forum_posts SET reply_count=reply_count+1,last_activity_at=CURRENT_TIMESTAMP WHERE id=$1', [postId]);
-      return { reply: reply(saved), replyCount: post.reply_count + 1, created: true };
-    });
-  }
   async updatePost(id: string, input: ValidatedPostUpdate, actor: AuthContext): Promise<{ post: ForumPost; updated: boolean }> {
     return this.database.transaction(async client => {
-      await this.member(client, actor);
+      await this.access.member(client, actor);
       const parent = (await client.query<{ community_id: string | null }>('SELECT community_id FROM forum_posts WHERE id=$1 AND author_id=$2', [id, actor.user.id])).rows[0];
       if (!parent) throw new HttpError(404, 'POST_NOT_FOUND', 'Esta publicación no existe o no puedes editarla.');
       // Mismo orden de bloqueos que las respuestas: usuario, comunidad, publicación y medios.

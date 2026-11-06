@@ -6,7 +6,7 @@ export function useDraft(key: string, topicId = '') {
   const [stored, setStored] = useState(true)
   const alive = useRef(true)
   useEffect(() => { alive.current = true; return () => { alive.current = false } }, [])
-  function change(values: Partial<Pick<ForumDraft, 'title' | 'body' | 'topicId' | 'mediaIds'>>) {
+  function change(values: Partial<Pick<ForumDraft, 'title' | 'body' | 'topicId' | 'mediaIds' | 'revision'>>) {
     const next = { ...draft, ...values, requestId: crypto.randomUUID() }
     setDraft(next)
     setStored(saveDraft(key, next))

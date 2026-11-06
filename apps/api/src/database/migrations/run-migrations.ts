@@ -8,8 +8,9 @@ import { createVideoCalls } from './006-create-video-calls.js';
 import { communityPrivacyAndPortraits } from './007-community-privacy-and-portraits.js';
 import { postDocuments } from './008-post-documents.js';
 import { postEditing } from './009-post-editing.js';
+import { forumDiscussion } from './010-forum-discussion.js';
 
-const migrations: readonly Migration[] = [createMessages, createAuth, createForum, createCommunities, createMedia, createVideoCalls, communityPrivacyAndPortraits, postDocuments, postEditing];
+const migrations: readonly Migration[] = [createMessages, createAuth, createForum, createCommunities, createMedia, createVideoCalls, communityPrivacyAndPortraits, postDocuments, postEditing, forumDiscussion];
 
 export async function runMigrations(pool: DatabasePool): Promise<void> {
   const client = await pool.connect();
