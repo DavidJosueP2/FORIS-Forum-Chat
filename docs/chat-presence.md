@@ -1,0 +1,49 @@
+# Presencia del chat global
+
+La interfaz muestra **miembros e invitados por aquí**, por ejemplo «1 miembro por aquí» o «2 miembros y 1 invitado por aquí», y omite las categorías con cero. Si ambos recuentos son cero, muestra «Sin actividad reciente»; si no se pueden comprobar, «Presencia no disponible». Internamente distingue cuentas activas y navegadores invitados. No mide personas únicas, lectura de mensajes ni participantes de una videollamada. Una misma persona puede usar varias cuentas o perfiles de navegador; personas distintas pueden compartir una cuenta o navegador. Foris no usa IP, huellas del dispositivo ni nombres como prueba de identidad humana. La información del chat explica el alcance sin cargar de términos técnicos el indicador.
+
+## Autoridad y deduplicación
+
+`PresenceIdentityService` resuelve la cuenta desde `SessionService`, con sesión vigente y correo verificado. El cliente no elige una cuenta por query, cuerpo, cabecera o `senderId`. Todas las sesiones de la misma cuenta se agrupan mediante `COUNT(DISTINCT user_id)`, también entre dispositivos y réplicas.
+
+Para invitados, el backend emite una cookie aleatoria de 256 bits con vencimiento y firma HMAC ligada al ámbito de presencia. Es HttpOnly, SameSite=Strict y Secure con HTTPS; usa `__Host-foris_presence` en HTTPS y `foris_presence` en localhost. PostgreSQL almacena su derivación HMAC, nunca la cookie, su firma ni una IP en claro. La cookie dura 30 días; una firma inválida no se acepta como identidad. Esto acredita un navegador que conserva una credencial, no una persona ni la ausencia de bots.
+
+Antes del SSE, `POST /api/chat/presence/identity` comprueba origen y JSON, limita el cuerpo a 1 KiB y reutiliza el limitador de autenticación. Devuelve solamente `ready`. Web Locks serializa ese arranque entre pestañas del mismo origen para que una primera visita simultánea reciba una única cookie. No existe un bloqueo fiable mediante variables locales ni se usa `localStorage` como autoridad. Si Web Locks no está disponible no se emiten cookies nuevas competidoras; las cuentas válidas o cookies previas todavía pueden identificarse. Una conexión sin identidad comprobable se registra como `unknown` y hace que el recuento del ámbito sea **no disponible**, en lugar de inventar un cero o una identidad por pestaña.
+
+Cambiar nombre de invitado no cambia la identidad. Borrar cookies, otro navegador, otro perfil o modo privado puede crear otra identidad. Un cliente modificado puede solicitar varias cookies: esto no es protección contra identidades falsas (Sybil). Cuando un navegador tiene concesiones de invitado y de cuenta simultáneamente, la cuenta suprime ese navegador del recuento invitado; no suma dos veces esa transición.
+
+## Concesiones, concurrencia y fallos
+
+La migración **013-chat-presence** añade `chat_presence_rooms` y `chat_presence_leases`, sin modificar historial ni migraciones aplicadas. Cada stream admitido tiene un UUID interno y una concesión de 90 segundos. Las concesiones físicas permiten cerrar una pestaña sin retirar las demás; el recuento usa identidades distintas, nunca el número de filas ni `clients.size`.
+
+Todas las réplicas del mismo origen y namespace deben compartir PostgreSQL, `AUTH_SECRET` y versión del código. El namespace deriva de `VERCEL_ENV` (o `NODE_ENV`) y, en previews, de la rama o URL del despliegue. Se hashéa junto con el origen de `APP_URL`. Dos bases independientes no forman un contador global. Diferentes orígenes están separados; dos dominios públicos distintos de Foris no deduplican invitados entre sí. Rotar el secreto puede crear nuevas identidades de invitado; dejar vencer las concesiones anteriores antes de interpretar el recuento tras esa rotación.
+
+La admisión bloquea la fila de sala `FOR UPDATE`, elimina concesiones vencidas de ese ámbito y comprueba atómicamente el límite global de **200 streams**, y **10 por IP derivada** cuando hay un secreto configurado. Estos límites protegen recursos, no demuestran unicidad. Con NAT varias personas comparten IP; la IP nunca define la cifra mostrada. Con `TRUST_PROXY` mal configurado puede agrupar al proxy o perder efectividad: revisar la cadena real de proxies antes de habilitar confianza. También se conserva el límite local temprano para rechazar solicitudes antes de consultar la base.
+
+El servidor renueva en lote las concesiones de sus streams abiertos y consulta la fotografía global, normalmente cada 30 segundos; las altas concurrentes comparten una conciliación en curso. No mantiene transacciones durante tráfico externo. Las consultas transaccionales tienen `statement_timeout=2500ms` y `lock_timeout=1500ms`; una conciliación que tarda más de 10 segundos se descarta. La hora de expiración y observación procede de PostgreSQL. Una concesión vencida no resucita: obliga a abrir un stream nuevo y comprobar identidad de nuevo. Las sesiones revocadas o vencidas no se renuevan ni cuentan como cuentas activas.
+
+Cerrar libera la concesión; si falla la liberación, permanece hasta su vencimiento. Una caída del proceso, red o congelación de timers deja como máximo la ventana de actividad de 90 segundos. Consultar el recuento siempre filtra por expiración, sin depender de cron ni de que una tarea borre filas. Las filas vencidas del ámbito se retiran en su siguiente admisión; un ámbito abandonado puede conservar filas inactivas hasta mantenimiento manual, sin contarlas. No hay un historial de actividad ni una escritura por latido de cada pestaña: hay una actualización en lote por instancia con streams abiertos.
+
+Si PostgreSQL falla durante la admisión, SSE devuelve 503 y no se inventa un contador local. Si falla durante una renovación, se publica `status: unavailable`. Los logs registran cambios de fallo/recuperación sin cookies, cuentas, IP, cuerpos ni SQL. No se utiliza un resultado anterior como permiso. Los mensajes de texto y su historial conservan sus flujos existentes; sus propios fallos se comunican normalmente.
+
+## Frescura e interfaz
+
+`presence` contiene `status`, cuentas, navegadores invitados, fecha de observación y ventana de 90 segundos. No se publica la identidad de los participantes. El frontend solo acepta el contrato nuevo; ignora el antiguo `connections`. Una cifra deja de mostrarse tras 45 segundos sin una observación válida, al desconectar, recibir un error o recuperar visibilidad con información antigua. El cierre remoto puede tardar hasta 90 segundos en desaparecer: es actividad reciente con tiempo acotado, no prueba instantánea de presencia física.
+
+La ayuda «Información del chat global» explica esas reglas y el indicador está disponible en móvil. “En directo” solo describe el canal SSE. Los cambios de cuenta vuelven a abrirlo para resolver identidad de nuevo. Los reintentos automáticos se limitan a cinco por montaje o cambio explícito de conexión, con esperas de 2, 5, 10, 30 y 60 segundos; después se conserva el botón Reconectar y el borrador. Una apertura exitosa no reinicia por sí sola ese presupuesto de reintentos.
+
+Esto no distribuye los eventos de mensajes entre instancias. El envío de mensajes sigue publicando a los streams de la instancia que lo recibe; la reconexión recupera el historial desde PostgreSQL. La presencia global y la distribución global de mensajes son problemas diferentes.
+
+## Coste y operación
+
+Se reutiliza PostgreSQL y el pool existente, sin Redis, servicios nuevos, cron ni consultas externas. El control consume lecturas/escrituras PostgreSQL y duración de funciones SSE; **no demuestra gasto cero de Neon/Vercel**. Una instancia con conexiones genera aproximadamente dos transacciones de renovación por minuto, más admisiones y cierres; varias instancias multiplican ese consumo. La protección de facturación solicitada anteriormente sigue siendo otra tarea pendiente; estos límites no la sustituyen.
+
+Se requieren `APP_URL` correcto y `AUTH_SECRET` privado compartido para identificar invitados. No se deben pegar secretos en el chat. La migración se registró en el mecanismo normal de inicio, **no se ejecutó aquí**. Ese mecanismo ejecutará las migraciones pendientes al arrancar la aplicación: revisar el despliegue autorizado antes de publicarlo. Desplegar API y frontend juntos evita mezclar contratos. No se modificó configuración remota.
+
+## Comprobaciones preparadas, no ejecutadas
+
+Las fuentes cubren cookie estable y firmada, HttpOnly, origen/cuerpo inválido, falta de secreto, dos pestañas sin duplicar cuentas/navegador, cierre parcial, admisión mientras se cierra, fallos y recuperación, expiración y revocación. `presence-postgres.test.ts` usa dos pools independientes y PostgreSQL real para competir por la última plaza, comprobar deduplicación, transición invitado/cuenta y separación de entornos. Es opt-in con `FORIS_PRESENCE_TEST_DATABASE_URL`, exclusivamente localhost y base dedicada `foris_presence_test`; crea y elimina solo un esquema temporal propio. Los dobles de transporte y pg-mem no prueban bloqueos PostgreSQL.
+
+Verificación manual pendiente: abrir simultáneamente dos pestañas de invitado en un perfil nuevo; abrir la misma cuenta en dos navegadores; cerrar una sola pestaña; cerrar sesión; revocar sesión; interrumpir una réplica; esperar más de 90 segundos; simular indisponibilidad de base; comprobar recuperación y estado no disponible; deshabilitar cookies/Web Locks; comprobar móvil y lector de pantalla; conservar un borrador tras agotar reintentos. No se iniciaron servidores, pruebas, compilación, typecheck, Docker ni migraciones.
+
+Referencias de la coordinación del navegador: [Web Locks](https://developer.mozilla.org/en-US/docs/Web/API/Web_Locks_API), [EventSource](https://developer.mozilla.org/en-US/docs/Web/API/EventSource). La protección del recuento se aplica en PostgreSQL; Web Locks solo resuelve carreras de la cookie entre pestañas cooperantes.

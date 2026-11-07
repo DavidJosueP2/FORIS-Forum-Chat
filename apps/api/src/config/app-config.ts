@@ -30,7 +30,7 @@ export interface AppConfig {
   database: PoolConfig;
   publicDirectory: string;
   messagesPerMinute: number;
-  events: { heartbeatMs: number; maxConnections: number; maxPerIp: number };
+  events: { heartbeatMs: number; maxConnections: number; maxPerIp: number; presenceNamespace: string };
 }
 
 const root = new URL('../../', import.meta.resolve('@messages/api/package.json'));
@@ -67,7 +67,8 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     port: port(env.PORT || env.APP_PORT || '3000', 'PORT'),
     publicDirectory: fileURLToPath(new URL('apps/web/dist/', root)),
     messagesPerMinute: 40,
-    events: { heartbeatMs: 15000, maxConnections: 200, maxPerIp: 10 },
+    events: { heartbeatMs: 15000, maxConnections: 200, maxPerIp: 10,
+      presenceNamespace: JSON.stringify([env.VERCEL_ENV ?? env.NODE_ENV ?? 'development', env.VERCEL_ENV === 'preview' ? env.VERCEL_GIT_COMMIT_REF ?? env.VERCEL_URL ?? 'unidentified-preview' : 'default']) },
     database: {
       host: env.PGHOST || '127.0.0.1',
       port: port(env.PGPORT || '5433', 'PGPORT'),
