@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { Message, MessageInput } from '@messages/contracts'
+import type { Message, MessageInput, Presence } from '@messages/contracts'
 
 import { describeChatError, fetchMessages, isMessage, postMessage } from '../api/chat-api'
 import { mergeMessages } from '../lib/messages'
+import { parsePresence, preparePresence, PRESENCE_STALE_MS } from '../lib/presence'
 
 export type ConnectionState = 'connecting' | 'live' | 'reconnecting' | 'offline'
 
@@ -10,7 +11,7 @@ export function useChat(accountId?: string) {
   const [messages, setMessages] = useState<Message[]>([])
   const [connection, setConnection] = useState<ConnectionState>(() =>
     navigator.onLine ? 'connecting' : 'offline')
-  const [connections, setConnections] = useState<number | null>(null)
+  const [presence, setPresence] = useState<Presence | null>(null)
   const [historyStatus, setHistoryStatus] = useState<'loading' | 'ready' | 'error'>('loading')
   const [historyError, setHistoryError] = useState<string | null>(null)
   const [hasOlder, setHasOlder] = useState(false)
@@ -29,6 +30,10 @@ export function useChat(accountId?: string) {
     let syncing = false
     let syncAgain = false
     let reconnectTimer: ReturnType<typeof setTimeout> | undefined
+    let presenceTimer: ReturnType<typeof setTimeout> | undefined
+    let lastPresence = 0
+    let generation = 0
+    let reconnects = 0
 
     async function synchronize() {
       if (syncing) {
@@ -67,10 +72,17 @@ export function useChat(accountId?: string) {
       }
     }
 
-    function connect() {
+    async function connect() {
       if (controller.signal.aborted || !navigator.onLine) return
+      const currentGeneration = ++generation
       stream?.close()
       clearTimeout(reconnectTimer)
+      clearTimeout(presenceTimer)
+      setPresence(null)
+      try { await preparePresence(controller.signal) } catch {
+        // La indisponibilidad de presencia no impide recuperar el texto del chat.
+      }
+      if (controller.signal.aborted || currentGeneration !== generation || !navigator.onLine) return
       const source = new EventSource('/api/events')
       stream = source
 
@@ -92,57 +104,71 @@ export function useChat(accountId?: string) {
         if (stream !== source || controller.signal.aborted) return
         if (!(event instanceof MessageEvent) || typeof event.data !== 'string') return
         try {
-          const value: unknown = JSON.parse(event.data)
-          if (value && typeof value === 'object' && 'connections' in value
-            && typeof value.connections === 'number'
-            && Number.isInteger(value.connections) && value.connections >= 0) {
-            setConnections(value.connections)
+          const value = parsePresence(JSON.parse(event.data))
+          clearTimeout(presenceTimer)
+          setPresence(value)
+          if (value) {
+            lastPresence = performance.now()
+            presenceTimer = setTimeout(() => setPresence(null), PRESENCE_STALE_MS)
           }
         } catch {
-          setConnections(null)
+          clearTimeout(presenceTimer)
+          setPresence(null)
         }
       })
       source.onerror = () => {
         if (stream !== source || controller.signal.aborted) return
         setConnection(navigator.onLine ? 'reconnecting' : 'offline')
-        setConnections(null)
-        // EventSource reintenta normalmente; los errores terminales necesitan otra instancia.
-        if (source.readyState === EventSource.CLOSED) {
-          clearTimeout(reconnectTimer)
-          reconnectTimer = setTimeout(connect, 5000)
+        clearTimeout(presenceTimer)
+        setPresence(null)
+        // Cierra el reintento nativo ilimitado. Tras cinco intentos queda Reconectar.
+        source.close()
+        clearTimeout(reconnectTimer)
+        if (navigator.onLine && reconnects < 5) {
+          const delay = [2000, 5000, 10000, 30000, 60000][reconnects++]
+          reconnectTimer = setTimeout(() => void connect(), delay)
         }
       }
     }
 
     const onOnline = () => {
+      reconnects = 0
       setConnection('connecting')
-      connect()
+      void connect()
       void synchronize()
     }
     const onOffline = () => {
       stream?.close()
       stream = null
+      generation++
       clearTimeout(reconnectTimer)
+      clearTimeout(presenceTimer)
       setConnection('offline')
-      setConnections(null)
+      setPresence(null)
+    }
+    const onVisible = () => {
+      if (!document.hidden && performance.now() - lastPresence >= PRESENCE_STALE_MS) setPresence(null)
     }
     window.addEventListener('online', onOnline)
     window.addEventListener('offline', onOffline)
-    connect()
+    document.addEventListener('visibilitychange', onVisible)
+    void connect()
     void synchronize()
 
     return () => {
       controller.abort()
       stream?.close()
       clearTimeout(reconnectTimer)
+      clearTimeout(presenceTimer)
       window.removeEventListener('online', onOnline)
       window.removeEventListener('offline', onOffline)
+      document.removeEventListener('visibilitychange', onVisible)
     }
-  }, [attempt])
+  }, [attempt, accountId])
 
   const reconnect = useCallback(() => {
     setConnection(navigator.onLine ? 'connecting' : 'offline')
-    setConnections(null)
+    setPresence(null)
     setHistoryError(null)
     setHistoryStatus(current => current === 'error' ? 'loading' : current)
     setAttempt(value => value + 1)
@@ -176,7 +202,7 @@ export function useChat(accountId?: string) {
   }, [accountId])
 
   return {
-    messages, connection, connections, historyStatus, historyError,
+    messages, connection, presence, historyStatus, historyError,
     hasOlder, loadingOlder, olderError, reconnect, loadOlder, sendMessage,
   }
 }

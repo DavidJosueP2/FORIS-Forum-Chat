@@ -49,6 +49,13 @@ export function RoomInfoDialog({ compact = false }: { compact?: boolean }) {
           </DialogDescription>
         </DialogHeader>
         <CommunityNotes />
+        <p className="text-sm text-muted-foreground">
+          La presencia refleja actividad de los últimos 90 segundos. Cada cuenta se cuenta una vez,
+          aunque abra varias pestañas o dispositivos. Los invitados se agrupan por la cookie de su
+          navegador: borrar cookies, usar modo privado u otro navegador puede contar otra identidad.
+          Son cuentas y navegadores, no personas verificadas. Si no podemos comprobar el recuento,
+          mostramos «Presencia no disponible».
+        </p>
       </DialogContent>
     </Dialog>
   )

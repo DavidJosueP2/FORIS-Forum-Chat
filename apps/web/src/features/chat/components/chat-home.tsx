@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Wifi, WifiOff } from 'lucide-react'
+import type { Presence } from '@messages/contracts'
 
 import { Button } from '@/components/ui/button'
 import { GlobalVideoCall } from '@/features/video-calls/components/global-video-call'
@@ -18,16 +19,18 @@ const connectionLabels: Record<ConnectionState, string> = {
   offline: 'Sin conexión',
 }
 
-function ConnectionStatus({ state, connections }: { state: ConnectionState; connections: number | null }) {
+function ConnectionStatus({ state, presence }: { state: ConnectionState; presence: Presence | null }) {
   return (
     <p className="connection-status" role="status" aria-live="polite">
       {state === 'offline' || state === 'reconnecting'
         ? <WifiOff aria-hidden="true" />
         : <Wifi aria-hidden="true" />}
       <span>{connectionLabels[state]}</span>
-      {state === 'live' && connections !== null && (
-        <span className="connection-count">
-          {connections} {connections === 1 ? 'conexión abierta' : 'conexiones abiertas'}
+      {state === 'live' && (
+        <span className="connection-count" title="Actividad reciente, hasta 90 segundos. Cada cuenta cuenta una vez entre dispositivos; cada navegador invitado, una vez entre pestañas. No identifica personas únicas.">
+          {presence?.status === 'available'
+            ? `${presence.accounts} ${presence.accounts === 1 ? 'cuenta activa' : 'cuentas activas'} · ${presence.guestBrowsers} ${presence.guestBrowsers === 1 ? 'navegador invitado' : 'navegadores invitados'}`
+            : 'Presencia no disponible'}
         </span>
       )}
     </p>
@@ -69,7 +72,7 @@ export function ChatHome() {
               <h1>Chat global</h1>
               <div className="call-entry-slot" ref={setVideoCallTrigger} />
             </div>
-            <ConnectionStatus state={chat.connection} connections={chat.connections} />
+            <ConnectionStatus state={chat.connection} presence={chat.presence} />
           </div>
           <div className="header-actions">
             {!session.user && <GuestNameDialog profile={profile} onNameChange={changeName} />}

@@ -127,7 +127,7 @@
   .room-heading h1 { font-size: 1.25rem; line-height: 1.4; text-wrap: wrap; }
   .header-actions { gap: 0; flex-wrap: wrap; width: 100%; }
   .connection-status { gap: 5px; font-size: .75rem; }
-  .connection-count { display: none; }
+  .connection-count { flex-basis: 100%; margin-left: 18px; }
   .feed-content { padding: 12px 20px; }
   .chat-empty { padding-block: 16px; }
   .chat-empty > img { width: 92px; height: 92px; margin-bottom: 16px; }

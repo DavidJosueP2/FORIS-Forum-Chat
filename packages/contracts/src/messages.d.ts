@@ -25,6 +25,9 @@ export interface Pagination {
   limit: number;
 }
 
-export interface Presence {
-  connections: number;
-}
+/** Actividad observada mediante concesiones del servidor; nunca personas únicas. */
+export type Presence = {
+  status: 'available'; accounts: number; guestBrowsers: number; observedAt: string; leaseSeconds: number;
+} | {
+  status: 'unavailable'; accounts: null; guestBrowsers: null; observedAt: null; leaseSeconds: number;
+};

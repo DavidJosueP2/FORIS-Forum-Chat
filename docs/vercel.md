@@ -33,6 +33,18 @@ Mantén las variables de producción en Vercel, en el entorno correspondiente al
 
 La corrección se revisó de forma estática. El nuevo despliegue y su respuesta de health quedan pendientes de comprobar en Vercel.
 
+## Chat: rechazo `ORIGIN_REJECTED` al enviar mensajes
+
+El filtro de `POST /api/messages` comparaba el `Origin` del navegador con `request.protocol` y `Host` recibidos por Nest. Detrás del proxy, la conexión interna puede ser HTTP o tener un host distinto del dominio público HTTPS. El filtro rechazaba el envío antes de distinguir entre invitado y cuenta, aunque la sesión fuera válida. El diagnóstico anterior sugería revisar `APP_URL`, pero ese filtro todavía no la consultaba.
+
+Ahora el chat compara el origen con `config.auth.origin`, normalizado desde `APP_URL`, igual que autenticación y foro. La autorización no depende de `Host`, `X-Forwarded-Host` ni `X-Forwarded-Proto`. No requiere cambiar `TRUST_PROXY` para resolver este error. Se conserva el comportamiento de clientes sin `Origin` y la exigencia de JSON; los orígenes presentes ajenos a `APP_URL` siguen recibiendo HTTP 403.
+
+Para aplicar la corrección, publica el commit corregido y verifica en el entorno correspondiente de Vercel que `APP_URL` sea exactamente el origen visible en el navegador (protocolo HTTPS y dominio, sin `/chat`, `/api`, query ni fragmento). Un dominio personalizado, un alias y una URL de preview son orígenes diferentes: abre el que coincide con `APP_URL`. No se aceptan comodines `*.vercel.app`. Cambiar variables exige un nuevo despliegue; este arreglo no modifica configuración remota.
+
+Después del despliegue, envía manualmente un mensaje de invitado y otro con sesión, y confirma la respuesta 201 de `/api/messages`. Un reintento del mismo envío debe devolver 200 sin duplicar el mensaje. Las fuentes de regresión cubren HTTPS público con conexión interna HTTP, ambos modos de identidad, reintentos y rechazo de orígenes falsificados. Se prepararon sin ejecutar pruebas, servidores, compilación ni typecheck.
+
+Referencias: [Express detrás de proxies](https://expressjs.com/en/guide/behind-proxies.html) explica cómo el proxy afecta las propiedades de la solicitud; [cabeceras de Vercel](https://vercel.com/docs/headers/request-headers) documenta `Host` y `X-Forwarded-*`.
+
 ## Inspección del 6 de noviembre de 2026
 
 El despliegue de producción `dpl_8rQQcHtXQd5f2pdMXFA5UmTt9D6e`, commit `0d122c94e169344edd1da334bc50a21d21d48929`, figura como `READY`. La consulta de `/api/health/` devolvió HTTP 500 con `INTERNAL_FUNCTION_INVOCATION_FAILED`; el identificador de la petición fue `iad1:iad1::b86kr-1794003023224-a3f66ea0acb2` (22:11:23 UTC). El MCP no devolvió logs de ejecución ni una traza para ese despliegue y esa petición.
