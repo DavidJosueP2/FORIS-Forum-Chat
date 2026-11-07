@@ -1,6 +1,6 @@
 # Presencia del chat global
 
-El contador distingue **cuentas activas** y **navegadores invitados**. No mide personas únicas, lectura de mensajes ni participantes de una videollamada. Una misma persona puede usar varias cuentas o perfiles de navegador; personas distintas pueden compartir una cuenta o navegador. Foris no usa IP, huellas del dispositivo ni nombres como prueba de identidad humana.
+La interfaz muestra **miembros e invitados por aquí**, por ejemplo «1 miembro por aquí» o «2 miembros y 1 invitado por aquí», y omite las categorías con cero. Si ambos recuentos son cero, muestra «Sin actividad reciente»; si no se pueden comprobar, «Presencia no disponible». Internamente distingue cuentas activas y navegadores invitados. No mide personas únicas, lectura de mensajes ni participantes de una videollamada. Una misma persona puede usar varias cuentas o perfiles de navegador; personas distintas pueden compartir una cuenta o navegador. Foris no usa IP, huellas del dispositivo ni nombres como prueba de identidad humana. La información del chat explica el alcance sin cargar de términos técnicos el indicador.
 
 ## Autoridad y deduplicación
 

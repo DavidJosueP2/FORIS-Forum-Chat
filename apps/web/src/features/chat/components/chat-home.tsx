@@ -19,6 +19,14 @@ const connectionLabels: Record<ConnectionState, string> = {
   offline: 'Sin conexión',
 }
 
+function presenceLabel(presence: Presence | null): string {
+  if (presence?.status !== 'available') return 'Presencia no disponible'
+  const labels: string[] = []
+  if (presence.accounts > 0) labels.push(`${presence.accounts} ${presence.accounts === 1 ? 'miembro' : 'miembros'}`)
+  if (presence.guestBrowsers > 0) labels.push(`${presence.guestBrowsers} ${presence.guestBrowsers === 1 ? 'invitado' : 'invitados'}`)
+  return labels.length ? `${labels.join(' y ')} por aquí` : 'Sin actividad reciente'
+}
+
 function ConnectionStatus({ state, presence }: { state: ConnectionState; presence: Presence | null }) {
   return (
     <p className="connection-status" role="status" aria-live="polite">
@@ -27,10 +35,8 @@ function ConnectionStatus({ state, presence }: { state: ConnectionState; presenc
         : <Wifi aria-hidden="true" />}
       <span>{connectionLabels[state]}</span>
       {state === 'live' && (
-        <span className="connection-count" title="Actividad reciente, hasta 90 segundos. Cada cuenta cuenta una vez entre dispositivos; cada navegador invitado, una vez entre pestañas. No identifica personas únicas.">
-          {presence?.status === 'available'
-            ? `${presence.accounts} ${presence.accounts === 1 ? 'cuenta activa' : 'cuentas activas'} · ${presence.guestBrowsers} ${presence.guestBrowsers === 1 ? 'navegador invitado' : 'navegadores invitados'}`
-            : 'Presencia no disponible'}
+        <span className="connection-count" title="Actividad de los últimos 90 segundos. Los miembros se cuentan por cuenta y los invitados por navegador, sin sumar sus pestañas. No es un recuento de personas únicas.">
+          {presenceLabel(presence)}
         </span>
       )}
     </p>
