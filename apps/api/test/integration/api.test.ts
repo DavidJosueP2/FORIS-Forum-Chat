@@ -8,6 +8,8 @@ import { createTestApplication } from '../support/application.js';
 import type { FixtureOptions } from '../support/application.js';
 import type { MessagePage } from '@messages/contracts';
 import type { AddressInfo } from 'node:net';
+import { randomToken, tokenHash } from '../../src/modules/auth/auth-crypto.js';
+import { unavailablePresence } from '../../src/modules/messages/presence.repository.js';
 
 const payload = (body: string) => ({ body, author: 'Ana', senderId: randomUUID(), requestId: randomUUID() });
 
@@ -73,10 +75,51 @@ test('rechaza adjuntos, orígenes ajenos, contenido inválido y exceso de tamañ
   await api.post('/api/messages').send({ ...payload('Hola'), file: 'audio.mp3' }).expect(400);
   await api.post('/api/messages').type('text').send('Hola').expect(415);
   await api.post('/api/messages').set('Origin', 'https://otro.example').send(payload('Hola')).expect(403);
-  await api.post('/api/messages').set('Host', 'mensajes.local').set('Origin', 'http://mensajes.local').send(payload('Hola')).expect(201);
+  await api.post('/api/messages').set('Host', '127.0.0.1:3000').set('Origin', 'http://127.0.0.1:5173').send(payload('Hola')).expect(201);
+  await api.post('/api/messages').set('Host', 'mensajes.local').set('Origin', 'http://mensajes.local').send(payload('Hola')).expect(403);
   await api.post('/api/messages').set('Content-Type', 'application/json').send('{ mal JSON').expect(400);
   await api.post('/api/messages').send(payload('a'.repeat(20000))).expect(413);
   await api.post('/api/messages').send(payload('   ')).expect(400);
+});
+
+test('acepta el origen público HTTPS detrás del proxy para invitados y cuentas, sin confiar en Host', async t => {
+  const origin = 'https://foris.example.test';
+  const { api, database } = await fixture(t, { auth: true, appUrl: origin });
+  const userId = randomUUID();
+  const token = randomToken();
+  await database.query('INSERT INTO users(id,email,display_name,email_verified_at) VALUES($1,$2,$3,$4)',
+    [userId, userId + '@example.test', 'Cuenta de prueba', new Date()]);
+  await database.query('INSERT INTO auth_sessions(id,user_id,token_hash,expires_at) VALUES($1,$2,$3,$4)',
+    [randomUUID(), userId, tokenHash(token), new Date(Date.now() + 3600000)]);
+
+  // La conexión de supertest es HTTP y su Host simula el destino interno del proxy.
+  const send = (mode: 'guest' | 'account') => {
+    const pending = api.post('/api/messages').set('Host', '127.0.0.1:3000').set('Origin', origin)
+      .set('X-Forwarded-Host', 'foris.example.test').set('X-Forwarded-Proto', 'https').set('X-Foris-Identity', mode);
+    return mode === 'account' ? pending.set('Cookie', '__Host-foris_session=' + token) : pending;
+  };
+  const guestInput = payload('Mensaje invitado detrás de HTTPS');
+  const guest = await send('guest').send(guestInput).expect(201);
+  assert.equal(guest.body.message.accountId, undefined);
+  assert.equal(guest.body.message.body, guestInput.body);
+  const accountInput = payload('Mensaje de cuenta detrás de HTTPS');
+  const account = await send('account').send(accountInput).expect(201);
+  assert.equal(account.body.message.accountId, userId);
+  assert.equal(account.body.message.author, 'Cuenta de prueba');
+  assert.equal(account.body.message.body, accountInput.body);
+  const retried = await send('account').send(accountInput).expect(200);
+  assert.equal(retried.body.message.id, account.body.message.id);
+
+  for (const badOrigin of ['https://otro.example.test', 'http://foris.example.test', 'https://foris.example.test:444', 'https://foris.example.test.evil.test', 'null']) {
+    const denied = await api.post('/api/messages').set('Origin', badOrigin)
+      .set('Host', badOrigin === 'null' ? 'otro.example.test' : new URL(badOrigin).host)
+      .set('X-Forwarded-Host', 'foris.example.test').set('X-Forwarded-Proto', 'https')
+      .set('Cookie', '__Host-foris_session=' + token).set('X-Foris-Identity', 'account')
+      .send(payload('No debe guardarse')).expect(403);
+    assert.equal(denied.body.error.code, 'ORIGIN_REJECTED');
+  }
+  const history = await api.get('/api/messages').expect(200);
+  assert.equal(history.body.messages.length, 2);
 });
 
 test('frena envíos repetidos con una respuesta recuperable', async t => {
@@ -98,7 +141,13 @@ test('un fallo de base no filtra consultas ni credenciales', async t => {
 });
 
 test('entrega el mismo mensaje en vivo a dos navegadores conectados', { timeout: 10000 }, async t => {
-  const { app, server, hub } = await fixture(t);
+  // Este caso comprueba el transporte SSE; bloqueos y recuentos globales se prueban
+  // exclusivamente con PostgreSQL real en presence-postgres.test.ts.
+  const { app, server, hub } = await fixture(t, { presence: {
+    async acquire() { return randomUUID(); },
+    async refresh(ids) { return { presence: unavailablePresence(), renewed: new Set(ids) }; },
+    async release() {},
+  } });
   await app.listen(0, '127.0.0.1');
   const abort = new AbortController();
   t.after(() => {

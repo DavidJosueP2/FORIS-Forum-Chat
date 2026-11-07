@@ -142,7 +142,7 @@ El envío usa POST con UUID de remitente y `requestId`. Reintentar el mismo cuer
 
 `MessageFeed` presenta carga, historial vacío confirmado, errores y paginación. El historial sigue el final si el lector permanece cerca de él o acaba de enviar un mensaje propio. Al cargar mensajes anteriores conserva un elemento DOM de un mensaje visible como ancla y tiene en cuenta el desplazamiento realizado durante la solicitud; así la inserción al principio no se confunde con mensajes recibidos al final. La acción «Volver al final» permite retomar la conversación. La sugerencia del estado vacío solo rellena el borrador y le da foco.
 
-El estado de conexión distingue conectando, en directo, reconectando y sin conexión. La presencia recibida cuenta conexiones abiertas, no personas únicas. Los mensajes y las cifras proceden de la API; no hay conversación ni presencia de ejemplo. Sin conexión se puede seguir preparando el texto y solicitar una reconexión.
+El estado de conexión distingue conectando, en directo, reconectando y sin conexión. La presencia distingue cuentas activas y navegadores invitados deduplicados mediante concesiones compartidas PostgreSQL; refleja actividad reciente de hasta 90 segundos, no personas únicas. La cifra se retira ante datos desconocidos o antiguos. Los mensajes y las cifras proceden de la API; no hay conversación ni presencia de ejemplo. Sin conexión se puede seguir preparando el texto y solicitar una reconexión. El alcance, límites y operación están en [chat-presence.md](chat-presence.md).
 
 `AccountEntry` sustituye el antiguo diálogo informativo y dirige a `/login` o `/profile` según la sesión. La navegación lateral y el compositor distinguen miembro e invitado; los mensajes usan `accountId` asignado por el servidor. `X-Foris-Identity` declara intención `account` o `guest`: `account` exige una sesión válida y el servidor fija autor, remitente y cuenta; `guest` no recibe cuenta asociada. Un encabezado o nombre enviado por el cliente no acredita identidad. Los clientes anteriores sin el encabezado conservan la resolución previa por sesión.
 
@@ -247,7 +247,7 @@ El inicio usa `features/forum/discovery` para las vistas cronológicas Para ti y
 
 Al cerrar, el servicio de eventos termina las conexiones SSE y `MediaService` y `VideoCallService` cancelan sus temporizadores y esperan la limpieza en curso antes de que Nest cierre el servidor HTTP. El pool PostgreSQL termina al concluir el cierre de la aplicación. Los errores de solicitudes muestran mensajes públicos y los registros omiten consultas y credenciales.
 
-La entrega SSE actual funciona en una instancia. Un despliegue con varias instancias necesitará distribución de eventos y límites compartidos; esa ampliación pertenece a otra etapa.
+La distribución de eventos de mensajes SSE sigue siendo local a una instancia. La presencia y la admisión global de streams se coordinan ahora en PostgreSQL; la distribución de mensajes entre instancias continúa pendiente y no se deduce del contador global.
 
 ## Configuración, herramientas y pruebas
 

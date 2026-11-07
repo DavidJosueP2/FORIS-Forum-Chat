@@ -49,6 +49,13 @@ export function RoomInfoDialog({ compact = false }: { compact?: boolean }) {
           </DialogDescription>
         </DialogHeader>
         <CommunityNotes />
+        <p className="text-sm text-muted-foreground">
+          «Por aquí» muestra miembros e invitados con actividad en los últimos 90 segundos.
+          Un miembro se cuenta una vez por cuenta, aunque abra varias pestañas o dispositivos.
+          Un invitado se cuenta por navegador: otro navegador, el modo privado o borrar las cookies
+          puede hacer que aparezca de nuevo. Por eso la cifra no equivale a personas únicas.
+          Si no podemos actualizarla, mostramos «Presencia no disponible».
+        </p>
       </DialogContent>
     </Dialog>
   )

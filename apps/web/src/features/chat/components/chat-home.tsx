@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Wifi, WifiOff } from 'lucide-react'
+import type { Presence } from '@messages/contracts'
 
 import { Button } from '@/components/ui/button'
 import { GlobalVideoCall } from '@/features/video-calls/components/global-video-call'
@@ -18,16 +19,24 @@ const connectionLabels: Record<ConnectionState, string> = {
   offline: 'Sin conexión',
 }
 
-function ConnectionStatus({ state, connections }: { state: ConnectionState; connections: number | null }) {
+function presenceLabel(presence: Presence | null): string {
+  if (presence?.status !== 'available') return 'Presencia no disponible'
+  const labels: string[] = []
+  if (presence.accounts > 0) labels.push(`${presence.accounts} ${presence.accounts === 1 ? 'miembro' : 'miembros'}`)
+  if (presence.guestBrowsers > 0) labels.push(`${presence.guestBrowsers} ${presence.guestBrowsers === 1 ? 'invitado' : 'invitados'}`)
+  return labels.length ? `${labels.join(' y ')} por aquí` : 'Sin actividad reciente'
+}
+
+function ConnectionStatus({ state, presence }: { state: ConnectionState; presence: Presence | null }) {
   return (
     <p className="connection-status" role="status" aria-live="polite">
       {state === 'offline' || state === 'reconnecting'
         ? <WifiOff aria-hidden="true" />
         : <Wifi aria-hidden="true" />}
       <span>{connectionLabels[state]}</span>
-      {state === 'live' && connections !== null && (
-        <span className="connection-count">
-          {connections} {connections === 1 ? 'conexión abierta' : 'conexiones abiertas'}
+      {state === 'live' && (
+        <span className="connection-count" title="Actividad de los últimos 90 segundos. Los miembros se cuentan por cuenta y los invitados por navegador, sin sumar sus pestañas. No es un recuento de personas únicas.">
+          {presenceLabel(presence)}
         </span>
       )}
     </p>
@@ -69,7 +78,7 @@ export function ChatHome() {
               <h1>Chat global</h1>
               <div className="call-entry-slot" ref={setVideoCallTrigger} />
             </div>
-            <ConnectionStatus state={chat.connection} connections={chat.connections} />
+            <ConnectionStatus state={chat.connection} presence={chat.presence} />
           </div>
           <div className="header-actions">
             {!session.user && <GuestNameDialog profile={profile} onNameChange={changeName} />}

@@ -15,6 +15,7 @@ import { MessageEventsService } from '../../src/modules/messages/message-events.
 import { HealthService } from '../../src/modules/health/health.service.js';
 import { testDatabase } from './database.js';
 import type { MediaConfig } from '../../src/config/media-config.js';
+import { PresenceRepository } from '../../src/modules/messages/presence.repository.js';
 
 export interface FixtureOptions {
   repository?: MessageRepositoryPort;
@@ -24,13 +25,15 @@ export interface FixtureOptions {
   pool?: DatabasePool;
   logger?: AppLogger;
   auth?: boolean;
+  appUrl?: string;
+  presence?: Pick<PresenceRepository, 'acquire' | 'refresh' | 'release'>;
   media?: Partial<MediaConfig>;
 }
 
 export async function createTestApplication(options: FixtureOptions = {}) {
   const pool = options.pool ?? (await testDatabase()).pool;
   const config = readConfig({ NODE_ENV: 'test', PGPASSWORD: 'test-only', AUTH_SECRET: options.auth ? 'foris-test-secret-with-at-least-32-characters' : undefined,
-    STORAGE_LOCAL_ROOT: options.media?.localRoot });
+    APP_URL: options.appUrl, STORAGE_LOCAL_ROOT: options.media?.localRoot });
   config.media = { ...config.media, ...options.media };
   config.port = options.port ?? 3099;
   config.messagesPerMinute = options.sendLimit ?? 40;
@@ -40,6 +43,7 @@ export async function createTestApplication(options: FixtureOptions = {}) {
     .overrideProvider(DATABASE_POOL).useValue(pool);
   if (options.repository) builder.overrideProvider(MessagesRepository).useValue(options.repository);
   if (options.health) builder.overrideProvider(HealthService).useValue(options.health);
+  if (options.presence) builder.overrideProvider(PresenceRepository).useValue(options.presence);
   try {
     const module = await builder.compile();
     const app = module.createNestApplication<NestExpressApplication>({ bodyParser: false, logger: false });
