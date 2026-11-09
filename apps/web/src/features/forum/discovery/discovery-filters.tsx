@@ -2,7 +2,7 @@ import { useEffect, useId, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useLocation } from 'react-router-dom'
 import type { ForumCategory, ForumTag } from '@messages/contracts'
-import { Check, ChevronLeft, ChevronRight, Compass, Cpu, FolderTree, GraduationCap, LayoutGrid, MessagesSquare, Palette, PanelLeft, Search, Tags, Wrench, X } from 'lucide-react'
+import { Check, ChevronDown, ChevronLeft, ChevronRight, Compass, Cpu, FolderTree, GraduationCap, LayoutGrid, MessagesSquare, Palette, PanelLeft, Search, Tags, Wrench, X } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
@@ -58,7 +58,7 @@ function TagFilter({ query, tags, selectedTags, onTag, resourceScope }: Pick<Pro
     <div className="discovery-tag-options">{choices.map(tag => <button type="button" key={tag.id} aria-pressed={query.tags.includes(tag.id)} onClick={() => {
       if (!query.tags.includes(tag.id) && query.tags.length >= 8) { setError('Puedes combinar hasta ocho etiquetas. Quita una para elegir otra.'); return }
       setError(''); onTag(tag.id)
-    }}>{query.tags.includes(tag.id) && <Check aria-hidden="true" />}{tag.name}</button>)}</div>
+    }}>{query.tags.includes(tag.id) && <Check aria-hidden="true" />}<span><span aria-hidden="true">#</span>{tag.name}</span></button>)}</div>
     {!resource.loading && !resource.error && !choices.length && <p className="forum-hint">{search ? 'No encontramos esa etiqueta.' : 'Las etiquetas aparecerán aquí cuando se usen en publicaciones.'}</p>}
     {error && <p className="forum-error" role="alert">{error}</p>}
     {query.tags.length > 0 && <p className="discovery-filter-note">Las publicaciones incluyen todas las etiquetas seleccionadas.</p>}
@@ -68,7 +68,32 @@ function FilterPanel(props: Props) {
   return <div className="discovery-filter-panel" data-discovery-control><CategoryFilter {...props} /><TagFilter {...props} /></div>
 }
 export function DiscoveryFilters({ navigation, ...props }: Props & { navigation?: ReactNode }) {
-  return <aside className="discovery-sidebar" aria-label="Explorar y filtrar publicaciones"><div className="discovery-sidebar-inner">{navigation}<h2 className="discovery-explore-title"><Compass aria-hidden="true" />Explorar</h2><FilterPanel {...props} /></div></aside>
+  const [expanded, setExpanded] = useState(true)
+  const panelId = useId()
+
+  return (
+    <aside className="discovery-sidebar" aria-label="Explorar y filtrar publicaciones">
+      <div className="discovery-sidebar-inner">
+        {navigation}
+        <h2>
+          <button
+            type="button"
+            className="discovery-explore-toggle"
+            aria-controls={panelId}
+            aria-expanded={expanded}
+            onClick={() => setExpanded(open => !open)}
+          >
+            <Compass aria-hidden="true" />
+            Explorar
+            <ChevronDown className="discovery-explore-chevron" aria-hidden="true" />
+          </button>
+        </h2>
+        <div id={panelId} hidden={!expanded} data-discovery-panel>
+          <FilterPanel {...props} />
+        </div>
+      </div>
+    </aside>
+  )
 }
 export function MobileDiscoveryFilters({ navigation, ...props }: Props & { navigation?: (close: () => void) => ReactNode }) {
   const location = useLocation()
@@ -84,8 +109,20 @@ export function MobileDiscoveryFilters({ navigation, ...props }: Props & { navig
   }, [])
   const count = Number(Boolean(props.query.category || props.query.topic)) + props.query.tags.length
   return <Sheet open={open} onOpenChange={next => { if (next) { setOpenedQuery(props.query.path); setOpenedLocation(currentLocation) } setOpen(next) }}><SheetTrigger asChild><Button type="button" variant="ghost" className="platform-explore-trigger h-11 w-11" aria-label={count ? 'Abrir explorador, ' + count + ' filtros seleccionados' : 'Abrir explorador'} title="Explorar"><PanelLeft aria-hidden="true" /></Button></SheetTrigger><SheetContent className="discovery-filter-sheet platform-filter-sheet" side="left" onCloseAutoFocus={event => {
-    if (openedQuery !== props.query.path || openedLocation !== currentLocation) { event.preventDefault(); const results = document.getElementById('discovery-heading') ?? document.querySelector<HTMLElement>('main'); results?.focus({ preventScroll: true }); results?.scrollIntoView({ block: 'start' }) }
-    else if (window.matchMedia('(min-width: 1024px)').matches) { event.preventDefault(); document.querySelector<HTMLElement>('.discovery-sidebar [aria-pressed="true"]')?.focus({ preventScroll: true }) }
+    if (openedQuery !== props.query.path || openedLocation !== currentLocation) {
+      event.preventDefault()
+      const heading = document.getElementById('discovery-heading')
+      const results = heading ?? document.querySelector<HTMLElement>('main')
+      results?.focus({ preventScroll: true })
+      if (heading) window.scrollTo({ top: 0, left: 0 })
+      else results?.scrollIntoView({ block: 'start' })
+    } else if (window.matchMedia('(min-width: 1024px)').matches) {
+      event.preventDefault()
+      const selected = document.querySelector<HTMLElement>('.discovery-sidebar [data-discovery-panel]:not([hidden]) [aria-pressed="true"]')
+      const toggle = document.querySelector<HTMLElement>('.discovery-explore-toggle')
+      const focusTarget = selected ?? toggle
+      focusTarget?.focus({ preventScroll: true })
+    }
   }}><SheetHeader><SheetTitle className="discovery-explore-title"><Compass aria-hidden="true" />Explorar</SheetTitle><SheetDescription className="sr-only">Navega por Foris y encuentra publicaciones por temática y etiquetas.</SheetDescription></SheetHeader><div className="discovery-filter-sheet-body">{navigation?.(() => setOpen(false))}<FilterPanel {...props} /></div><SheetFooter><SheetClose asChild><Button type="button" className="h-11">Continuar</Button></SheetClose>{props.query.filtered && <Button type="button" variant="ghost" className="h-11" onClick={props.onClear}>Quitar filtros</Button>}</SheetFooter></SheetContent></Sheet>
 }
 export function ActiveDiscoveryFilters(props: Props) {
@@ -96,7 +133,13 @@ export function ActiveDiscoveryFilters(props: Props) {
     {query.search && <span className="discovery-active-filter">«{query.search}»<button type="button" aria-label="Quitar búsqueda" title="Quitar búsqueda" onClick={props.onSearchClear}><X aria-hidden="true" /></button></span>}
     {(query.category || query.topic) && <span className="discovery-active-filter">{category?.name ?? 'Temática seleccionada'}<button type="button" aria-label="Quitar filtro de temática" title="Quitar temática" onClick={() => props.onCategory(null)}><X aria-hidden="true" /></button></span>}
     {query.author && <span className="discovery-active-filter">De este perfil<button type="button" aria-label="Quitar filtro de autor" title="Quitar autor" onClick={props.onAuthorClear}><X aria-hidden="true" /></button></span>}
-    {query.tags.map(id => <span className="discovery-active-filter discovery-active-tag" key={id}>{props.selectedTags.data?.find(tag => tag.id === id)?.name ?? (props.selectedTags.loading ? 'Cargando etiqueta…' : 'Etiqueta seleccionada')}<button type="button" aria-label={'Quitar etiqueta ' + (props.selectedTags.data?.find(tag => tag.id === id)?.name ?? 'seleccionada')} title="Quitar etiqueta" onClick={() => props.onTag(id)}><X aria-hidden="true" /></button></span>)}
+    {query.tags.map(id => {
+      const name = props.selectedTags.data?.find(tag => tag.id === id)?.name
+      return <span className="discovery-active-filter discovery-active-tag" key={id}>
+        {name ? <span><span aria-hidden="true">#</span>{name}</span> : props.selectedTags.loading ? 'Cargando etiqueta…' : 'Etiqueta seleccionada'}
+        <button type="button" aria-label={'Quitar etiqueta ' + (name ?? 'seleccionada')} title="Quitar etiqueta" onClick={() => props.onTag(id)}><X aria-hidden="true" /></button>
+      </span>
+    })}
     <Button type="button" variant="ghost" className="h-11" onClick={props.onClear}>Quitar filtros</Button>
     {props.selectedTags.error && <div className="discovery-selected-tags-error"><p className="forum-error" role="alert">No pudimos cargar los nombres de las etiquetas seleccionadas.</p><Button type="button" variant="ghost" className="h-11" onClick={props.selectedTags.retry}>Volver a cargar etiquetas</Button></div>}
   </div>

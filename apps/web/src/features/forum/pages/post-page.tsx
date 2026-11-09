@@ -12,6 +12,7 @@ import { PostImages } from '@/features/media/components/post-images'
 import { ForumEmpty, ForumError, ForumLoading, ForumTime } from '../components/forum-states'
 import { useResource } from '../hooks/use-forum'
 import { DocumentView } from '../editor/document-view'
+import { PostTaxonomy } from '../discovery/post-taxonomy'
 import { PostContext } from '../components/context-rail'
 import { FollowButton } from '../following/follow-button'
 import { Discussion } from '../reading/discussion'
@@ -51,9 +52,11 @@ function PostContent({ id }: { id: string }) {
         {item.community && <Link to={'/comunidades/' + item.community.id} className="reading-community">{item.community.name}</Link>}<ForumTime value={item.createdAt} /><FollowButton id={item.author.id} name={item.author.displayName} initial={item.author.isFollowing} compact />
         {item.updatedAt && <span title={new Date(item.updatedAt).toLocaleString('es-EC')}>editado</span>}
         {auth.session.user?.id === item.author.id && <DropdownMenu><DropdownMenuTrigger asChild><Button type="button" variant="ghost" className="reading-icon reading-post-menu" aria-label="Opciones de la publicación"><MoreHorizontal aria-hidden="true" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end" className="reading-menu"><DropdownMenuItem asChild><Link to={'/publicaciones/' + item.id + '/editar'}><PencilLine aria-hidden="true" />Editar publicación</Link></DropdownMenuItem></DropdownMenuContent></DropdownMenu>}
-      </div><h1>{item.title}</h1></header>
+      </div>
+        <PostTaxonomy category={item.category} tags={item.tags} />
+        <h1>{item.title}</h1>
+      </header>
       <div className="reading-post-body">{item.content ? <DocumentView document={item.content} images={item.images} /> : <><p className="forum-prose">{item.body}</p><PostImages images={item.images} /></>}</div>
-      {(item.category || item.tags.length > 0) && <div className="reading-taxonomy">{item.category && <Link to={'/?categoria=' + item.category.id} className="reading-category">{item.category.name}</Link>}{item.tags.map(tag => <Link key={tag.id} to={'/?etiqueta=' + tag.id} className="reading-tag">{tag.name}</Link>)}</div>}
       <footer className="reading-post-actions"><VoteButtons votes={item.votes} path={'posts/' + item.id} participation={participation} onChange={votes => post.setData(current => current ? { ...current, votes } : current)} /><Button asChild variant="ghost" className="reading-action"><Link to={next} aria-label={item.replyCount + ' comentarios. Añadir comentario'}><MessageCircle aria-hidden="true" />{item.replyCount}</Link></Button><ShareLink path={'/publicaciones/' + item.id} title={item.title} /></footer>
     </article>
     {community.error && <p className="forum-error reading-inline-error" role="alert">{community.error} <button type="button" className="reading-retry" onClick={community.retry}>Reintentar</button></p>}

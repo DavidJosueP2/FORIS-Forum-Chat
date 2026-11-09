@@ -1,6 +1,6 @@
-.forum-platform { --platform-sidebar-width: 248px; --platform-header-height: 80px; --platform-content-gap: 16px; --discovery-header-offset: 96px; --discovery-tag-background: #c5eee6; --discovery-tag-foreground: #134e46; --discovery-tag-hover: #afe4da; }
+.forum-platform { --platform-sidebar-width: 248px; --platform-header-height: 80px; --platform-content-gap: 16px; --discovery-header-offset: 96px; --discovery-tag-foreground: #134e46; }
 .forum-app.forum-platform { padding-block-end: var(--platform-content-gap); background: var(--sidebar); }
-.dark .forum-platform { --discovery-tag-background: #164e46; --discovery-tag-foreground: #c5eee6; --discovery-tag-hover: #21685c; }
+.dark .forum-platform { --discovery-tag-foreground: #c5eee6; }
 .forum-header.platform-header { position: sticky; top: 0; z-index: 30; max-width: none; width: 100%; min-height: 80px; padding: 12px 24px; gap: 24px; flex-wrap: nowrap; background: var(--sidebar); color: var(--sidebar-foreground); }
 /* Remates inversos de 16px: conservan las esquinas sin cambiar el scroll del documento. */
 .platform-header::before, .platform-header::after { content: ''; position: absolute; top: 100%; width: 16px; height: 16px; background: var(--sidebar); clip-path: path('M 0 0 H 16 A 16 16 0 0 0 0 16 Z'); pointer-events: none; }
