@@ -59,6 +59,7 @@ function flatten(branches: Branch[], parents: string[] = [], slugs: string[] = [
 }
 export const forumCatalog: readonly ForumCategory[] = flatten(tree);
 export const forumSeedTags = ['pregunta', 'guía', 'debate', 'recurso', 'inspiración', 'feedback', 'tutorial', 'experiencia', 'descubrimiento', 'colaboración'];
+export const forumSeedTagRows = forumSeedTags.map(name => ({ id: stableId('tag/' + name), name }));
 const literal = (value: string) => "'" + value.replaceAll("'", "''") + "'";
 export const forumCatalogSql = `
   INSERT INTO forum_categories(id,slug,name,description,parent_id,root_id,depth,path,position) VALUES
@@ -66,5 +67,5 @@ export const forumCatalogSql = `
     item.parentId ? literal(item.parentId) : 'NULL', literal(item.rootId), item.depth,
     'ARRAY[' + item.path.map(literal).join(',') + ']::uuid[]', item.position].join(',') + ')').join(',\n')};
   INSERT INTO forum_tags(id,name,is_seeded) VALUES
-  ${forumSeedTags.map(name => '(' + literal(stableId('tag/' + name)) + ',' + literal(name) + ',TRUE)').join(',\n')};
+  ${forumSeedTagRows.map(({ id, name }) => '(' + literal(id) + ',' + literal(name) + ',TRUE)').join(',\n')};
 `;
