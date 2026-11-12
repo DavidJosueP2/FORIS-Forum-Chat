@@ -8,6 +8,49 @@
   background: var(--background);
 }
 
+.forum-platform .foris-app.chats-page { display: grid; grid-template-columns: minmax(220px, 280px) minmax(0, 1fr); gap: var(--platform-content-gap); background: transparent; }
+.chats-page > .chat-directory, .chats-page > .chat-workspace, .chats-page > .chat-unavailable { border-radius: inherit; }
+.chats-page > .chat-workspace, .chats-page > .chat-unavailable { background: var(--background); }
+.chats-page > .chat-workspace { overflow: hidden; }
+.chat-directory { display: grid; grid-template-rows: minmax(0, 1fr) auto; min-width: 0; min-height: 0; overflow: hidden; background: var(--card); }
+.chat-directory-list { min-height: 0; padding: 20px 16px; overflow-y: auto; overscroll-behavior-y: contain; }
+.chat-directory h2 { margin: 0 8px 12px; font-size: 1.5rem; font-weight: 600; }
+.chat-directory-footer { padding: 4px 16px 8px; border-block-start: 1px solid var(--secondary); }
+.chat-directory-group { margin-top: 24px; }
+.chat-directory-group h3 { margin: 0 8px 8px; color: var(--muted-foreground); font-size: .875rem; font-weight: 600; }
+.chat-directory-group ul { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.chat-directory-link { display: flex; min-height: 48px; align-items: center; gap: 10px; padding: 6px 8px; border-radius: var(--radius); font-size: .875rem; font-weight: 600; overflow-wrap: anywhere; }
+.chat-directory-link:hover { background: var(--secondary); }
+.chat-directory-link[aria-current="page"] { background: var(--accent); color: var(--accent-foreground); }
+.chat-directory-link:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
+.chat-directory-icon { display: grid; flex: 0 0 36px; height: 36px; place-items: center; border-radius: 50%; background: var(--secondary); }
+.chat-directory-icon svg { width: 18px; height: 18px; }
+.identity-image.chat-directory-avatar { --identity-size: 36px; }
+.chat-directory-group p, .chat-directory-guest { margin: 8px; color: var(--muted-foreground); font-size: .875rem; line-height: 1.6; }
+.chat-directory-guest { margin-top: 16px; }
+.chat-directory-group p a, .chat-directory-guest a, .chat-unavailable > a:not([data-slot]) { color: var(--foreground); text-decoration: underline; text-underline-offset: 3px; }
+.chat-directory-mobile { display: none; }
+.chat-unavailable { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; padding: 24px; overflow-y: auto; }
+.chat-unavailable h1 { font-size: 1.5rem; font-weight: 600; }
+.chat-header.scoped-chat-header { flex-wrap: nowrap; justify-content: flex-start; gap: 12px; }
+.scoped-chat-header .room-heading { flex: 1; overflow-wrap: anywhere; }
+.identity-image.chat-header-avatar { --identity-size: 44px; }
+.chat-room-audience { display: flex; align-items: center; gap: 6px; margin-top: 4px; color: var(--muted-foreground); font-size: .75rem; }
+.chat-room-audience svg { width: 14px; height: 14px; flex-shrink: 0; }
+.chat-community-back { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; color: var(--muted-foreground); font-size: .875rem; }
+.chat-community-back:hover { text-decoration: underline; text-underline-offset: 4px; }
+.chat-community-back svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+@media (max-width: 767px) {
+  .forum-platform .foris-app.chats-page { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  .chat-directory { grid-template-rows: auto auto; }
+  .chat-directory-list { display: none; }
+  .chat-directory-mobile { display: flex; min-width: 0; align-items: center; gap: 10px; padding: 6px 16px; }
+  .chat-directory-footer { display: flex; justify-content: flex-end; padding-block: 0 4px; border-block-start: 0; }
+  .chat-directory-mobile [data-slot="native-select-wrapper"] { flex: 1; min-width: 0; }
+  .chat-directory-mobile [data-slot="native-select"] { min-height: 44px; }
+}
+
 .skip-to-composer {
   position: fixed;
   top: 12px;
@@ -47,8 +90,7 @@
 .connection-count { margin-left: 9px; }
 .header-actions { display: flex; flex-shrink: 0; align-items: center; gap: 6px; }
 
-.conversation-layout { display: grid; min-width: 0; min-height: 0; flex: 1; grid-template-columns: minmax(0, 1fr); }
-.conversation-main { display: flex; min-width: 0; min-height: 0; flex-direction: column; }
+.conversation-main { display: flex; min-width: 0; min-height: 0; flex: 1; flex-direction: column; }
 .feed-container { position: relative; display: flex; min-height: 0; flex: 1; }
 .message-viewport { width: 100%; min-height: 0; overflow-y: auto; overflow-anchor: none; overscroll-behavior-y: contain; scrollbar-gutter: stable; }
 .feed-content { width: 100%; max-width: 840px; min-height: 100%; margin-inline: auto; padding: 16px 40px 12px; }
@@ -98,23 +140,13 @@
 .composer-hint { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; margin: 10px 6px 0; color: var(--muted-foreground); font-size: .75rem; line-height: 1.5; }
 .composer-error { margin: 10px 6px 0; color: var(--destructive); font-size: .875rem; line-height: 1.5; }
 
-.community-aside { display: none; min-height: 0; padding: 26px 32px 24px 20px; overflow-y: auto; }
-.community-aside > h2 { max-width: 17ch; margin: 0; font-family: var(--font-serif); font-size: 1.5rem; font-weight: 400; line-height: 1.3; letter-spacing: -0.02em; }
-.community-intro { margin-top: 18px; color: var(--muted-foreground); font-size: .875rem; line-height: 1.75; }
 .community-notes { display: grid; gap: 24px; margin: 32px 0 0; padding: 0; list-style: none; }
 .community-notes h3 { margin: 0; font-family: var(--font-sans); font-size: .875rem; font-weight: 600; line-height: 1.5; }
 .community-notes p { margin-top: 7px; color: var(--muted-foreground); font-size: .875rem; line-height: 1.75; }
-.community-footnote { margin-top: 44px; color: var(--muted-foreground); font-size: .75rem; line-height: 1.7; }
-.community-footnote p:first-child { margin-bottom: 8px; color: var(--foreground); font-weight: 500; }
 .foris-dialog { max-height: calc(100dvh - 40px); gap: 24px; overflow-y: auto; padding: 28px; }
 .foris-dialog .community-notes { margin-top: 0; }
 .account-options { display: grid; gap: 12px; }
 .guest-name-form { display: grid; gap: 10px; }
-
-@media (min-width: 1360px) {
-  .conversation-layout { grid-template-columns: minmax(0, 1fr) 264px; }
-  .community-aside { display: block; }
-}
 
 @media (max-width: 1023px) {
   .chat-header { min-height: 100px; padding: 20px 28px; }

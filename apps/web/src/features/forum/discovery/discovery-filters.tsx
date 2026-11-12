@@ -1,8 +1,8 @@
 import { useEffect, useId, useState } from 'react'
 import type { ReactNode } from 'react'
-import { useLocation } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import type { ForumCategory, ForumTag } from '@messages/contracts'
-import { Check, ChevronDown, ChevronLeft, ChevronRight, Compass, Cpu, FolderTree, GraduationCap, LayoutGrid, MessagesSquare, Palette, PanelLeft, Search, Tags, Wrench, X } from 'lucide-react'
+import { ArrowRight, Check, ChevronLeft, ChevronRight, Compass, Cpu, FolderTree, GraduationCap, LayoutGrid, MessagesSquare, Palette, PanelLeft, Search, Tags, Wrench, X } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
@@ -67,35 +67,34 @@ function TagFilter({ query, tags, selectedTags, onTag, resourceScope }: Pick<Pro
 function FilterPanel(props: Props) {
   return <div className="discovery-filter-panel" data-discovery-control><CategoryFilter {...props} /><TagFilter {...props} /></div>
 }
-export function DiscoveryFilters({ navigation, ...props }: Props & { navigation?: ReactNode }) {
-  const [expanded, setExpanded] = useState(true)
-  const panelId = useId()
+function ExploreLink({ to, onNavigate }: { to: string; onNavigate?: () => void }) {
+  const { pathname, search, hash } = useLocation()
+  return <Link to={to} className="discovery-explore-link" onClick={event => {
+    if (event.button !== 0 || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return
+    if (pathname + search + hash === to) window.scrollTo({ top: 0, left: 0 })
+    onNavigate?.()
+  }}>
+    <Compass aria-hidden="true" />Explorar<ArrowRight aria-hidden="true" />
+  </Link>
+}
 
+export function DiscoveryFilters({ navigation, footer, feedHref, ...props }: Props & {
+  navigation?: ReactNode; footer?: ReactNode; feedHref: (following: boolean) => string
+}) {
   return (
     <aside className="discovery-sidebar" aria-label="Explorar y filtrar publicaciones">
       <div className="discovery-sidebar-inner">
         {navigation}
-        <h2>
-          <button
-            type="button"
-            className="discovery-explore-toggle"
-            aria-controls={panelId}
-            aria-expanded={expanded}
-            onClick={() => setExpanded(open => !open)}
-          >
-            <Compass aria-hidden="true" />
-            Explorar
-            <ChevronDown className="discovery-explore-chevron" aria-hidden="true" />
-          </button>
-        </h2>
-        <div id={panelId} hidden={!expanded} data-discovery-panel>
-          <FilterPanel {...props} />
-        </div>
+        <ExploreLink to={feedHref(false)} />
+        <FilterPanel {...props} />
       </div>
+      {footer}
     </aside>
   )
 }
-export function MobileDiscoveryFilters({ navigation, ...props }: Props & { navigation?: (close: () => void) => ReactNode }) {
+export function MobileDiscoveryFilters({ navigation, footer, feedHref, ...props }: Props & {
+  navigation?: (close: () => void) => ReactNode; footer?: (close: () => void) => ReactNode; feedHref: (following: boolean) => string
+}) {
   const location = useLocation()
   const currentLocation = location.pathname + location.search
   const [open, setOpen] = useState(false)
@@ -108,7 +107,8 @@ export function MobileDiscoveryFilters({ navigation, ...props }: Props & { navig
     return () => wide.removeEventListener('change', close)
   }, [])
   const count = Number(Boolean(props.query.category || props.query.topic)) + props.query.tags.length
-  return <Sheet open={open} onOpenChange={next => { if (next) { setOpenedQuery(props.query.path); setOpenedLocation(currentLocation) } setOpen(next) }}><SheetTrigger asChild><Button type="button" variant="ghost" className="platform-explore-trigger h-11 w-11" aria-label={count ? 'Abrir explorador, ' + count + ' filtros seleccionados' : 'Abrir explorador'} title="Explorar"><PanelLeft aria-hidden="true" /></Button></SheetTrigger><SheetContent className="discovery-filter-sheet platform-filter-sheet" side="left" onCloseAutoFocus={event => {
+  const closeSheet = () => setOpen(false)
+  return <Sheet open={open} onOpenChange={next => { if (next) { setOpenedQuery(props.query.path); setOpenedLocation(currentLocation) } setOpen(next) }}><SheetTrigger asChild><Button type="button" variant="ghost" className="platform-explore-trigger h-11 w-11" aria-label={count ? 'Abrir menú y filtros, ' + count + ' filtros seleccionados' : 'Abrir menú y filtros'} title="Menú y filtros"><PanelLeft aria-hidden="true" /></Button></SheetTrigger><SheetContent className="discovery-filter-sheet platform-filter-sheet" side="left" onCloseAutoFocus={event => {
     if (openedQuery !== props.query.path || openedLocation !== currentLocation) {
       event.preventDefault()
       const heading = document.getElementById('discovery-heading')
@@ -118,12 +118,20 @@ export function MobileDiscoveryFilters({ navigation, ...props }: Props & { navig
       else results?.scrollIntoView({ block: 'start' })
     } else if (window.matchMedia('(min-width: 1024px)').matches) {
       event.preventDefault()
-      const selected = document.querySelector<HTMLElement>('.discovery-sidebar [data-discovery-panel]:not([hidden]) [aria-pressed="true"]')
-      const toggle = document.querySelector<HTMLElement>('.discovery-explore-toggle')
-      const focusTarget = selected ?? toggle
+      const selected = document.querySelector<HTMLElement>('.discovery-sidebar .discovery-filter-panel [aria-pressed="true"]')
+      const explore = document.querySelector<HTMLElement>('.discovery-sidebar .discovery-explore-link')
+      const focusTarget = selected ?? explore
       focusTarget?.focus({ preventScroll: true })
     }
-  }}><SheetHeader><SheetTitle className="discovery-explore-title"><Compass aria-hidden="true" />Explorar</SheetTitle><SheetDescription className="sr-only">Navega por Foris y encuentra publicaciones por temática y etiquetas.</SheetDescription></SheetHeader><div className="discovery-filter-sheet-body">{navigation?.(() => setOpen(false))}<FilterPanel {...props} /></div><SheetFooter><SheetClose asChild><Button type="button" className="h-11">Continuar</Button></SheetClose>{props.query.filtered && <Button type="button" variant="ghost" className="h-11" onClick={props.onClear}>Quitar filtros</Button>}</SheetFooter></SheetContent></Sheet>
+  }}>
+    <SheetHeader><SheetTitle className="discovery-explore-title"><PanelLeft aria-hidden="true" />Menú y filtros</SheetTitle><SheetDescription className="sr-only">Navega por Foris y encuentra publicaciones por temática y etiquetas.</SheetDescription></SheetHeader>
+    <div className="discovery-filter-sheet-body">
+      {navigation?.(closeSheet)}
+      <ExploreLink to={feedHref(false)} onNavigate={closeSheet} />
+      <FilterPanel {...props} />
+    </div>
+    <SheetFooter><SheetClose asChild><Button type="button" className="h-11">Continuar</Button></SheetClose>{props.query.filtered && <Button type="button" variant="ghost" className="h-11" onClick={props.onClear}>Quitar filtros</Button>}{footer?.(closeSheet)}</SheetFooter>
+  </SheetContent></Sheet>
 }
 export function ActiveDiscoveryFilters(props: Props) {
   const { query } = props

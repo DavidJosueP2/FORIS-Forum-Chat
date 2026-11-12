@@ -21,12 +21,13 @@ interface MessageFeedProps {
   olderError: string | null
   loadOlder: () => Promise<boolean>
   reconnect: () => void
-  onSuggestion: (body: string) => void
+  onSuggestion?: (body: string) => void
+  roomName?: string
 }
 
 export function MessageFeed({
   messages, senderId, accountId, historyStatus, historyError, hasOlder,
-  loadingOlder, olderError, loadOlder, reconnect, onSuggestion,
+  loadingOlder, olderError, loadOlder, reconnect, onSuggestion, roomName,
 }: MessageFeedProps) {
   const viewportRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -99,7 +100,7 @@ export function MessageFeed({
         }}
         tabIndex={0}
         role="region"
-        aria-label="Historial del chat global"
+        aria-label={roomName ? 'Historial de ' + roomName : 'Historial del chat global'}
       >
         <div className={'feed-content' + (!hasMessages ? ' feed-content-empty' : '')}>
           {historyError && (
@@ -126,16 +127,16 @@ export function MessageFeed({
           {historyStatus === 'ready' && !hasMessages && (
             <div className="chat-empty">
               <ForisCharacter scene="chat" width={116} height={116} />
-              <h2>Rompe el hielo.</h2>
-              <p>El chat global es un espacio abierto. Comparte una idea, una pregunta o simplemente saluda.</p>
-              <div className="empty-suggestions">
+              <h2>{roomName ? 'Empieza la conversación' : 'Rompe el hielo.'}</h2>
+              <p>{roomName ? 'Envía el primer mensaje.' : 'El chat global es un espacio abierto. Comparte una idea, una pregunta o simplemente saluda.'}</p>
+              {onSuggestion && <div className="empty-suggestions">
                 <Button variant="secondary" className="h-11 px-5" onClick={() => onSuggestion('Hola, soy nuevo por aquí. ¿Cómo están?')}>
                   Decir hola
                 </Button>
                 <Button variant="secondary" className="h-11 px-5" onClick={() => onSuggestion('¿Qué están aprendiendo estos días?')}>
                   Hacer una pregunta
                 </Button>
-              </div>
+              </div>}
             </div>
           )}
           {hasOlder && (

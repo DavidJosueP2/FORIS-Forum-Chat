@@ -14,15 +14,17 @@ interface MessageComposerProps {
   profile: GuestProfile
   draft: string
   onDraftChange: (body: string) => void
-  onNameChange: (name: string) => void
+  onNameChange?: (name: string) => void
   onSent: (body: string) => void
   sendMessage: (input: MessageInput) => Promise<void>
   inputRef: RefObject<HTMLTextAreaElement | null>
   identityPending?: boolean
+  roomName?: string
+  audience?: string
 }
 
 export function MessageComposer({
-  profile, draft, onDraftChange, onNameChange, onSent, sendMessage, inputRef, identityPending = false,
+  profile, draft, onDraftChange, onNameChange, onSent, sendMessage, inputRef, identityPending = false, roomName = 'General', audience,
 }: MessageComposerProps) {
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -57,20 +59,20 @@ export function MessageComposer({
 
   return (
     <div className="composer-area">
-      <div className="composer-identity">
+      {!audience && <div className="composer-identity">
         <span>Escribes como</span>
         {profile.accountId
           ? <Button asChild variant="ghost" className="guest-name-trigger h-11"><Link to="/profile"><span>{profile.name}</span></Link></Button>
-          : <GuestNameDialog profile={profile} onNameChange={onNameChange} />}
+          : onNameChange && <GuestNameDialog profile={profile} onNameChange={onNameChange} />}
         <span className="guest-label">{profile.accountId ? 'Miembro' : profile.name !== 'Invitado' ? 'Invitado' : ''}</span>
-      </div>
+      </div>}
       <form
         className="message-composer"
-        aria-label="Escribir en General"
+        aria-label={'Escribir en ' + roomName}
         aria-busy={sending}
         onSubmit={event => { event.preventDefault(); void submit() }}
       >
-        <label htmlFor="message-body" className="sr-only">Mensaje para General</label>
+        <label htmlFor="message-body" className="sr-only">Mensaje para {roomName}</label>
         <Textarea
           ref={inputRef}
           id="message-body"
@@ -90,7 +92,7 @@ export function MessageComposer({
           }}
           readOnly={sending}
           maxLength={MAX_MESSAGE_LENGTH}
-          placeholder="Comparte algo con General…"
+          placeholder={audience ? 'Escribe un mensaje…' : 'Comparte algo con General…'}
           aria-describedby={error ? 'composer-error composer-hint' : 'composer-hint'}
           aria-invalid={Boolean(error)}
           className="composer-input"
@@ -116,7 +118,7 @@ export function MessageComposer({
         </p>
       )}
       <p id="composer-hint" className="composer-hint">
-        <span>Lo que escribes es público.</span>
+        <span>{audience ?? 'Lo que escribes es público.'}</span>
         <span className="keyboard-hint">Ctrl o ⌘ + Enter para enviar</span>
       </p>
     </div>

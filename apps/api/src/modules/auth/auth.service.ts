@@ -29,8 +29,9 @@ export class AuthService {
   }
   async register(body: unknown) {
     this.sessions.requireEnabled();
+    const fields = validate.record(body, ['email', 'password', 'displayName', 'termsVersion']);
+    const version = validate.termsVersion(fields.termsVersion);
     this.mail.requireEnabled();
-    const fields = validate.record(body, ['email', 'password', 'displayName']);
     const email = validate.email(fields.email);
     const displayName = validate.text(fields.displayName, 'El nombre visible', 32);
     const passwordHash = await hashPassword(validate.password(fields.password));
@@ -43,27 +44,29 @@ export class AuthService {
       const eligible = user && !user.email_verified_at;
       // El hash elegido pertenece a esta solicitud; solo se aplica al demostrar el correo.
       return this.otp.issue(client, eligible ? user.id : null, email, 'verify_email',
-        eligible ? { passwordHash, displayName } : {}, Boolean(eligible));
+        eligible ? { passwordHash, displayName, termsVersion: version } : {}, Boolean(eligible));
     });
   }
   async verifyEmail(body: unknown) {
-    const fields = validate.challengeInput(body);
+    const fields = validate.challengeInput(body, ['termsVersion']);
     return this.otp.consume(fields.challengeId, fields.code, 'verify_email', undefined, async (client, row) => {
       const user = await this.repository.user(row.user_id!, client, true);
       if (!user || user.email_verified_at || user.email !== row.email
         || typeof row.payload.passwordHash !== 'string' || typeof row.payload.displayName !== 'string') {
         throw new HttpError(400, 'OTP_INVALID', 'Esta solicitud ya no es válida.');
       }
+      const version = validate.termsVersion(fields.termsVersion ?? row.payload.termsVersion);
       await client.query(`UPDATE users SET password_hash = $2, display_name = $3,
         email_verified_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
       [user.id, row.payload.passwordHash, row.payload.displayName]);
       await this.otp.invalidateUser(client, user.id);
+      await this.repository.acceptTerms(client, user.id, version);
       return this.sessions.issue(client, user.id, true);
     });
   }
   async login(body: unknown) {
     this.sessions.requireEnabled();
-    const fields = validate.record(body, ['email', 'password']);
+    const fields = validate.record(body, ['email', 'password', 'termsVersion']);
     const email = validate.email(fields.email);
     const password = validate.password(fields.password, false);
     const key = keyedHash(this.config.secret, 'login', email);
@@ -111,7 +114,7 @@ export class AuthService {
     await this.otp.consume(fields.challengeId, fields.code, 'reset_password', undefined, async (client, row) => {
       const user = await this.repository.user(row.user_id!, client, true);
       if (!user || user.email !== row.email) throw new HttpError(400, 'OTP_INVALID', 'Esta solicitud ya no es válida.');
-      await client.query(`UPDATE users SET password_hash = $2, email_verified_at = COALESCE(email_verified_at,CURRENT_TIMESTAMP),
+      await client.query(`UPDATE users SET password_hash = $2,
         updated_at = CURRENT_TIMESTAMP WHERE id = $1`, [user.id, await hashPassword(password)]);
       await client.query('DELETE FROM auth_sessions WHERE user_id = $1', [user.id]);
       await client.query('DELETE FROM auth_login_attempts WHERE email_hash = $1', [keyedHash(this.config.secret, 'login', user.email)]);

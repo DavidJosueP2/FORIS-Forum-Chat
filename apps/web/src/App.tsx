@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { ForumShell } from '@/features/forum/components/forum-shell'
-import { ChatHome } from '@/features/chat/components/chat-home'
+import { ChatsPage } from '@/features/chat/components/chats-page'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { LoginPage } from '@/features/account/pages/login-page'
 import { ProfilePage } from '@/features/account/pages/profile-page'
@@ -16,6 +16,7 @@ import { CreateCommunityPage } from '@/features/communities/pages/create-communi
 import { NotificationsPage } from '@/features/communities/pages/notifications-page'
 import { InvitationPage } from '@/features/communities/pages/invitation-page'
 import { usePageTitle } from '@/hooks/use-page-title'
+import { LegalPage } from '@/features/legal/legal-page'
 
 function TitledPage({ title, children }: { title: string; children: ReactNode }) {
   usePageTitle(title)
@@ -29,7 +30,8 @@ function App() {
       <Routes>
         <Route element={<ForumShell />}>
           <Route path="/" element={<ForumPage />} />
-          <Route path="/chat" element={<TitledPage title="Chat global"><ChatHome /></TitledPage>} />
+          <Route path="/chat/:room?" element={<ChatsPage />} />
+          <Route path="/legal/:document?" element={<LegalPage />} />
           <Route path="/publicar" element={<TitledPage title="Crear publicación"><CreatePostPage /></TitledPage>} />
           <Route path="/publicaciones/:postId" element={<PostPage />} />
           <Route path="/publicaciones/:postId/editar" element={<TitledPage title="Editar publicación"><EditPostPage /></TitledPage>} />

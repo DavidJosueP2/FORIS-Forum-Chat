@@ -11,7 +11,7 @@ const tables = [
   'forum_posts', 'forum_post_tags', 'forum_replies', 'forum_post_edits', 'forum_post_votes',
   'forum_reply_votes', 'author_follows', 'communities', 'community_memberships', 'community_preferences',
   'community_notifications', 'community_invitations', 'media', 'media_quotas', 'media_events', 'media_metrics',
-  'video_call_room', 'video_call_members', 'video_call_signals', 'chat_presence_rooms', 'chat_presence_leases',
+  'video_call_room', 'video_call_members', 'video_call_signals', 'chat_presence_rooms', 'chat_presence_leases', 'conversation_messages',
 ].map(name => 'public.' + name).join(', ');
 
 export function resetLocalDatabase(pool: Pool, database: string, media: MediaConfig, apply: boolean) {

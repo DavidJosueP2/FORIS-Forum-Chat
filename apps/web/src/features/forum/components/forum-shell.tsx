@@ -6,6 +6,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AccountEntry } from '@/features/account/components/account-entry'
 import { ForisCharacter } from '@/components/brand/foris-character'
 import { NotificationEntry } from '@/features/communities/components/notification-entry'
+import { LegalEntry } from '@/features/legal/legal-page'
 import { DiscoveryProvider } from '../discovery/discovery-provider'
 import { useDiscovery } from '../discovery/use-discovery'
 import { DiscoverySearch } from '../discovery/discovery-search'
@@ -15,7 +16,7 @@ import '@/features/communities/communities.css'
 import '../discovery/discovery.css'
 import './platform-shell.css'
 
-const navigation = [{ to: '/', label: 'Foros', end: true, icon: MessagesSquare }, { to: '/comunidades', label: 'Comunidades', end: false, icon: UsersRound }, { to: '/chat', label: 'Chat global', end: false, icon: MessageCircle }]
+const navigation = [{ to: '/', label: 'Foros', end: true, icon: MessagesSquare }, { to: '/comunidades', label: 'Comunidades', end: false, icon: UsersRound }, { to: '/chat', label: 'Chats', end: false, icon: MessageCircle }]
 function PlatformNavigation({ onNavigate, icons = false }: { onNavigate?: () => void; icons?: boolean }) {
   return <nav className="forum-navigation" aria-label="Navegación principal">
     {navigation.map(item => <NavLink key={item.to} to={item.to} end={item.end} onClick={onNavigate}>{icons && <item.icon className="platform-navigation-icon" aria-hidden="true" />}{item.label}</NavLink>)}
@@ -31,7 +32,10 @@ function PlatformFrame() {
   const header = useRef<HTMLElement>(null)
   const account = pathname === '/login' || pathname === '/profile'
   const access = pathname === '/login'
-  const chat = pathname === '/chat'
+  const chat = pathname === '/chat' || pathname.startsWith('/chat/')
+  const legal = pathname === '/legal' || pathname.startsWith('/legal/')
+  const compact = access || chat || legal
+  const showSidebarLegal = pathname === '/' || pathname === '/publicar' || pathname.startsWith('/publicaciones/') || pathname === '/comunidades' || pathname.startsWith('/comunidades/')
   const contentId = chat ? 'conversation' : account ? 'account-content' : 'forum-content'
   const community = /^\/comunidades\/([1-9]\d{0,18})$/u.exec(pathname)?.[1] ?? (pathname === '/publicar' ? new URLSearchParams(search).get('comunidad') : null)
   const create = '/publicar' + (community && /^[1-9]\d{0,18}$/u.test(community) ? '?comunidad=' + encodeURIComponent(community) : '')
@@ -49,15 +53,19 @@ function PlatformFrame() {
     observer.observe(element)
     return () => observer.disconnect()
   }, [])
-  return <div ref={shell} className={'forum-app forum-platform' + (access ? ' platform-access' : '')}>
+  return <div ref={shell} className={'forum-app forum-platform' + (access ? ' platform-access' : chat ? ' platform-chat' : legal ? ' platform-legal' : '')}>
     <a href={'#' + contentId} className="forum-skip">Ir al contenido</a>
     <header ref={header} className="forum-header platform-header">
-      <div className="platform-brand">{access ? <CompactNavigation /> : <MobileDiscoveryFilters {...discovery} navigation={close => <PlatformNavigation icons onNavigate={close} />} />}<Link to="/" className="forum-wordmark" aria-label="Foris, inicio"><ForisCharacter scene="brand" width={32} height={32} className="platform-brand-mark" /><span>Foris</span></Link></div>
+      <div className="platform-brand">{compact ? <CompactNavigation /> : <MobileDiscoveryFilters {...discovery} navigation={close => <PlatformNavigation icons onNavigate={close} />} footer={showSidebarLegal ? close => <LegalEntry onNavigate={close} /> : undefined} />}<Link to="/" className="forum-wordmark" aria-label="Foris, inicio"><ForisCharacter scene="brand" width={32} height={32} className="platform-brand-mark" /><span>Foris</span></Link></div>
       <div className="platform-top-navigation"><PlatformNavigation /></div>
-      <div className="platform-navbar-tools"><DiscoverySearch key={discovery.searchReset} navigationKey={pathname} applied={discovery.query.search} onSearch={discovery.onSearch} /><Button asChild className="platform-create h-11 px-4"><Link to={create} aria-label="Crear publicación"><Plus aria-hidden="true" /><span className="platform-create-label">Crear publicación</span><span className="platform-create-short">Crear</span></Link></Button></div>
+      {!chat && !legal && <div className="platform-navbar-tools">
+        <DiscoverySearch key={discovery.searchReset} navigationKey={pathname} applied={discovery.query.search} onSearch={discovery.onSearch} />
+        <Button asChild className="platform-create h-11 px-4"><Link to={create} aria-label="Crear publicación"><Plus aria-hidden="true" /><span className="platform-create-label">Crear publicación</span><span className="platform-create-short">Crear</span></Link></Button>
+      </div>}
       <div className="forum-account"><NotificationEntry /><AccountEntry /></div>
     </header>
-    {!access && <DiscoveryFilters {...discovery} navigation={<div className="platform-side-navigation"><PlatformNavigation icons /></div>} />}
+    {!compact && <DiscoveryFilters {...discovery} navigation={<div className="platform-side-navigation"><PlatformNavigation icons /></div>}
+      footer={showSidebarLegal ? <div className={pathname === '/' ? 'discovery-sidebar-footer discovery-sidebar-footer-compact' : 'discovery-sidebar-footer'}><LegalEntry /></div> : undefined} />}
     <div className={'platform-content' + (chat ? ' platform-content-chat' : '')}><Outlet /></div>
   </div>
 }

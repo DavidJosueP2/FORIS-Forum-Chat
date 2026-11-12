@@ -6,3 +6,4 @@ export type { ForumNodeType, ForumMarkType, ForumAttributes, ForumContentMark, F
 export type { CommunityRef, Community, CreateCommunity, CommunityPreferences, CommunityNotification, CommunityInvitation, InvitationPreview } from './communities.js';
 export type { ImageMime, ImagePurpose, MediaState, MediaImage, MediaMetadata, MediaOptions, MediaUploadIntent, MediaReadUrl, MediaUsage } from './media.js';
 export type { VideoCallPeer, VideoDescription, VideoSignal, VideoCallStatus, VideoCallSync, VideoCallJoin } from './video-calls.js';
+export type { Conversation } from './conversations.js';

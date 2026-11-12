@@ -10,9 +10,10 @@ import { MediaModule } from './modules/media/media.module.js';
 import { HealthModule } from './modules/health/health.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { VideoCallModule } from './modules/video-calls/video-call.module.js';
+import { ConversationsModule } from './modules/conversations/conversations.module.js';
 
 @Module({
-  imports: [ConfigurationModule, DatabaseModule, HealthModule, AuthModule, CommunitiesModule, MediaModule, ForumModule, MessagesModule, VideoCallModule],
+  imports: [ConfigurationModule, DatabaseModule, HealthModule, AuthModule, CommunitiesModule, MediaModule, ForumModule, MessagesModule, ConversationsModule, VideoCallModule],
   providers: [{ provide: APP_FILTER, useClass: ApiExceptionFilter }],
 })
 export class AppModule {}

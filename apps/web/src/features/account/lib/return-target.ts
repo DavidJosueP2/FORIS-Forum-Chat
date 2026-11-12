@@ -3,6 +3,7 @@ export function returnTarget(value: unknown): string {
   if (value === '/?vista=siguiendo') return value
   if (/^\/personas\/[\da-fA-F]{8}-(?:[\da-fA-F]{4}-){3}[\da-fA-F]{12}(?:\?vista=comunidades)?$/u.test(value)) return value
   if (/^\/(?:profile|chat|comunidades(?:\/crear)?|notificaciones)?$/u.test(value)) return value
+  if (/^\/chat\/(?:community:[1-9]\d{0,18}|direct:[\da-f]{8}-(?:[\da-f]{4}-){3}[\da-f]{12})$/u.test(value)) return value
   if (/^\/comunidades\/[1-9]\d{0,18}$/u.test(value)) return value
   if (/^\/invitaciones\/[A-Za-z0-9_-]{43}$/u.test(value)) return value
   const publication = /^\/publicar(?:\?([^#]*))?$/u.exec(value)

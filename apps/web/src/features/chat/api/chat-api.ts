@@ -1,5 +1,5 @@
 import type { Message, MessageInput, MessagePage } from '@messages/contracts'
-import { AUTH_EVENT } from '@/features/account/api/account-api'
+import { AccountApiError, AUTH_EVENT } from '@/features/account/api/account-api'
 
 export class ChatApiError extends Error {
   readonly status: number
@@ -74,7 +74,7 @@ export async function postMessage(input: MessageInput, asAccount = false): Promi
 }
 
 export function describeChatError(error: unknown): string {
-  return error instanceof ChatApiError
+  return error instanceof ChatApiError || error instanceof AccountApiError
     ? error.message
     : 'No pudimos conectar con Foris. Revisa tu conexión y vuelve a intentarlo.'
 }

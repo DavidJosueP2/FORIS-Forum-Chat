@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import type { AuthSession, OtpChallenge } from '@messages/contracts'
 import { LoaderCircle } from 'lucide-react'
@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { usePageTitle } from '@/hooks/use-page-title'
 import { ForisFamily } from '@/components/brand/foris-family'
+import { legalRevision } from '@/features/legal/legal-documents'
+import { useResource } from '@/features/forum/hooks/use-forum'
 import { AccountShell } from '../components/account-shell'
 import { PasswordField } from '../components/password-field'
 import { OtpForm } from '../components/otp-form'
@@ -24,16 +26,36 @@ const googleErrors: Record<string, string> = {
   SESSION_REQUIRED: 'Tu sesión terminó. Vuelve a entrar.',
   GOOGLE_ALREADY_LINKED: 'Tu perfil ya tiene una cuenta de Google vinculada.',
 }
+
+function TermsAcceptance({ checked, onChange, disabled }: {
+  checked: boolean; onChange: (value: boolean) => void; disabled: boolean
+}) {
+  const id = useId()
+  return <div className="auth-terms">
+    <label htmlFor={id} className="auth-terms-label">
+      <input id={id} type="checkbox" required checked={checked} disabled={disabled} onChange={event => onChange(event.target.checked)} />
+      Acepto los términos y condiciones de Foris.
+    </label>
+    <div className="auth-terms-links">
+      <Link to="/legal/terminos" target="_blank" rel="noopener">Leer los términos</Link>
+      <Link to="/legal/privacidad" target="_blank" rel="noopener">Política de privacidad</Link>
+    </div>
+  </div>
+}
+
 export function LoginPage() {
   const auth = useAuth()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const next = returnTarget(params.get('next'))
+  const googleSignup = params.get('mode') === 'google-signup'
+  const signup = useResource<{ email: string; displayName: string }>(googleSignup ? 'auth/google/signup' : null)
   const mode = params.get('mode') === 'register' ? 'register' : params.get('mode') === 'recover' ? 'recover' : 'login'
   const [email, setEmail] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [password, setPassword] = useState('')
   const [confirmation, setConfirmation] = useState('')
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [pending, setPending] = useState(readPendingOtp)
   const pendingRef = useRef(pending)
   const [busy, setBusy] = useState(false)
@@ -53,19 +75,25 @@ export function LoginPage() {
     setNotice(null)
     setPassword('')
     setConfirmation('')
+    setAcceptedTerms(false)
     setParams(value === 'login' ? { next } : { mode: value, next })
   }
   async function submit() {
-    if (guard.current) return
+    if (guard.current || ((googleSignup || mode === 'register') && !acceptedTerms)) return
     guard.current = true
     setBusy(true)
     setError(null)
     setNotice(null)
     try {
-      if (mode === 'register') {
+      if (googleSignup) {
+        const result = await accountRequest<{ session: AuthSession; returnTo: string }>('auth/google/signup', 'POST', { termsVersion: legalRevision })
+        auth.applySession(result.session)
+        remember(null)
+        navigate(returnTarget(result.returnTo), { replace: true })
+      } else if (mode === 'register') {
         if (password !== confirmation) throw new Error('Las contraseñas no coinciden.')
-        const challenge = await accountRequest<OtpChallenge>('auth/register', 'POST', { email, password, displayName })
-        remember({ kind: 'verify', email, challenge, returnTo: next })
+        const challenge = await accountRequest<OtpChallenge>('auth/register', 'POST', { email, password, displayName, termsVersion: legalRevision })
+        remember({ kind: 'verify', email, challenge, returnTo: next, termsVersion: legalRevision })
       } else if (mode === 'recover') {
         const challenge = await accountRequest<OtpChallenge>('auth/password/forgot', 'POST', { email })
         remember({ kind: 'reset', email, challenge, returnTo: next })
@@ -86,7 +114,8 @@ export function LoginPage() {
   const unavailable = auth.status === 'loading' || !auth.options.enabled
   const mailUnavailable = mode !== 'login' && !auth.options.emailDelivery
   const providerError = params.get('error')
-  const title = pending ? pending.kind === 'verify' ? 'Confirma tu correo' : 'Cambia tu contraseña'
+  const verifyNeedsTerms = pending?.kind === 'verify' && pending.termsVersion !== legalRevision
+  const title = googleSignup ? 'Completa tu registro con Google' : pending ? pending.kind === 'verify' ? 'Confirma tu correo' : 'Cambia tu contraseña'
     : mode === 'register' ? 'Crear cuenta' : mode === 'recover' ? 'Recuperar acceso' : 'Entrar'
   usePageTitle(title)
   return (
@@ -100,18 +129,18 @@ export function LoginPage() {
         </aside>
         <section className="auth-main" aria-labelledby="access-title">
           <div className="auth-form-column">
-            {!pending && (
+            {!pending && !googleSignup && (
               <div className="auth-mode-switch" role="group" aria-label="Forma de acceso">
                 <Button variant={mode === 'login' ? 'default' : 'ghost'} className="h-11 px-6" disabled={busy} aria-pressed={mode === 'login'} onClick={() => changeMode('login')}>Entrar</Button>
                 <Button variant={mode === 'register' ? 'default' : 'ghost'} className="h-11 px-6" disabled={busy} aria-pressed={mode === 'register'} onClick={() => changeMode('register')}>Crear cuenta</Button>
               </div>
             )}
             <h1 id="access-title">
-              {pending ? pending.kind === 'verify' ? 'Confirma tu correo' : 'Una contraseña nueva'
+              {googleSignup ? title : pending ? pending.kind === 'verify' ? 'Confirma tu correo' : 'Una contraseña nueva'
                 : mode === 'register' ? 'Encuentra tu lugar' : mode === 'recover' ? 'Recupera tu acceso' : 'Qué bueno verte'}
             </h1>
             <p className="auth-description">
-              {pending ? 'Si la solicitud corresponde, recibirás un código en ' + pending.email + '.'
+              {googleSignup ? 'Confirma los términos para crear tu cuenta de Foris.' : pending ? 'Si la solicitud corresponde, recibirás un código en ' + pending.email + '.'
                 : mode === 'register' ? 'Elige cómo quieres entrar a Foris.'
                   : mode === 'recover' ? 'Te enviaremos un código para crear una nueva contraseña.'
                     : 'Entra con Google o con tu correo y contraseña.'}
@@ -122,10 +151,21 @@ export function LoginPage() {
             {auth.status === 'error' && (
               <div className="account-status" role="alert"><p>{auth.error}</p><Button variant="secondary" className="h-11" onClick={() => void auth.refresh()}>Volver a conectar</Button></div>
             )}
-            {pending ? (
+            {googleSignup ? <>
+              {signup.loading && <p role="status" className="account-hint">Comprobando la cuenta de Google…</p>}
+              {signup.error && <p role="alert" className="account-error">{signup.error}</p>}
+              {signup.data && <form className="account-form" onSubmit={event => { event.preventDefault(); void submit() }} aria-busy={busy}>
+                <div className="google-linked-email"><strong>{signup.data.displayName}</strong><span>{signup.data.email}</span></div>
+                <TermsAcceptance checked={acceptedTerms} onChange={setAcceptedTerms} disabled={busy} />
+                {error && <p role="alert" className="account-error">{error}</p>}
+                <Button type="submit" className="h-12 w-full" disabled={busy || !acceptedTerms}>Crear mi cuenta</Button>
+              </form>}
+              <Button type="button" variant="ghost" className="mt-3 h-11 w-full" disabled={busy} onClick={() => changeMode('login')}>Volver al acceso</Button>
+            </> : pending ? (
               <>
                 <OtpForm key={pending.challenge.challengeId + pending.challenge.resendAt}
                   challenge={pending.challenge}
+                  confirmDisabled={verifyNeedsTerms && !acceptedTerms}
                   onResent={challenge => {
                     const current = pendingRef.current
                     if (current?.challenge.challengeId === challenge.challengeId) remember({ ...current, challenge })
@@ -136,7 +176,7 @@ export function LoginPage() {
                     guard.current = true
                     try {
                       if (pending.kind === 'verify') {
-                        const session = await accountRequest<AuthSession>('auth/verify-email', 'POST', { challengeId: pending.challenge.challengeId, code })
+                        const session = await accountRequest<AuthSession>('auth/verify-email', 'POST', { challengeId: pending.challenge.challengeId, code, termsVersion: verifyNeedsTerms && acceptedTerms ? legalRevision : undefined })
                         auth.applySession(session)
                         remember(null)
                         navigate(returnTarget(pending.returnTo ?? next), { replace: true })
@@ -147,11 +187,13 @@ export function LoginPage() {
                         remember(null)
                         setPassword('')
                         setConfirmation('')
+                        setAcceptedTerms(false)
                         setParams({ next: returnTarget(pending.returnTo ?? next) })
                         setNotice('Tu contraseña se actualizó. Ya puedes entrar con ella.')
                       }
                     } finally { setBusy(false); guard.current = false }
                   }}>
+                  {verifyNeedsTerms && <TermsAcceptance checked={acceptedTerms} onChange={setAcceptedTerms} disabled={busy} />}
                   {pending.kind === 'reset' && <>
                     <PasswordField label="Nueva contraseña" creating value={password} onChange={setPassword} />
                     <PasswordField label="Repite la contraseña" creating confirm value={confirmation} onChange={setConfirmation} />
@@ -180,8 +222,9 @@ export function LoginPage() {
                     <div className="account-field"><label htmlFor="access-email">Correo electrónico</label><Input id="access-email" name="email" type="email" autoComplete="email" required maxLength={254} value={email} onChange={event => setEmail(event.target.value)} /></div>
                     {mode !== 'recover' && <PasswordField label="Contraseña" creating={mode === 'register'} value={password} onChange={setPassword} />}
                     {mode === 'register' && <PasswordField label="Repite la contraseña" creating confirm value={confirmation} onChange={setConfirmation} />}
+                    {mode === 'register' && <TermsAcceptance checked={acceptedTerms} onChange={setAcceptedTerms} disabled={busy} />}
                     {error && <p className="account-error" role="alert">{error}</p>}
-                    <Button type="submit" className="h-12 w-full">{busy && <LoaderCircle className="animate-spin" aria-hidden="true" />}{mode === 'register' ? 'Crear cuenta' : mode === 'recover' ? 'Recibir código' : 'Entrar a Foris'}</Button>
+                    <Button type="submit" className="h-12 w-full" disabled={mode === 'register' && !acceptedTerms}>{busy && <LoaderCircle className="animate-spin" aria-hidden="true" />}{mode === 'register' ? 'Crear cuenta' : mode === 'recover' ? 'Recibir código' : 'Entrar a Foris'}</Button>
                   </fieldset>
                 </form>
                 {error && busy && <p className="account-error" role="alert">{error}</p>}

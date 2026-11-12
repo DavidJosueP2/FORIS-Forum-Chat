@@ -48,10 +48,22 @@ export class AuthController {
   @Post('google/start') startGoogle(@Body() body: unknown, @Req() request: AuthRequest, @Res({ passthrough: true }) response: Response) {
     return this.google.start(body, request, response);
   }
+  @Get('google/signup') googleSignup(@Req() request: AuthRequest) { return this.google.signupDetails(request); }
+  @Post('google/signup') async finishGoogleSignup(@Body() body: unknown, @Req() request: AuthRequest, @Res({ passthrough: true }) response: Response) {
+    const { grant, returnTo } = await this.google.finishSignup(body, request);
+    this.google.clearSignupCookie(response);
+    this.sessions.setCookie(response, grant);
+    return { session: this.sessions.view(grant.context), returnTo };
+  }
   @Get('google/callback') async callback(@Query() query: Record<string, unknown>, @Req() request: AuthRequest, @Res() response: Response) {
     this.google.clearCookie(response);
     try {
       const result = await this.google.callback(query, request);
+      if (result.signup) {
+        this.google.setSignupCookie(response, result.signup);
+        response.redirect(303, '/login?' + new URLSearchParams({ mode: 'google-signup', next: result.returnTo }));
+        return;
+      }
       this.sessions.setCookie(response, result.grant);
       response.redirect(303, result.intent === 'login' ? result.returnTo : '/profile?notice=' + (result.intent === 'link' ? 'google_linked' : 'reauthenticated'));
     } catch (error) {

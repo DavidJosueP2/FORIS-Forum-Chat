@@ -64,7 +64,10 @@ function CommunitiesIndex() {
   const path = 'communities?' + filters.toString()
   const list = <CommunityList key={path + (auth.session.user?.id ?? 'guest') + auth.status} path={path} scope={scope} searched={Boolean(search)} />
   return <main id="forum-content" className="forum-main community-directory" tabIndex={-1}>
-    <header className="forum-intro"><div><h1>Encuentra tu gente.</h1><p>Un espacio para las ideas que compartes y las personas con quienes quieres seguir conversando.</p></div><Button asChild className="h-12 px-6"><Link to="/comunidades/crear"><Plus aria-hidden="true" />Crear comunidad</Link></Button></header>
+    <header className="forum-intro">
+      <div><h1>Encuentra tu gente.</h1><p>Un espacio para las ideas que compartes y las personas con quienes quieres seguir conversando.</p></div>
+      <Button asChild className="h-12 px-6"><Link to="/comunidades/crear"><Plus aria-hidden="true" />Crear comunidad</Link></Button>
+    </header>
     <div className="community-directory-tools">
       <form className="forum-search" role="search" onSubmit={event => { event.preventDefault(); const next = new URLSearchParams(params); if (query.trim()) next.set('q', query.trim()); else next.delete('q'); setParams(next) }}>
         <label htmlFor="community-search">Busca una comunidad</label><div><Input id="community-search" type="search" maxLength={120} value={query} onChange={event => setQuery(event.target.value)} placeholder="Nombre o interés…" /><Button type="submit" variant="secondary" className="h-12 px-5"><Search aria-hidden="true" />Buscar</Button></div>

@@ -1,7 +1,7 @@
 import { publicProfileLink } from '@/features/account/lib/public-profile'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Bell, LockKeyhole, Plus, Star, UsersRound } from 'lucide-react'
+import { ArrowLeft, Bell, LockKeyhole, MessageCircle, Plus, Star, UsersRound } from 'lucide-react'
 import type { Community, CommunityPreferences } from '@messages/contracts'
 import { Button } from '@/components/ui/button'
 import { usePageTitle } from '@/hooks/use-page-title'
@@ -43,10 +43,11 @@ function CommunityControls({ community, onChanged }: { community: Community; onC
   return <section className="community-controls" aria-label="Tu relación con esta comunidad" aria-busy={busy}>
     <div className="forum-actions">
       {!community.membership && <Button className="h-11 px-6" disabled={busy} onClick={() => void change('join')}>Unirme</Button>}
+      {community.membership && <Button asChild className="h-11 px-5"><Link to={'/chat/community:' + community.id}><MessageCircle aria-hidden="true" />Abrir chat</Link></Button>}
       <Button variant="secondary" className="h-11 px-5 community-star" data-active={community.isFavorite} aria-pressed={community.isFavorite} disabled={busy} onClick={() => void change('preferences', { favorite: !community.isFavorite })}><Star aria-hidden="true" />{community.isFavorite ? 'En favoritas' : 'Guardar favorita'}</Button>
-      {community.membership?.role === 'member' && <Button variant="ghost" className="h-11 px-5" disabled={busy} onClick={() => void change('leave')}>Salir de la comunidad</Button>}
     </div>
     {community.membership && <label className="community-notification-setting"><input type="checkbox" checked={community.membership.notifyPosts} disabled={busy} onChange={event => void change('preferences', { notifyPosts: event.target.checked })} /><span><strong><Bell aria-hidden="true" />Avisos de publicaciones</strong></span></label>}
+    {community.membership?.role === 'member' && <Button variant="ghost" className="community-leave h-11" disabled={busy} onClick={() => void change('leave')}>Salir de la comunidad</Button>}
     {error && <p className="forum-error" role="alert">{error}</p>}
     {notice && <p className="sr-only" role="status">{notice}</p>}
   </section>
@@ -62,14 +63,12 @@ function CommunityContent({ id }: { id: string }) {
   if (!community.data) return null
   const item = community.data
   return <>
+    <Link to="/comunidades" className="community-directory-back"><ArrowLeft aria-hidden="true" />Todas las comunidades</Link>
     <header className="community-heading">
       <div className="community-identity">
         <IdentityImage fallbackKey={'community:' + item.id} mediaId={item.imageId} name={item.name} className="community-photo" />
         <div>
-          <div className="community-page-title">
-            <Button asChild variant="ghost" size="icon" className="h-11 w-11 shrink-0"><Link to="/comunidades" aria-label="Volver a comunidades" title="Volver"><ArrowLeft aria-hidden="true" /></Link></Button>
-            <h1>{item.name}</h1>
-          </div>
+          <h1>{item.name}</h1>
           <p className="community-description">{item.description}</p>
           <div className="forum-meta">
             {item.visibility === 'private' && <span className="community-members"><LockKeyhole aria-hidden="true" />Privada</span>}
@@ -92,7 +91,10 @@ function CommunityContent({ id }: { id: string }) {
     </header>
     {item.membership?.role === 'owner' && <CommunityManagement community={item} onChanged={community.setData} />}
     <section className="community-forums" aria-labelledby="community-forums-heading">
-      <div className="forum-list-heading"><h2 id="community-forums-heading">Publicaciones</h2>{item.membership && <Button asChild className="h-11 px-5"><Link to={'/publicar?comunidad=' + id}><Plus aria-hidden="true" />Nueva publicación</Link></Button>}</div>
+      <div className="forum-list-heading">
+        <h2 id="community-forums-heading">Publicaciones</h2>
+        {item.membership && <Button asChild variant="secondary" className="h-11 px-5"><Link to={'/publicar?comunidad=' + id}><Plus aria-hidden="true" />Nueva publicación</Link></Button>}
+      </div>
       <PostList key={id} path={'posts?community=' + id} filtered={false} createTo={'/publicar?comunidad=' + id} />
     </section>
   </>
@@ -100,7 +102,7 @@ function CommunityContent({ id }: { id: string }) {
 export function CommunityPage() {
   const { communityId = '' } = useParams()
   const auth = useAuth()
-  return <main id="forum-content" className="forum-main" tabIndex={-1}>
+  return <main id="forum-content" className="forum-main community-detail" tabIndex={-1}>
     <CommunityContent key={communityId + (auth.session.user?.id ?? 'guest') + auth.status} id={communityId} />
   </main>
 }

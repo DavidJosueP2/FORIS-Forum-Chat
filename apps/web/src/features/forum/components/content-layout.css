@@ -17,6 +17,8 @@
 .context-note { color: var(--muted-foreground); font-size: .875rem; line-height: 1.7; }
 .context-communities { list-style: none; margin: 0; padding: 0; }
 .context-communities li { padding-bottom: 12px; }
+.context-community-links { display: grid; justify-items: start; }
+.context-legal .legal-entry { padding-inline-start: 0; }
 .context-section .discovery-post-taxonomy { column-gap: 8px; font-size: .75rem; }
 .follow-control { display: inline-flex; flex-wrap: wrap; align-items: center; max-width: 100%; }
 .follow-control .follow-button { min-height: 44px; padding-inline: 12px; gap: 6px; font-size: .75rem; }
