@@ -12,8 +12,11 @@ import { forumDiscussion } from './010-forum-discussion.js';
 import { following } from './011-following.js';
 import { communityMembershipFeed } from './012-community-membership-feed.js';
 import { chatPresence } from './013-chat-presence.js';
+import { conversations } from './014-conversations.js';
+import { termsAcceptance } from './015-terms-acceptance.js';
+import { socialDiscovery } from './016-social-discovery.js';
 
-const migrations: readonly Migration[] = [createMessages, createAuth, createForum, createCommunities, createMedia, createVideoCalls, communityPrivacyAndPortraits, postDocuments, postEditing, forumDiscussion, following, communityMembershipFeed, chatPresence];
+const migrations: readonly Migration[] = [createMessages, createAuth, createForum, createCommunities, createMedia, createVideoCalls, communityPrivacyAndPortraits, postDocuments, postEditing, forumDiscussion, following, communityMembershipFeed, chatPresence, conversations, termsAcceptance, socialDiscovery];
 
 export async function runMigrations(pool: DatabasePool): Promise<void> {
   const client = await pool.connect();

@@ -14,14 +14,16 @@ import { ForumAccess } from './forum-access.service.js';
 import { ForumDiscussionRepository } from './forum-discussion.repository.js';
 import { ForumFollowRepository } from './forum-follow.repository.js';
 import { ForumFollowController } from './forum-follow.controller.js';
+import { SearchRepository } from './search.repository.js';
 
 @Module({
   imports: [AuthModule, CommunitiesModule, MediaModule],
   controllers: [ForumController, TaxonomyController, ForumFollowController],
-  providers: [ForumRepository, ForumDiscussionRepository, ForumFollowRepository, ForumAccess, ForumWriteMiddleware, ForumReadMiddleware, TaxonomyRepository],
+  providers: [ForumRepository, ForumDiscussionRepository, ForumFollowRepository, ForumAccess, ForumWriteMiddleware, ForumReadMiddleware, TaxonomyRepository, SearchRepository],
 })
 export class ForumModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(ForumReadMiddleware).forRoutes({ path: 'search', method: RequestMethod.GET });
     consumer.apply(ForumReadMiddleware).forRoutes({ path: 'authors/:id', method: RequestMethod.GET }, { path: 'authors/:id/posts', method: RequestMethod.GET }, { path: 'authors/:id/communities', method: RequestMethod.GET });
     consumer.apply(ForumWriteMiddleware, json({ limit: '8kb', strict: true })).forRoutes({ path: 'authors/:id/follow', method: RequestMethod.PUT });
     consumer.apply(ForumReadMiddleware).forRoutes({ path: 'posts', method: RequestMethod.GET }, { path: 'posts/:id', method: RequestMethod.GET }, { path: 'posts/:id/replies', method: RequestMethod.GET }, { path: 'posts/:id/replies/:replyId', method: RequestMethod.GET }, { path: 'taxonomy/tags', method: RequestMethod.GET });

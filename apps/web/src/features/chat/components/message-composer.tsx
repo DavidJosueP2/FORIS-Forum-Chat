@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom'
 import { ArrowUp, LoaderCircle } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import { SocialFeedback } from '@/components/ui/social-feedback'
 import { Textarea } from '@/components/ui/textarea'
 import { describeChatError } from '../api/chat-api'
 import { MAX_MESSAGE_LENGTH, type GuestProfile } from '../lib/guest-session'
@@ -14,24 +15,29 @@ interface MessageComposerProps {
   profile: GuestProfile
   draft: string
   onDraftChange: (body: string) => void
-  onNameChange: (name: string) => void
+  onNameChange?: (name: string) => void
   onSent: (body: string) => void
   sendMessage: (input: MessageInput) => Promise<void>
   inputRef: RefObject<HTMLTextAreaElement | null>
   identityPending?: boolean
+  roomName?: string
+  audience?: string
+  waiting?: boolean
+  guidance?: string
 }
 
 export function MessageComposer({
-  profile, draft, onDraftChange, onNameChange, onSent, sendMessage, inputRef, identityPending = false,
+  profile, draft, onDraftChange, onNameChange, onSent, sendMessage, inputRef, identityPending = false, roomName = 'General', audience, waiting = false, guidance,
 }: MessageComposerProps) {
   const [sending, setSending] = useState(false)
+  const [pulse, setPulse] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const attemptRef = useRef<MessageInput | null>(null)
   const busyRef = useRef(false)
 
   async function submit() {
     const body = draft.replaceAll('\r\n', '\n').trim()
-    if (!body || busyRef.current || identityPending || body.length > MAX_MESSAGE_LENGTH) return
+    if (!body || busyRef.current || identityPending || waiting || body.length > MAX_MESSAGE_LENGTH) return
     const previous = attemptRef.current
     const input: MessageInput = previous
       && previous.body === body && (Boolean(profile.accountId) || previous.author === profile.name)
@@ -44,6 +50,7 @@ export function MessageComposer({
     setError(null)
     try {
       await sendMessage(input)
+      setPulse(current => current + 1)
       attemptRef.current = null
       onSent(input.body)
       inputRef.current?.focus()
@@ -57,20 +64,21 @@ export function MessageComposer({
 
   return (
     <div className="composer-area">
-      <div className="composer-identity">
+      {guidance && <p id="composer-guidance" className="composer-guidance" role="status">{guidance}</p>}
+      {!audience && <div className="composer-identity">
         <span>Escribes como</span>
         {profile.accountId
           ? <Button asChild variant="ghost" className="guest-name-trigger h-11"><Link to="/profile"><span>{profile.name}</span></Link></Button>
-          : <GuestNameDialog profile={profile} onNameChange={onNameChange} />}
+          : onNameChange && <GuestNameDialog profile={profile} onNameChange={onNameChange} />}
         <span className="guest-label">{profile.accountId ? 'Miembro' : profile.name !== 'Invitado' ? 'Invitado' : ''}</span>
-      </div>
+      </div>}
       <form
         className="message-composer"
-        aria-label="Escribir en General"
+        aria-label={'Escribir en ' + roomName}
         aria-busy={sending}
         onSubmit={event => { event.preventDefault(); void submit() }}
       >
-        <label htmlFor="message-body" className="sr-only">Mensaje para General</label>
+        <label htmlFor="message-body" className="sr-only">Mensaje para {roomName}</label>
         <Textarea
           ref={inputRef}
           id="message-body"
@@ -88,10 +96,10 @@ export function MessageComposer({
               void submit()
             }
           }}
-          readOnly={sending}
+          readOnly={sending || waiting}
           maxLength={MAX_MESSAGE_LENGTH}
-          placeholder="Comparte algo con General…"
-          aria-describedby={error ? 'composer-error composer-hint' : 'composer-hint'}
+          placeholder={waiting ? 'Esperando respuesta…' : audience ? 'Escribe un mensaje…' : 'Comparte algo con General…'}
+          aria-describedby={'composer-hint' + (error ? ' composer-error' : '') + (guidance ? ' composer-guidance' : '')}
           aria-invalid={Boolean(error)}
           className="composer-input"
           rows={2}
@@ -102,11 +110,11 @@ export function MessageComposer({
           </span>
           <Button
             type="submit"
-            disabled={sending || identityPending || !draft.trim()}
-            className="send-button h-11 gap-2 px-5"
+            disabled={sending || identityPending || waiting || !draft.trim()}
+            className="send-button social-action h-11 gap-2 px-5"
           >
-            {sending ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : <ArrowUp aria-hidden="true" />}
-            <span>{identityPending ? 'Un momento' : sending ? 'Enviando' : error ? 'Reintentar' : 'Enviar'}</span>
+            <SocialFeedback pulse={pulse}>{sending ? <LoaderCircle className="animate-spin" /> : <ArrowUp />}</SocialFeedback>
+            <span>{waiting ? 'En espera' : identityPending ? 'Un momento' : sending ? 'Enviando' : error ? 'Reintentar' : 'Enviar'}</span>
           </Button>
         </div>
       </form>
@@ -116,7 +124,7 @@ export function MessageComposer({
         </p>
       )}
       <p id="composer-hint" className="composer-hint">
-        <span>Lo que escribes es público.</span>
+        <span>{audience ?? 'Lo que escribes es público.'}</span>
         <span className="keyboard-hint">Ctrl o ⌘ + Enter para enviar</span>
       </p>
     </div>

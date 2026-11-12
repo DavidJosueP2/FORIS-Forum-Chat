@@ -52,13 +52,16 @@ export class VideoCallClient {
   private cursor = '0'
   private readonly changed: (view: CallView) => void;
   private readonly ended: (message: string | null) => void;
+  private readonly joinPath: string
 
   constructor(
     changed: (view: CallView) => void,
-    ended: (message: string | null) => void
+    ended: (message: string | null) => void,
+    room?: string,
   ) {
     this.changed = changed;
     this.ended = ended;
+    this.joinPath = 'video-call/join' + (room ? '?room=' + encodeURIComponent(room) : '')
   }
   private publish() {
     if (!this.stopped) this.changed({ local: this.local, peers: [...this.peers.values()].map(peer => ({ ...peer.profile, stream: peer.stream, state: peer.connection.connectionState })) })
@@ -74,10 +77,10 @@ export class VideoCallClient {
       this.local = stream
       stream.getTracks().forEach(track => track.addEventListener('ended', () => this.stop('La cámara o el micrófono se desconectó. Puedes volver a entrar.'), { once: true }))
       const requestId = crypto.randomUUID()
-      try { this.member = await accountRequest<VideoCallJoin>('video-call/join', 'POST', { requestId }, this.abort.signal) }
+      try { this.member = await accountRequest<VideoCallJoin>(this.joinPath, 'POST', { requestId }, this.abort.signal) }
       catch (error) {
         if (this.abort.signal.aborted || !(error instanceof AccountApiError) || ![0, 503].includes(error.status)) throw error
-        this.member = await accountRequest<VideoCallJoin>('video-call/join', 'POST', { requestId }, this.abort.signal)
+        this.member = await accountRequest<VideoCallJoin>(this.joinPath, 'POST', { requestId }, this.abort.signal)
       }
       if (this.stopped) { this.leave(); return }
       this.duration = setTimeout(() => this.stop('Se cumplieron los treinta minutos de esta participación. Puedes volver a entrar.'), Math.max(0, Date.parse(this.member.expiresAt) - Date.now()))

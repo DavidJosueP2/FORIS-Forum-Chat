@@ -5,7 +5,7 @@ import type { ForumDocument, ForumPost, ForumPostSummary, ForumPage, ForumTopic 
 import type { QueryResultRow } from 'pg';
 import { DatabaseService } from '../../database/database.service.js';
 import { ForumAccess } from './forum-access.service.js';
-import { postVotes } from './forum-discussion.repository.js';
+import { postVotes, postVotesById } from './forum-discussion.repository.js';
 import type { AuthContext, SqlClient } from '../auth/auth.types.js';
 import { HttpError } from '../../common/errors/http-error.js';
 import type { ForumFilters, ValidatedPost, ValidatedPostUpdate } from './forum-validation.js';
@@ -28,6 +28,7 @@ interface PostRow extends PostSummaryRow {
   request_id: string; media_request_ids: string[]; tag_request_names: string[];
   content: ForumDocument | null; revision: number; updated_at: Date | null;
 }
+interface FeedRow extends PostSummaryRow { can_vote: boolean }
 const POST_CONTEXT = `COALESCE(t.slug,g.slug) AS topic_id,COALESCE(t.name,g.name) AS topic_name,
   COALESCE(t.description,g.description) AS topic_description,u.display_name,author_avatar.id AS author_avatar_id,c.name AS community_name,
   k.slug AS category_slug,k.name AS category_name,k.description AS category_description,
@@ -38,8 +39,11 @@ const POST_CONTEXT = `COALESCE(t.slug,g.slug) AS topic_id,COALESCE(t.name,g.name
   LEFT JOIN forum_categories k ON k.id=p.category_id LEFT JOIN forum_categories t ON t.id=k.root_id
   LEFT JOIN communities c ON c.id=p.community_id`;
 const POSTS = 'SELECT p.*,' + POST_CONTEXT;
-const POST_SUMMARIES = 'SELECT p.id,p.title,p.body,p.category_id,p.author_id,p.reply_count,p.created_at,p.last_activity_at,p.community_id,EXISTS(SELECT 1 FROM author_follows af WHERE af.follower_id=$1 AND af.author_id=p.author_id) AS author_following,' + POST_CONTEXT;
-function summary(row: PostSummaryRow): ForumPostSummary {
+const POST_SUMMARIES = `SELECT p.id,p.title,p.body,p.category_id,p.author_id,p.reply_count,p.created_at,p.last_activity_at,p.community_id,
+  EXISTS(SELECT 1 FROM author_follows af WHERE af.follower_id=$1 AND af.author_id=p.author_id) AS author_following,
+  ($1::uuid IS NOT NULL AND (p.community_id IS NULL OR EXISTS(SELECT 1 FROM community_memberships m
+    WHERE m.community_id=p.community_id AND m.user_id=$1))) AS can_vote,` + POST_CONTEXT;
+function summary(row: PostSummaryRow): Omit<ForumPostSummary, 'votes'> {
   return {
     id: String(row.id), title: row.title, excerpt: row.body.replace(/\s+/gu, ' ').slice(0, 420),
     topic: { id: row.topic_id, name: row.topic_name, description: row.topic_description },
@@ -97,13 +101,15 @@ export class ForumRepository {
       where.push('(p.title ILIKE $' + values.length + ' OR p.body ILIKE $' + values.length + ')');
     }
     values.push(filters.limit + 1);
-    const result = await this.database.query<PostSummaryRow>(POST_SUMMARIES + ' WHERE ' + where.join(' AND ') + ' ORDER BY p.created_at DESC,p.id DESC LIMIT $' + values.length, values);
-    const items = result.rows.slice(0, filters.limit).map(summary);
+    const result = await this.database.query<FeedRow>(POST_SUMMARIES + ' WHERE ' + where.join(' AND ') + ' ORDER BY p.created_at DESC,p.id DESC LIMIT $' + values.length, values);
+    const items = result.rows.slice(0, filters.limit).map(row => ({ ...summary(row), canVote: row.can_vote }));
     const hasMore = result.rows.length > filters.limit;
-    const selected = { items, hasMore, nextCursor: hasMore ? encodePostCursor(items.at(-1)!) : null };
-    const images = await this.media.images(selected.items.map(item => item.id));
-    const tags = await this.taxonomy.postTags(selected.items.map(item => item.id));
-    return { ...selected, items: selected.items.map(item => ({ ...item, images: images.get(item.id) ?? [], tags: tags.get(item.id) ?? [] })) };
+    const ids = items.map(item => item.id);
+    const [images, tags, votes] = await Promise.all([
+      this.media.images(ids), this.taxonomy.postTags(ids), postVotesById(this.database, ids, userId),
+    ]);
+    return { hasMore, nextCursor: hasMore ? encodePostCursor(items.at(-1)!) : null,
+      items: items.map(item => ({ ...item, images: images.get(item.id) ?? [], tags: tags.get(item.id) ?? [], votes: votes.get(item.id) ?? { score: 0, value: 0 } })) };
   }
   async getPost(id: string, client: SqlClient = this.database, userId: string | null = null): Promise<ForumPost> {
     const row = (await client.query<PostRow>(POSTS + ' WHERE p.id=$1 AND ' + readablePost('$2'), [id, userId])).rows[0];

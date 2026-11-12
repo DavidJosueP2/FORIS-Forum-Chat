@@ -3,11 +3,11 @@ import { Wifi, WifiOff } from 'lucide-react'
 import type { Presence } from '@messages/contracts'
 
 import { Button } from '@/components/ui/button'
-import { GlobalVideoCall } from '@/features/video-calls/components/global-video-call'
+import { ConversationVideoCall } from '@/features/video-calls/components/conversation-video-call'
 import { useAuth } from '@/features/account/hooks/use-auth'
 import { useChat, type ConnectionState } from '../hooks/use-chat'
 import { readDraft, readGuestProfile, storeDraft, storeGuestProfile } from '../lib/guest-session'
-import { CommunityNotes, GuestNameDialog, RoomInfoDialog } from './chat-dialogs'
+import { GuestNameDialog, RoomInfoDialog } from './chat-dialogs'
 import { MessageComposer } from './message-composer'
 import { MessageFeed } from './message-feed'
 import '../chat.css'
@@ -69,83 +69,67 @@ export function ChatHome() {
   }
 
   return (
-    <div className="foris-app">
+    <div className="chat-workspace">
       <a href="#message-body" className="skip-to-composer">Ir a escribir un mensaje</a>
-      <div className="chat-workspace">
-        <header className="chat-header">
-          <div className="room-heading">
-            <div className="room-title-row">
-              <h1>Chat global</h1>
-              <div className="call-entry-slot" ref={setVideoCallTrigger} />
-            </div>
-            <ConnectionStatus state={chat.connection} presence={chat.presence} />
+      <header className="chat-header">
+        <div className="room-heading">
+          <div className="room-title-row">
+            <h1>Chat global</h1>
+            <div className="call-entry-slot" ref={setVideoCallTrigger} />
           </div>
-          <div className="header-actions">
-            {!session.user && <GuestNameDialog profile={profile} onNameChange={changeName} />}
-            <RoomInfoDialog compact />
-          </div>
-        </header>
-
-        <div className="conversation-layout">
-          <main id="conversation" tabIndex={-1} className="conversation-main" aria-label="Chat global">
-            <GlobalVideoCall key={session.user?.id ?? 'guest'} user={session.user} triggerContainer={videoCallTrigger} />
-            {auth.status === 'error' && !session.user && (
-              <div className="connection-notice" role="alert">
-                <p>No pudimos comprobar tu sesión. Tu borrador sigue aquí.</p>
-                <Button variant="secondary" className="h-11" onClick={() => void auth.refresh()}>Revisar sesión</Button>
-              </div>
-            )}
-            {(chat.connection === 'offline' || chat.connection === 'reconnecting') && (
-              <div className="connection-notice">
-                <p>
-                  {chat.connection === 'offline'
-                    ? 'Estás sin conexión. Puedes seguir preparando tu mensaje.'
-                    : 'Estamos recuperando la conexión. Tu borrador sigue aquí.'}
-                </p>
-                <Button variant="secondary" className="h-11" onClick={chat.reconnect}>Reconectar</Button>
-              </div>
-            )}
-            <MessageFeed
-              messages={chat.messages}
-              senderId={identity.senderId}
-              accountId={identity.accountId}
-              historyStatus={chat.historyStatus}
-              historyError={chat.historyError}
-              hasOlder={chat.hasOlder}
-              loadingOlder={chat.loadingOlder}
-              olderError={chat.olderError}
-              loadOlder={chat.loadOlder}
-              reconnect={chat.reconnect}
-              onSuggestion={body => {
-                changeDraft(body)
-                inputRef.current?.focus()
-              }}
-            />
-            <MessageComposer
-              identityPending={auth.status === 'loading' || (auth.status === 'error' && !session.user)}
-              profile={identity}
-              draft={draft}
-              onDraftChange={changeDraft}
-              onNameChange={changeName}
-              onSent={body => {
-                if (draftRef.current.replaceAll('\r\n', '\n').trim() === body) changeDraft('')
-              }}
-              sendMessage={chat.sendMessage}
-              inputRef={inputRef}
-            />
-          </main>
-
-          <aside className="community-aside" aria-label="Acerca de esta comunidad">
-            <h2>Las buenas conversaciones empiezan por escuchar.</h2>
-            <p className="community-intro">Este espacio lo hacemos entre todos. Dale lugar a otras voces y comparte la tuya.</p>
-            <CommunityNotes />
-            <div className="community-footnote">
-              <p>{session.user ? 'Un espacio para tu voz.' : 'También como invitado.'}</p>
-              <p>{session.user ? 'Participas con tu perfil. Cada mensaje forma parte de una conversación pública.' : 'Puedes elegir un nombre o crear una cuenta. No necesitas registrarte para empezar.'}</p>
-            </div>
-          </aside>
+          <ConnectionStatus state={chat.connection} presence={chat.presence} />
         </div>
-      </div>
+        <div className="header-actions">
+          {!session.user && <GuestNameDialog profile={profile} onNameChange={changeName} />}
+          <RoomInfoDialog compact />
+        </div>
+      </header>
+
+      <main id="conversation" tabIndex={-1} className="conversation-main" aria-label="Chat global">
+        <ConversationVideoCall key={session.user?.id ?? 'guest'} user={session.user} triggerContainer={videoCallTrigger} />
+        {auth.status === 'error' && !session.user && (
+          <div className="connection-notice" role="alert">
+            <p>No pudimos comprobar tu sesión. Tu borrador sigue aquí.</p>
+            <Button variant="secondary" className="h-11" onClick={() => void auth.refresh()}>Revisar sesión</Button>
+          </div>
+        )}
+        {(chat.connection === 'offline' || chat.connection === 'reconnecting') && (
+          <div className="connection-notice">
+            <p>{chat.connection === 'offline'
+              ? 'Estás sin conexión. Puedes seguir preparando tu mensaje.'
+              : 'Estamos recuperando la conexión. Tu borrador sigue aquí.'}</p>
+            <Button variant="secondary" className="h-11" onClick={chat.reconnect}>Reconectar</Button>
+          </div>
+        )}
+        <MessageFeed
+          messages={chat.messages}
+          senderId={identity.senderId}
+          accountId={identity.accountId}
+          historyStatus={chat.historyStatus}
+          historyError={chat.historyError}
+          hasOlder={chat.hasOlder}
+          loadingOlder={chat.loadingOlder}
+          olderError={chat.olderError}
+          loadOlder={chat.loadOlder}
+          reconnect={chat.reconnect}
+          onSuggestion={body => {
+            changeDraft(body)
+            inputRef.current?.focus()
+          }}
+        />
+        <MessageComposer
+          identityPending={auth.status === 'loading' || (auth.status === 'error' && !session.user)}
+          profile={identity}
+          draft={draft}
+          onDraftChange={changeDraft}
+          onNameChange={changeName}
+          onSent={body => {
+            if (draftRef.current.replaceAll('\r\n', '\n').trim() === body) changeDraft('')
+          }}
+          sendMessage={chat.sendMessage}
+          inputRef={inputRef}
+        />
+      </main>
     </div>
   )
 }

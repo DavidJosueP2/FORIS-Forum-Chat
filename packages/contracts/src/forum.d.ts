@@ -12,10 +12,12 @@ export interface FollowState { isFollowing: boolean }
 export interface ForumPostSummary {
   id: string; title: string; excerpt: string; topic: ForumTopic; author: ForumAuthor;
   replyCount: number; createdAt: string; lastActivityAt: string; community: CommunityRef | null; images: MediaImage[];
-  category: ForumCategory | null; tags: ForumTag[];
+  category: ForumCategory | null; tags: ForumTag[]; votes: ForumVotes;
+  /** Permiso de voto del lector en los listados. */
+  canVote?: boolean;
 }
 export interface ForumVotes { score: number; value: -1 | 0 | 1 }
-export interface ForumPost extends ForumPostSummary { body: string; content: ForumDocument | null; revision: number; updatedAt: string | null; votes: ForumVotes }
+export interface ForumPost extends ForumPostSummary { body: string; content: ForumDocument | null; revision: number; updatedAt: string | null }
 export interface ForumReply {
   id: string; postId: string; body: string; author: ForumAuthor; createdAt: string;
   parentId: string | null; depth: number; replyCount: number; pinned: boolean; deleted: boolean;

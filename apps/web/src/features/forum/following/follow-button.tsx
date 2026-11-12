@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { Check, LoaderCircle, Plus } from 'lucide-react'
 import type { FollowState } from '@messages/contracts'
 import { Button } from '@/components/ui/button'
+import { SocialFeedback } from '@/components/ui/social-feedback'
 import { useAuth } from '@/features/account/hooks/use-auth'
 import { loginLink } from '@/features/account/lib/return-target'
 import { accountError, accountRequest } from '@/features/account/api/account-api'
@@ -14,6 +15,7 @@ export function FollowButton({ id, name, initial = false, compact = false }: { i
   const identity = viewer + ':author:' + id
   const [override, setOverride] = useState<{ identity: string; base: boolean; value: boolean } | null>(null)
   const [busy, setBusy] = useState(false)
+  const [pulse, setPulse] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const guard = useRef(false)
   const alive = useRef(true)
@@ -36,10 +38,11 @@ export function FollowButton({ id, name, initial = false, compact = false }: { i
     guard.current = true; setBusy(true); setError(null)
     try {
       const result = await accountRequest<FollowState>('authors/' + id + '/follow', 'PUT', { following: !followed })
+      if (alive.current) setPulse(current => current + 1)
       window.dispatchEvent(new CustomEvent(FOLLOWING_CHANGED, { detail: { viewer, kind: 'author', id, isFollowing: result.isFollowing } }))
     } catch (cause) { if (alive.current) setError(accountError(cause)) }
     finally { guard.current = false; if (alive.current) setBusy(false) }
   }
   if (id === viewer) return null
-  return <span className="follow-control"><Button type="button" variant={followed ? 'secondary' : 'ghost'} className={compact ? 'follow-button follow-compact h-11' : 'follow-button h-11'} disabled={busy || auth.status === 'loading'} aria-pressed={followed} aria-label={(followed ? 'Dejar de seguir a ' : 'Seguir a ') + name} title={followed ? 'Dejar de seguir' : 'Ver sus publicaciones en Siguiendo'} onClick={() => void toggle()}>{busy ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : followed ? <Check aria-hidden="true" /> : <Plus aria-hidden="true" />}<span>{followed ? 'Siguiendo' : 'Seguir'}</span></Button>{error && <span className="forum-error follow-error" role="alert">{error}</span>}</span>
+  return <span className="follow-control"><Button type="button" variant={followed ? 'secondary' : 'ghost'} className={compact ? 'social-action follow-button follow-compact h-11' : 'social-action follow-button h-11'} disabled={busy || auth.status === 'loading'} aria-pressed={followed} aria-label={(followed ? 'Dejar de seguir a ' : 'Seguir a ') + name} title={followed ? 'Dejar de seguir' : 'Ver sus publicaciones en Siguiendo'} onClick={() => void toggle()}><SocialFeedback pulse={pulse} celebrate={followed}>{busy ? <LoaderCircle className="animate-spin" /> : followed ? <Check /> : <Plus />}</SocialFeedback><span className="follow-label">{followed ? 'Siguiendo' : 'Seguir'}</span></Button>{error && <span className="forum-error follow-error" role="alert">{error}</span>}</span>
 }

@@ -4,13 +4,21 @@ import { SessionService } from '../auth/session.service.js';
 import type { AuthRequest } from '../auth/auth.types.js';
 import { ForumRepository } from './forum.repository.js';
 import { createPostInput, createReplyInput, updatePostInput, forumFilters, forumId, updateReplyInput, deleteReplyInput, voteInput, pinInput } from './forum-validation.js';
-import { pageInput, resourceId } from '../../common/validation/input.js';
+import { inputText, pageInput, resourceId } from '../../common/validation/input.js';
 import { ForumDiscussionRepository } from './forum-discussion.repository.js';
+import { SearchRepository } from './search.repository.js';
 
 @Controller()
 export class ForumController {
   constructor(@Inject(ForumRepository) private readonly repository: ForumRepository, @Inject(SessionService) private readonly sessions: SessionService,
-    @Inject(ForumDiscussionRepository) private readonly discussion: ForumDiscussionRepository) {}
+    @Inject(ForumDiscussionRepository) private readonly discussion: ForumDiscussionRepository,
+    @Inject(SearchRepository) private readonly searchIndex: SearchRepository) {}
+  @Get('search') @Header('Cache-Control', 'no-store')
+  async search(@Query('q') query: unknown, @Req() request: AuthRequest) {
+    const term = inputText(query, 'La búsqueda', 120);
+    if (Array.from(term).length < 2) return { results: [] };
+    return { results: await this.searchIndex.find(term, (await this.sessions.optional(request))?.user.id ?? null) };
+  }
   @Get('topics') @Header('Cache-Control', 'no-store') topics() { return this.repository.topics(); }
   @Get('posts') @Header('Cache-Control', 'no-store') async list(@Query() query: Record<string, unknown>, @Req() request: AuthRequest) { return this.repository.list(forumFilters(query), (await this.sessions.optional(request))?.user.id ?? null); }
   @Get('posts/:id') @Header('Cache-Control', 'no-store') async post(@Param('id') id: string, @Req() request: AuthRequest) { return this.repository.getPost(forumId(id), undefined, (await this.sessions.optional(request))?.user.id ?? null); }

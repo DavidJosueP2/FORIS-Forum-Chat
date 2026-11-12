@@ -2,18 +2,30 @@ import { useEffect, useRef, useState } from 'react'
 import type { ForumPage } from '@messages/contracts'
 import { accountError, accountRequest } from '@/features/account/api/account-api'
 
-export function useResource<T>(path: string | null, scope = '') {
+export function useResource<T>(path: string | null, scope = '', refreshMs = 0) {
   const identity = path === null ? null : path + '\0' + scope
   const [state, setState] = useState<{ identity: string | null; data: T | null; error: string | null; loading: boolean }>({ identity, data: null, error: null, loading: Boolean(path) })
   const [attempt, setAttempt] = useState(0)
   useEffect(() => {
     if (!path) return
     const controller = new AbortController()
-    void accountRequest<T>(path, 'GET', undefined, controller.signal)
-      .then(data => { if (!controller.signal.aborted) setState({ identity, data, error: null, loading: false }) })
-      .catch(cause => { if (!controller.signal.aborted) setState({ identity, data: null, error: accountError(cause), loading: false }) })
-    return () => controller.abort()
-  }, [path, identity, attempt])
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const refresh = async (background = false) => {
+      try {
+        if (!background || document.visibilityState === 'visible') {
+          const data = await accountRequest<T>(path, 'GET', undefined, controller.signal)
+          if (!controller.signal.aborted) setState({ identity, data, error: null, loading: false })
+        }
+      } catch (cause) {
+        if (!controller.signal.aborted) setState(previous => background && previous.identity === identity && previous.data !== null
+          ? previous : { identity, data: null, error: accountError(cause), loading: false })
+      } finally {
+        if (refreshMs && !controller.signal.aborted) timer = setTimeout(() => void refresh(true), refreshMs)
+      }
+    }
+    void refresh()
+    return () => { controller.abort(); clearTimeout(timer) }
+  }, [path, identity, attempt, refreshMs])
   const current = path !== null && state.identity === identity
   return { data: current ? state.data : null, error: current ? state.error : null, loading: path !== null && (!current || state.loading), setData: (data: T | ((previous: T | null) => T | null)) => setState(previous => ({ identity, data: typeof data === 'function' ? (data as (previous: T | null) => T | null)(previous.identity === identity ? previous.data : null) : data, error: null, loading: false })), retry: () => {
     setState(previous => ({ identity, data: previous.identity === identity ? previous.data : null, error: null, loading: Boolean(path) }))
