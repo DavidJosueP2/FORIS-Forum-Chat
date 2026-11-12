@@ -96,16 +96,16 @@
 .discovery-post-taxonomy a { display: inline-flex; align-items: center; min-height: 44px; max-width: 100%; overflow-wrap: anywhere; }
 .discovery-post-category { color: var(--muted-foreground); }
 .discovery-post-tag { color: var(--discovery-tag-foreground); }
-.discovery-post-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; margin-top: 12px; padding: 4px 10px; background: var(--card); border-radius: 10px; }
+.discovery-post-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; margin-top: 12px; padding: 4px 10px; background: var(--card); border-radius: 10px; --reading-accent: var(--discovery-tag-foreground); --reading-accent-surface: var(--accent); }
+.discovery-post-actions .reading-icon { width: 44px; height: 44px; padding: 0; }
+.discovery-post-actions .reading-icon:not([aria-pressed="true"]) { color: var(--muted-foreground); }
 .discovery-post-action { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; color: var(--muted-foreground); font-size: .875rem; line-height: 1.6; }
-.discovery-post-actions button.discovery-post-action { padding-inline: 8px; margin-left: -8px; }
+.discovery-post-actions button.discovery-post-action { height: 44px; padding-inline: 8px; }
 .discovery-post-action svg, .discovery-read-post svg { width: 18px; height: 18px; flex-shrink: 0; }
 .discovery-read-post { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; margin-left: auto; font-size: .875rem; font-weight: 500; }
 .discovery-post-meta a:hover, .discovery-post-taxonomy a:hover, .discovery-post-action:hover, .discovery-read-post:hover, .discovery-image-more:hover { text-decoration: underline; text-underline-offset: 4px; }
 .discovery-feed-more { display: flex; margin: 12px auto 24px; padding-inline: 24px; }
 .discovery-invalid { display: grid; justify-items: start; gap: 16px; padding-block: 24px; color: var(--destructive); line-height: 1.8; }
-.discovery-copy-panel { width: min(360px, calc(100vw - 32px)); padding: 16px; font-size: .875rem; line-height: 1.6; }
-.discovery-copy-panel input { width: 100%; min-height: 44px; background: var(--secondary); color: var(--foreground); padding: 10px; border-radius: 10px; }
 .discovery-filter-sheet { width: min(380px, calc(100vw - 24px)); --discovery-tag-foreground: #134e46; }
 .dark .discovery-filter-sheet { --discovery-tag-foreground: #c5eee6; }
 .discovery-filter-sheet-body { flex: 1; min-height: 0; overflow-y: auto; padding: 0 24px 24px; overscroll-behavior: contain; }

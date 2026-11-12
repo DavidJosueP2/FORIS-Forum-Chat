@@ -4,6 +4,7 @@ import { ArrowUpRight, LockKeyhole, Plus, Search, Star, UsersRound } from 'lucid
 import type { Community } from '@messages/contracts'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { usePageTitle } from '@/hooks/use-page-title'
 import { useAuth } from '@/features/account/hooks/use-auth'
 import { ForumEmpty, ForumError, ForumLoading, ParticipationGate } from '@/features/forum/components/forum-states'
 import { useForumPage } from '@/features/forum/hooks/use-forum'
@@ -33,6 +34,7 @@ function CommunitiesIndex() {
   const auth = useAuth()
   const [params, setParams] = useSearchParams()
   const scope = params.get('vista') === 'mias' ? 'mine' : params.get('vista') === 'favoritas' ? 'favorites' : 'all'
+  usePageTitle(scope === 'mine' ? 'Mis comunidades' : scope === 'favorites' ? 'Comunidades favoritas' : 'Comunidades')
   const search = params.get('q') ?? ''
   const [query, setQuery] = useState(search)
   const filters = new URLSearchParams({ scope })

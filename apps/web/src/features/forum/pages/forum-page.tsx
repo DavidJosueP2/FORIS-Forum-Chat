@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
+import { usePageTitle } from '@/hooks/use-page-title'
 import { useAuth } from '@/features/account/hooks/use-auth'
 import { loginLink } from '@/features/account/lib/return-target'
 import { useDiscovery } from '../discovery/use-discovery'
@@ -16,6 +17,7 @@ function ForumIndex() {
   const [revision, setRevision] = useState(0)
   const viewer = auth.session.user?.id ?? null
   const following = query.feed === 'following'
+  usePageTitle(following ? 'Siguiendo' : 'Foros')
   const discoverHref = feedHref(false)
   const followingHref = feedHref(true)
   useEffect(() => {

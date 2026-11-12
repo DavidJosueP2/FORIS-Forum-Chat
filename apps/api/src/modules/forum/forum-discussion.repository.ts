@@ -29,10 +29,16 @@ function reply(row: ReplyRow): ForumReply {
     deleted, pinned: row.pinned, replyCount: row.reply_count, votes: deleted ? { score: 0, value: 0 } : { score: row.score, value: row.vote } };
 }
 
+export async function postVotesById(client: SqlClient, ids: string[], userId: string | null): Promise<Map<string, ForumVotes>> {
+  if (!ids.length) return new Map();
+  const { rows } = await client.query<ForumVotes & { post_id: string }>(`SELECT post_id,SUM(value)::int AS score,
+    COALESCE(MAX(value) FILTER(WHERE user_id=$2),0)::int AS value FROM forum_post_votes
+    WHERE post_id=ANY($1::uuid[]) GROUP BY post_id`, [ids, userId]);
+  return new Map(rows.map(({ post_id, score, value }) => [post_id, { score, value }]));
+}
+
 export async function postVotes(client: SqlClient, id: string, userId: string | null): Promise<ForumVotes> {
-  const row = (await client.query<{ score: number; value: -1 | 0 | 1 }>(`SELECT COALESCE(SUM(value),0)::int AS score,
-    COALESCE(MAX(value) FILTER(WHERE user_id=$2),0)::int AS value FROM forum_post_votes WHERE post_id=$1`, [id, userId])).rows[0]!;
-  return row;
+  return (await postVotesById(client, [id], userId)).get(id.toLowerCase()) ?? { score: 0, value: 0 };
 }
 
 @Injectable()

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { ForumShell } from '@/features/forum/components/forum-shell'
 import { ChatHome } from '@/features/chat/components/chat-home'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
@@ -14,6 +15,12 @@ import { CommunityPage } from '@/features/communities/pages/community-page'
 import { CreateCommunityPage } from '@/features/communities/pages/create-community-page'
 import { NotificationsPage } from '@/features/communities/pages/notifications-page'
 import { InvitationPage } from '@/features/communities/pages/invitation-page'
+import { usePageTitle } from '@/hooks/use-page-title'
+
+function TitledPage({ title, children }: { title: string; children: ReactNode }) {
+  usePageTitle(title)
+  return children
+}
 
 function App() {
   return (
@@ -22,17 +29,17 @@ function App() {
       <Routes>
         <Route element={<ForumShell />}>
           <Route path="/" element={<ForumPage />} />
-          <Route path="/chat" element={<ChatHome />} />
-          <Route path="/publicar" element={<CreatePostPage />} />
+          <Route path="/chat" element={<TitledPage title="Chat global"><ChatHome /></TitledPage>} />
+          <Route path="/publicar" element={<TitledPage title="Crear publicación"><CreatePostPage /></TitledPage>} />
           <Route path="/publicaciones/:postId" element={<PostPage />} />
-          <Route path="/publicaciones/:postId/editar" element={<EditPostPage />} />
+          <Route path="/publicaciones/:postId/editar" element={<TitledPage title="Editar publicación"><EditPostPage /></TitledPage>} />
           <Route path="/comunidades" element={<CommunitiesPage />} />
-          <Route path="/comunidades/crear" element={<CreateCommunityPage />} />
+          <Route path="/comunidades/crear" element={<TitledPage title="Crear comunidad"><CreateCommunityPage /></TitledPage>} />
           <Route path="/comunidades/:communityId" element={<CommunityPage />} />
-          <Route path="/notificaciones" element={<NotificationsPage />} />
-          <Route path="/invitaciones/:token" element={<InvitationPage />} />
+          <Route path="/notificaciones" element={<TitledPage title="Notificaciones"><NotificationsPage /></TitledPage>} />
+          <Route path="/invitaciones/:token" element={<TitledPage title="Invitación a una comunidad"><InvitationPage /></TitledPage>} />
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/profile" element={<TitledPage title="Tu perfil"><ProfilePage /></TitledPage>} />
           <Route path="/personas/:userId" element={<PublicProfilePage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

@@ -4,6 +4,7 @@ import type { AuthSession, OtpChallenge } from '@messages/contracts'
 import { LoaderCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { usePageTitle } from '@/hooks/use-page-title'
 import { ForisFamily } from '@/components/brand/foris-family'
 import { AccountShell } from '../components/account-shell'
 import { PasswordField } from '../components/password-field'
@@ -85,6 +86,9 @@ export function LoginPage() {
   const unavailable = auth.status === 'loading' || !auth.options.enabled
   const mailUnavailable = mode !== 'login' && !auth.options.emailDelivery
   const providerError = params.get('error')
+  const title = pending ? pending.kind === 'verify' ? 'Confirma tu correo' : 'Cambia tu contraseña'
+    : mode === 'register' ? 'Crear cuenta' : mode === 'recover' ? 'Recuperar acceso' : 'Entrar'
+  usePageTitle(title)
   return (
     <AccountShell>
       <main id="account-content" className="login-layout" tabIndex={-1}>

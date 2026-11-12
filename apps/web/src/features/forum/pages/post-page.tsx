@@ -4,6 +4,7 @@ import { Link, useLocation, useParams } from 'react-router-dom'
 import { ArrowLeft, MessageCircle, MoreHorizontal, PencilLine } from 'lucide-react'
 import type { Community, ForumPost } from '@messages/contracts'
 import { Button } from '@/components/ui/button'
+import { usePageTitle } from '@/hooks/use-page-title'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/features/account/hooks/use-auth'
 import { loginLink } from '@/features/account/lib/return-target'
@@ -21,7 +22,9 @@ import '../reading/reading.css'
 
 function PostContent({ id }: { id: string }) {
   const auth = useAuth()
-  const post = useResource<ForumPost>('posts/' + id)
+  const valid = /^[\da-f]{8}-(?:[\da-f]{4}-){3}[\da-f]{12}$/iu.test(id)
+  const post = useResource<ForumPost>(valid ? 'posts/' + id : null)
+  usePageTitle(post.data?.title ?? 'Publicación')
   const community = useResource<Community>(post.data?.community ? 'communities/' + post.data.community.id : null)
   const { hash, search } = useLocation()
   const requested = new URLSearchParams(search).get('comentario')
@@ -34,6 +37,7 @@ function PostContent({ id }: { id: string }) {
     element?.scrollIntoView({ block: 'start' })
     if (hash === '#responder') (element?.querySelector('textarea') ?? element)?.focus({ preventScroll: true })
   }, [loaded, hash, participationReady])
+  if (!valid) return <ForumEmpty title="Esta publicación no existe"><p>Vuelve al foro para encontrar otra conversación.</p><Link to="/">Ver publicaciones</Link></ForumEmpty>
   if (post.loading && !post.data) return <ForumLoading label="Cargando publicación…" />
   if (post.error) return <ForumError message={post.error} retry={post.retry} />
   if (!post.data) return null
@@ -66,8 +70,7 @@ function PostContent({ id }: { id: string }) {
 export function PostPage() {
   const auth = useAuth()
   const { postId = '' } = useParams()
-  const valid = /^[\da-f]{8}-(?:[\da-f]{4}-){3}[\da-f]{12}$/iu.test(postId)
   return <main id="forum-content" className="forum-main post-reading content-layout" tabIndex={-1}>
-    {valid ? <PostContent key={postId + (auth.session.user?.id ?? 'guest') + auth.status} id={postId} /> : <ForumEmpty title="Esta publicación no existe"><p>Vuelve al foro para encontrar otra conversación.</p><Link to="/">Ver publicaciones</Link></ForumEmpty>}
+    <PostContent key={postId + (auth.session.user?.id ?? 'guest') + auth.status} id={postId} />
   </main>
 }

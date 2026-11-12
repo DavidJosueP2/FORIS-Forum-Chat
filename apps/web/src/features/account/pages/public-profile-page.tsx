@@ -2,6 +2,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom'
 import type { Community, ForumAuthorProfile } from '@messages/contracts'
 import { ArrowLeft, PencilLine, UsersRound } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { usePageTitle } from '@/hooks/use-page-title'
 import { IdentityImage } from '@/features/media/components/identity-image'
 import { ForisCharacter } from '@/components/brand/foris-character'
 import { FollowButton } from '@/features/forum/following/follow-button'
@@ -26,10 +27,14 @@ function PublicCommunities({ personId, preview = false }: { personId: string; pr
 }
 function PublicProfile({ id }: { id: string }) {
   const auth = useAuth()
-  const person = useResource<ForumAuthorProfile>('authors/' + id)
+  const valid = /^[\da-f]{8}-(?:[\da-f]{4}-){3}[\da-f]{12}$/iu.test(id)
+  const person = useResource<ForumAuthorProfile>(valid ? 'authors/' + id : null)
   const [params, setParams] = useSearchParams()
   const communities = params.get('vista') === 'comunidades'
+  const name = person.data?.displayName ?? 'Perfil público'
+  usePageTitle(communities ? `${name} · Comunidades` : name)
   function showCommunities(value: boolean) { setParams(value ? { vista: 'comunidades' } : {}) }
+  if (!valid) return <ForumEmpty title="Este perfil no está disponible"><Link to="/">Volver a Foros</Link></ForumEmpty>
   if (person.loading && !person.data) return <ForumLoading label="Abriendo perfil…" />
   if (person.error) return <ForumError message={person.error} retry={person.retry} />
   if (!person.data) return null
@@ -50,6 +55,5 @@ function PublicProfile({ id }: { id: string }) {
 export function PublicProfilePage() {
   const { userId = '' } = useParams()
   const auth = useAuth()
-  const valid = /^[\da-f]{8}-(?:[\da-f]{4}-){3}[\da-f]{12}$/iu.test(userId)
-  return <main id="forum-content" className="forum-main person-page" tabIndex={-1}>{valid ? <PublicProfile key={userId + '.' + (auth.session.user?.id ?? 'guest') + '.' + auth.status} id={userId.toLowerCase()} /> : <ForumEmpty title="Este perfil no está disponible"><Link to="/">Volver a Foros</Link></ForumEmpty>}</main>
+  return <main id="forum-content" className="forum-main person-page" tabIndex={-1}><PublicProfile key={userId + '.' + (auth.session.user?.id ?? 'guest') + '.' + auth.status} id={userId.toLowerCase()} /></main>
 }

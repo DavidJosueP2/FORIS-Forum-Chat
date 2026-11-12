@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Bell, LockKeyhole, Plus, Star, UsersRound } from 'lucide-react'
 import type { Community, CommunityPreferences } from '@messages/contracts'
 import { Button } from '@/components/ui/button'
+import { usePageTitle } from '@/hooks/use-page-title'
 import { useAuth } from '@/features/account/hooks/use-auth'
 import { accountError, accountRequest } from '@/features/account/api/account-api'
 import { loginLink } from '@/features/account/lib/return-target'
@@ -52,14 +53,43 @@ function CommunityControls({ community, onChanged }: { community: Community; onC
 }
 function CommunityContent({ id }: { id: string }) {
   const auth = useAuth()
-  const community = useResource<Community>('communities/' + id)
+  const valid = validCommunityId(id)
+  const community = useResource<Community>(valid ? 'communities/' + id : null)
+  usePageTitle(community.data?.name ?? 'Comunidad')
+  if (!valid) return <ForumEmpty title="Esta comunidad no existe"><p>Vuelve a explorar para encontrar otro espacio.</p><Link to="/comunidades">Ver comunidades</Link></ForumEmpty>
   if (community.loading && !community.data) return <ForumLoading label="Abriendo comunidad…" />
   if (community.error) return <ForumError message={community.error} retry={community.retry} />
   if (!community.data) return null
   const item = community.data
   return <>
-    <header className="community-heading"><IdentityImage fallbackKey={'community:' + item.id} mediaId={item.imageId} name={item.name} className="community-photo" /><div><div className="community-page-title"><Button asChild variant="ghost" size="icon" className="h-11 w-11 shrink-0"><Link to="/comunidades" aria-label="Volver a comunidades" title="Volver"><ArrowLeft aria-hidden="true" /></Link></Button><h1>{item.name}</h1></div><p className="community-description">{item.description}</p><div className="forum-meta">{item.visibility === 'private' && <span className="community-members"><LockKeyhole aria-hidden="true" />Privada</span>}<span className="community-members"><UsersRound aria-hidden="true" />{item.memberCount} {item.memberCount === 1 ? 'miembro' : 'miembros'}</span><span>{item.postCount} {item.postCount === 1 ? 'publicación' : 'publicaciones'}</span><span>Creada por <Link to={publicProfileLink(item.owner.id)}>{item.owner.displayName}</Link></span>{item.membership && <span>Tu rol: <strong>{item.membership.role === 'owner' ? 'Creador' : 'Miembro'}</strong></span>}</div></div></header>
-    {auth.status === 'loading' ? <ForumLoading label="Comprobando tu cuenta…" /> : auth.status === 'error' ? <ForumError message={auth.error ?? 'No pudimos comprobar tu cuenta.'} retry={() => void auth.refresh()} /> : auth.session.user ? <CommunityControls community={item} onChanged={community.setData} /> : <section className="community-controls"><div className="forum-actions"><Button asChild className="h-11 px-6"><Link to={loginLink('/comunidades/' + id)}>Entrar para unirme</Link></Button><Button asChild variant="secondary" className="h-11 px-5"><Link to={loginLink('/comunidades/' + id)}><Star aria-hidden="true" />Guardar favorita</Link></Button></div></section>}
+    <header className="community-heading">
+      <div className="community-identity">
+        <IdentityImage fallbackKey={'community:' + item.id} mediaId={item.imageId} name={item.name} className="community-photo" />
+        <div>
+          <div className="community-page-title">
+            <Button asChild variant="ghost" size="icon" className="h-11 w-11 shrink-0"><Link to="/comunidades" aria-label="Volver a comunidades" title="Volver"><ArrowLeft aria-hidden="true" /></Link></Button>
+            <h1>{item.name}</h1>
+          </div>
+          <p className="community-description">{item.description}</p>
+          <div className="forum-meta">
+            {item.visibility === 'private' && <span className="community-members"><LockKeyhole aria-hidden="true" />Privada</span>}
+            <span className="community-members"><UsersRound aria-hidden="true" />{item.memberCount} {item.memberCount === 1 ? 'miembro' : 'miembros'}</span>
+            <span>{item.postCount} {item.postCount === 1 ? 'publicación' : 'publicaciones'}</span>
+            <span>Creada por <Link to={publicProfileLink(item.owner.id)}>{item.owner.displayName}</Link></span>
+            {item.membership && <span>Tu rol: <strong>{item.membership.role === 'owner' ? 'Creador' : 'Miembro'}</strong></span>}
+          </div>
+        </div>
+      </div>
+      <div className="community-heading-actions">
+        {auth.status === 'loading' ? <ForumLoading label="Comprobando tu cuenta…" />
+          : auth.status === 'error' ? <ForumError message={auth.error ?? 'No pudimos comprobar tu cuenta.'} retry={() => void auth.refresh()} />
+          : auth.session.user ? <CommunityControls community={item} onChanged={community.setData} />
+          : <div className="forum-actions">
+            <Button asChild className="h-11 px-6"><Link to={loginLink('/comunidades/' + id)}>Entrar para unirme</Link></Button>
+            <Button asChild variant="secondary" className="h-11 px-5"><Link to={loginLink('/comunidades/' + id)}><Star aria-hidden="true" />Guardar favorita</Link></Button>
+          </div>}
+      </div>
+    </header>
     {item.membership?.role === 'owner' && <CommunityManagement community={item} onChanged={community.setData} />}
     <section className="community-forums" aria-labelledby="community-forums-heading">
       <div className="forum-list-heading"><h2 id="community-forums-heading">Publicaciones</h2>{item.membership && <Button asChild className="h-11 px-5"><Link to={'/publicar?comunidad=' + id}><Plus aria-hidden="true" />Nueva publicación</Link></Button>}</div>
@@ -71,6 +101,6 @@ export function CommunityPage() {
   const { communityId = '' } = useParams()
   const auth = useAuth()
   return <main id="forum-content" className="forum-main" tabIndex={-1}>
-    {validCommunityId(communityId) ? <CommunityContent key={communityId + (auth.session.user?.id ?? 'guest') + auth.status} id={communityId} /> : <ForumEmpty title="Esta comunidad no existe"><p>Vuelve a explorar para encontrar otro espacio.</p><Link to="/comunidades">Ver comunidades</Link></ForumEmpty>}
+    <CommunityContent key={communityId + (auth.session.user?.id ?? 'guest') + auth.status} id={communityId} />
   </main>
 }
