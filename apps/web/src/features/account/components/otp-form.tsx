@@ -13,8 +13,9 @@ interface OtpFormProps {
   children?: ReactNode
   submitLabel?: string
   inputRef?: Ref<HTMLInputElement>
+  confirmDisabled?: boolean
 }
-export function OtpForm({ challenge, onResent, onConfirm, children, submitLabel = 'Confirmar código', inputRef }: OtpFormProps) {
+export function OtpForm({ challenge, onResent, onConfirm, children, submitLabel = 'Confirmar código', inputRef, confirmDisabled = false }: OtpFormProps) {
   const id = useId()
   const [code, setCode] = useState('')
   const [now, setNow] = useState(Date.now)
@@ -30,7 +31,7 @@ export function OtpForm({ challenge, onResent, onConfirm, children, submitLabel 
   return (
     <form className="account-form" onSubmit={event => {
       event.preventDefault()
-      if (guard.current) return
+      if (guard.current || confirmDisabled) return
       guard.current = true
       setBusy(true)
       setError(null)
@@ -50,7 +51,7 @@ export function OtpForm({ challenge, onResent, onConfirm, children, submitLabel 
       </div>
       <fieldset disabled={busy} className="account-fieldset">{children}</fieldset>
       {error && <p className="account-error" role="alert">{error}</p>}
-      <Button type="submit" className="h-12 w-full" disabled={busy || code.length !== 6}>
+      <Button type="submit" className="h-12 w-full" disabled={busy || confirmDisabled || code.length !== 6}>
         {busy && <LoaderCircle className="animate-spin" aria-hidden="true" />}{submitLabel}
       </Button>
       <Button type="button" variant="ghost" className="h-11 w-full" disabled={busy || seconds > 0}

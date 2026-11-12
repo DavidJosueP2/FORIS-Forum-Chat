@@ -25,6 +25,10 @@
     "check": "npm run typecheck && npm run lint && npm test",
     "setup": "node scripts/setup.ts",
     "setup:auth": "node scripts/setup-auth.ts",
+    "db:migrate": "node --import ./scripts/demo/source-resolution.ts scripts/db.ts migrate",
+    "db:reset": "node --import ./scripts/demo/source-resolution.ts scripts/db.ts reset",
+    "db:seed:catalogs": "node --import ./scripts/demo/source-resolution.ts scripts/db.ts catalogs",
+    "db:seed:demo": "node --import ./scripts/demo/source-resolution.ts scripts/db.ts demo",
     "sonar:report": "node --env-file-if-exists=.env scripts/sonar-report.ts"
   },
   "dependencies": {},

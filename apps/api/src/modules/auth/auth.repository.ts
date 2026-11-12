@@ -29,4 +29,7 @@ export class AuthRepository {
   async lockKey(client: SqlClient, key: string): Promise<void> {
     await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [key]);
   }
+  async acceptTerms(client: SqlClient, userId: string, version: string): Promise<void> {
+    await client.query('UPDATE users SET terms_version=$2, terms_accepted_at=CURRENT_TIMESTAMP WHERE id=$1', [userId, version]);
+  }
 }

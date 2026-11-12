@@ -14,10 +14,6 @@
 .reading-post-body .foris-document, .reading-post-body .forum-prose { line-height: 1.75; }
 .reading-post-body .foris-document > * + * { margin-top: 1rem; }
 .reading-post-body .foris-document h2, .reading-post-body .foris-document h3 { margin-block: 1.5rem .75rem; }
-.reading-taxonomy { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 16px; font-size: .75rem; }
-.reading-category, .reading-tag { display: inline-flex; align-items: center; min-height: 44px; padding-inline: 12px; border-radius: 999px; text-decoration: none; }
-.reading-category { color: var(--muted-foreground); background: var(--secondary); }
-.reading-tag { color: var(--reading-accent); background: var(--reading-accent-surface); }
 .reading-post-actions, .reading-comment-actions { display: flex; align-items: center; gap: 2px 4px; flex-wrap: wrap; margin-top: 8px; }
 .post-reading .reading-action, .post-reading .reading-icon { min-height: 44px; height: 44px; padding: 8px 12px; font-size: .75rem; gap: 6px; }
 .post-reading .reading-icon { width: 44px; padding: 10px; flex-shrink: 0; }
@@ -85,7 +81,7 @@
 .reading-thread .reading-comment-list > li + li::before { display: none; }
 @media (max-width: 767px) {
  .reading-post-meta .follow-compact { width: 44px; padding-inline: 0; }
- .reading-post-meta .follow-compact span { display: none; }
+ .reading-post-meta .follow-compact .follow-label { display: none; }
  .reading-discussion { margin-top: 16px; }
  .reading-comment { padding-top: 10px; }
 }

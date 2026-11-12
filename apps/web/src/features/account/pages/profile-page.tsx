@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { AccountShell } from '../components/account-shell'
+import { GoogleIcon } from '../components/google-icon'
 import { PasswordField } from '../components/password-field'
 import { OtpForm } from '../components/otp-form'
 import { useAuth } from '../hooks/use-auth'
@@ -225,6 +226,7 @@ function GoogleSettings({ user, onCreatePassword }: { user: AccountUser; onCreat
           {user.hasPassword && <PasswordField label="Confirma tu contraseña" value={currentPassword} onChange={setCurrentPassword} />}
           {error && <p className="account-error" role="alert">{error}</p>}
           <Button type="submit" variant="secondary" className="h-11 justify-self-start px-6" disabled={!user.google && !auth.options.google}>
+            <GoogleIcon />
             {user.google ? 'Desvincular Google' : 'Vincular Google'}
           </Button>
         </fieldset>

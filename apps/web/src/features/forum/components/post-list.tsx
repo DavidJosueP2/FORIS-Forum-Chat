@@ -3,13 +3,14 @@ import { ArrowUpRight, MessageSquare } from 'lucide-react'
 import type { ForumPostSummary } from '@messages/contracts'
 import { Button } from '@/components/ui/button'
 import { PrivateImage } from '@/features/media/components/private-image'
-import { ForumEmpty, ForumError, ForumLoading, ForumTime } from './forum-states'
+import { ForumEmpty, ForumError, ForumTime } from './forum-states'
+import { ContentSkeleton, PostRowsPlaceholder } from './content-skeletons'
 import { useForumPage } from '../hooks/use-forum'
 import { publicProfileLink } from '@/features/account/lib/public-profile'
 
 export function PostList({ path, filtered, createTo = '/publicar', emptyTitle }: { path: string; filtered: boolean; createTo?: string; emptyTitle?: string }) {
   const page = useForumPage<ForumPostSummary>(path)
-  if (page.loading && !page.ready) return <ForumLoading />
+  if (page.loading && !page.ready) return <ContentSkeleton label="Cargando publicaciones…"><PostRowsPlaceholder compact /></ContentSkeleton>
   if (page.error) return <ForumError message={page.error} retry={page.retry} />
   if (!page.items.length) return <ForumEmpty scene={filtered ? 'forumSearch' : 'communityStart'} title={emptyTitle ?? (filtered ? 'Sin resultados' : 'Aún no hay publicaciones')}>
     {filtered && <p>Prueba otra búsqueda.</p>}

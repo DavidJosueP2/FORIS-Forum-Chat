@@ -9,7 +9,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { IdentityImage } from '@/features/media/components/identity-image'
 import { ForisCharacter } from '@/components/brand/foris-character'
 import { accountError, accountRequest } from '@/features/account/api/account-api'
-import { ForumError, ForumLoading, ForumTime } from '../components/forum-states'
+import { ForumError, ForumTime } from '../components/forum-states'
+import { CommentPlaceholders, ContentSkeleton } from '../components/content-skeletons'
 import { useForumPage, useResource } from '../hooks/use-forum'
 import { ReplyComposer } from './reply-composer'
 import { ShareLink, VoteButtons } from './reading-actions'
@@ -78,7 +79,7 @@ function Comment({ item, post, participation, onChange, onCount, onPin, permalin
     {mode === 'edit' && participation.userId ? <ReplyComposer key={'edit-' + item.id} postId={post.id} userId={participation.userId} editing={item} onSaved={saved} onCancel={closeComposer} onReload={reply => { onChange(reply); closeComposer() }} /> : <p className={'reading-comment-body' + (item.deleted ? ' is-deleted' : '')}>{item.deleted ? 'Este comentario fue eliminado.' : item.body}</p>}
     <div className="reading-comment-actions">
       {!item.deleted && mode === 'read' && <><VoteButtons votes={item.votes} path={path} participation={participation} disabled={busy} onBusyChange={setVoting} onChange={votes => onChange({ ...item, votes })} />
-        {item.depth < 5 && <Button type="button" variant="ghost" className="reading-action" disabled={participation.pending || busy || voting} aria-expanded={false} onClick={reply}><MessageCircle aria-hidden="true" />Responder</Button>}
+        {item.depth < 5 && <Button type="button" variant="ghost" className="reading-action social-action" disabled={participation.pending || busy || voting} aria-expanded={false} onClick={reply}><MessageCircle aria-hidden="true" />Responder</Button>}
         <ShareLink path={link} title={post.title} compact />
         {(own || canPin) && <DropdownMenu><DropdownMenuTrigger asChild><Button type="button" variant="ghost" className="reading-icon" aria-label="Opciones del comentario" disabled={busy || voting || participation.pending}><MoreHorizontal aria-hidden="true" /></Button></DropdownMenuTrigger><DropdownMenuContent align="start" className="reading-menu" onCloseAutoFocus={event => { if (suppressMenuFocus.current) { event.preventDefault(); suppressMenuFocus.current = false } }}>
           {own && <><DropdownMenuItem disabled={Boolean(participation.href)} onSelect={() => { suppressMenuFocus.current = true; setMode('edit') }}><PencilLine aria-hidden="true" />Editar</DropdownMenuItem><DropdownMenuItem onSelect={() => { suppressMenuFocus.current = true; setDeleteOpen(true) }}><Trash2 aria-hidden="true" />Eliminar</DropdownMenuItem></>}
@@ -105,7 +106,8 @@ function ReplyList({ post, participation, parentId = null, onCount, rootComposer
   }
   return <>
     {rootComposer && <div id="responder" className="reading-reply-entry" tabIndex={-1}>{participation.userId && !participation.href && <ReplyComposer key={participation.userId} postId={post.id} userId={participation.userId} onSaved={result => { page.prepend(result.reply); onCount(result.replyCount) }} />}</div>}
-    {page.loading && !page.ready && <ForumLoading label="Cargando comentarios…" />}{page.error && <ForumError message={page.error} retry={page.retry} />}
+    {page.loading && !page.ready && !items.length && <ContentSkeleton label="Cargando comentarios…"><CommentPlaceholders count={parentId || post.replyCount <= 1 ? 1 : 2} /></ContentSkeleton>}
+    {page.error && <ForumError message={page.error} retry={page.retry} />}
     {page.ready && !page.error && !items.length && <div className="reading-empty-state">{!parentId && post.replyCount === 0 && <ForisCharacter scene="firstComment" width={48} height={48} />}<p className="reading-empty">{parentId ? 'Todavía no hay respuestas.' : 'Sé el primero en comentar.'}</p></div>}
     <ol className="reading-comment-list" aria-label={parentId ? 'Respuestas al comentario' : 'Comentarios'}>{items.map(item => <li key={item.id}><Comment item={item} post={post} participation={participation} onChange={page.update} onCount={onCount} onPin={pin} /></li>)}</ol>
     {page.moreError && <p role="alert" className="forum-error">{page.moreError}</p>}{page.hasMore && <Button type="button" variant="ghost" className="reading-action" disabled={page.loadingMore} onClick={() => void page.loadMore()}>{page.loadingMore ? 'Cargando…' : 'Ver más comentarios'}</Button>}
@@ -119,7 +121,8 @@ function LinkedComment({ id, post, participation, onCount }: { id: string; post:
   useEffect(() => { if (loaded) { container.current?.scrollIntoView({ block: 'start' }); container.current?.focus({ preventScroll: true }) } }, [loaded])
   return <div ref={container} tabIndex={-1} className="reading-linked-comment">
     <div className="reading-context-links"><Link to={'/publicaciones/' + post.id + '#respuestas'}>Todos los comentarios</Link>{comment.data?.parentId && <Link to={'/publicaciones/' + post.id + '?comentario=' + comment.data.parentId}>Ver comentario anterior</Link>}</div>
-    {comment.loading && !comment.data && <ForumLoading label="Cargando comentario…" />}{comment.error && <ForumError message={comment.error} retry={comment.retry} />}
+    {comment.loading && !comment.data && <ContentSkeleton label="Cargando comentario…"><CommentPlaceholders /></ContentSkeleton>}
+    {comment.error && <ForumError message={comment.error} retry={comment.retry} />}
     {comment.data && <Comment item={comment.data} post={post} participation={participation} onChange={comment.setData} onCount={onCount} permalink />}
   </div>
 }

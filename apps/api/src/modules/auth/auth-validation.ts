@@ -1,4 +1,12 @@
 import { HttpError } from '../../common/errors/http-error.js';
+
+// Debe coincidir con la revisión de los términos publicada por el cliente.
+const TERMS_VERSION = '2026-11-12';
+
+export function termsVersion(value: unknown): string {
+  if (value !== TERMS_VERSION) throw new HttpError(400, 'TERMS_REQUIRED', 'Acepta la versión vigente de los términos de Foris para continuar.');
+  return TERMS_VERSION;
+}
 export function record(value: unknown, allowed: string[]): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)
     || Object.keys(value).some(key => !allowed.includes(key))) invalid('Los datos enviados no son válidos.');

@@ -9,7 +9,13 @@ import { localTicket } from '../local-tickets.js';
 
 export class LocalStorageAdapter implements ObjectStoragePort {
   readonly profile: string;
-  constructor(private readonly config: MediaConfig, private readonly secret: string) { this.profile = config.profile; }
+  private readonly config: MediaConfig;
+  private readonly secret: string;
+  constructor(config: MediaConfig, secret: string) {
+    this.config = config;
+    this.secret = secret;
+    this.profile = config.profile;
+  }
   private path(key: string): string {
     assertObjectKey(key);
     const path = resolve(this.config.localRoot, key);

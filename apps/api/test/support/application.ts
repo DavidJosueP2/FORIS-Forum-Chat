@@ -25,6 +25,7 @@ export interface FixtureOptions {
   pool?: DatabasePool;
   logger?: AppLogger;
   auth?: boolean;
+  google?: boolean;
   appUrl?: string;
   presence?: Pick<PresenceRepository, 'acquire' | 'refresh' | 'release'>;
   media?: Partial<MediaConfig>;
@@ -33,7 +34,8 @@ export interface FixtureOptions {
 export async function createTestApplication(options: FixtureOptions = {}) {
   const pool = options.pool ?? (await testDatabase()).pool;
   const config = readConfig({ NODE_ENV: 'test', PGPASSWORD: 'test-only', AUTH_SECRET: options.auth ? 'foris-test-secret-with-at-least-32-characters' : undefined,
-    APP_URL: options.appUrl, STORAGE_LOCAL_ROOT: options.media?.localRoot });
+    APP_URL: options.appUrl, STORAGE_LOCAL_ROOT: options.media?.localRoot,
+    ...(options.google ? { GOOGLE_CLIENT_ID: 'fixture-client', GOOGLE_CLIENT_SECRET: 'fixture-secret' } : {}) });
   config.media = { ...config.media, ...options.media };
   config.port = options.port ?? 3099;
   config.messagesPerMinute = options.sendLimit ?? 40;

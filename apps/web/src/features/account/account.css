@@ -18,6 +18,12 @@
 .auth-mode-switch button { font-size: .875rem; }
 .auth-alternative { margin-block: 24px; color: var(--muted-foreground); font-size: .75rem; text-align: center; }
 .google-access { font-size: .875rem; }
+.auth-terms { font-size: .875rem; line-height: 1.5; }
+.auth-terms-label { display: flex; min-height: 44px; align-items: center; gap: 10px; cursor: pointer; }
+.auth-terms-label input { width: 18px; height: 18px; flex-shrink: 0; appearance: auto; accent-color: var(--primary); }
+.auth-terms-label input:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+.auth-terms-links { display: flex; flex-wrap: wrap; gap: 4px 14px; padding-inline-start: 28px; color: var(--muted-foreground); font-size: .75rem; }
+.auth-terms-links a { display: inline-flex; min-height: 28px; align-items: center; text-decoration: underline; text-underline-offset: 3px; }
 .account-form, .account-fieldset { display: grid; min-width: 0; gap: 20px; }
 .account-fieldset { margin: 0; padding: 0; border: 0; }
 .account-fieldset:empty { display: none; }
