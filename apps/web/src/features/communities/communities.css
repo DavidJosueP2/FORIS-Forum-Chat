@@ -1,4 +1,36 @@
 .community-list, .community-inbox { list-style: none; margin: 0; padding: 0; }
+.forum-main.community-directory { max-width: 1200px; container: community-directory / inline-size; }
+.community-directory .forum-intro { margin-bottom: 28px; }
+.community-directory-tools { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px 24px; margin-bottom: 24px; }
+.community-directory-tools .forum-search { flex: 1 1 20rem; min-width: 0; max-width: 34rem; margin: 0; }
+.community-directory-tools .forum-topics { margin: 0; }
+.community-list { display: grid; grid-template-columns: minmax(0, 1fr); column-gap: 28px; }
+.community-list > li { min-width: 0; border-block-start: 1px solid var(--secondary); }
+.community-entry { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: clamp(12px, 2cqi, 24px); height: 100%; padding: 16px 8px; border-radius: var(--radius); text-decoration: none; scroll-margin-block-start: var(--discovery-header-offset, 16px); }
+.community-entry:hover, .community-entry:focus-visible { background: var(--card); }
+.community-entry:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
+.identity-image.community-directory-photo { --identity-size: clamp(80px, 14cqi, 144px); border-radius: 10px; }
+.identity-image.community-directory-photo[data-fallback="character"] { background: var(--accent); }
+.community-directory-photo img.identity-character { width: 56%; height: 56%; }
+.community-entry-content { display: flex; flex-direction: column; gap: 8px; min-width: 0; min-height: 100%; }
+.community-entry-title { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.community-entry-title h2 { min-width: 0; font-size: clamp(1.25rem, 2.5cqi, 1.5rem); font-weight: 600; line-height: 1.35; letter-spacing: -.02em; overflow-wrap: anywhere; }
+.community-entry-title > svg { flex-shrink: 0; width: 18px; height: 18px; margin-top: 3px; color: var(--muted-foreground); }
+.community-entry:hover h2, .community-entry:focus-visible h2 { text-decoration: underline; text-underline-offset: 4px; }
+.community-entry .community-description { font-size: .875rem; line-height: 1.65; }
+.community-entry-meta { margin-top: auto; padding-top: 4px; gap: 4px 14px; }
+.community-entry-meta > span, .community-entry-status > span { display: inline-flex; align-items: center; gap: 6px; }
+.community-entry-meta svg, .community-entry-status svg { flex-shrink: 0; width: 16px; height: 16px; }
+.community-entry-status { display: flex; flex-wrap: wrap; gap: 4px 12px; color: var(--muted-foreground); font-size: .75rem; line-height: 1.5; }
+.community-entry-status svg { width: 14px; height: 14px; }
+@container community-directory (min-width: 46rem) {
+  .community-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@container community-directory (max-width: 35rem) {
+  .community-directory-tools .forum-topics [data-slot="button"] { padding-inline: 12px; }
+  .community-entry-meta { gap: 4px 10px; }
+  .community-entry-meta svg { width: 14px; height: 14px; }
+}
 .community-builder { max-width: 720px; }
 .community-page-title { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .community-page-title h1 { min-width: 0; overflow-wrap: anywhere; }
@@ -19,7 +51,6 @@
 .community-access-switch label:focus-within { outline: 2px solid var(--ring); outline-offset: 2px; }
 .community-access-switch svg { width: 18px; height: 18px; }
 .community-access > p { margin-top: 12px; max-width: 60ch; }
-.community-row-with-image { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 20px; align-items: start; }
 .community-heading { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 20px 24px; }
 .community-identity { flex: 1 1 360px; min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: 24px; }
 .community-heading-actions { max-width: min(100%, 24rem); }
@@ -50,21 +81,14 @@
   .community-identity { grid-template-columns: minmax(0, 1fr); gap: 16px; }
   .community-heading-actions .forum-actions { gap: 8px; }
   .community-heading-actions .forum-actions [data-slot="button"] { padding-inline: 12px; }
-  .community-row-with-image { gap: 14px; }
-  .identity-image.community-list-photo { --identity-size: 44px; font-size: 1rem; }
   .community-identity-editor { gap: 16px; }
 }
-.community-row { padding-block: 28px; }
-.community-row-title { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
-.community-row h2, .community-notification h2 { font-size: 1.5rem; line-height: 1.5; font-weight: 600; overflow-wrap: anywhere; }
-.community-row h2 a, .community-notification h2 a { text-decoration: none; }
-.community-row h2 a:hover, .community-notification h2 a:hover { text-decoration: underline; text-underline-offset: 4px; }
-.community-row h2 svg { display: inline; width: 18px; height: 18px; margin-left: 12px; vertical-align: baseline; }
+.community-notification h2 { font-size: 1.5rem; line-height: 1.5; font-weight: 600; overflow-wrap: anywhere; }
+.community-notification h2 a { text-decoration: none; }
+.community-notification h2 a:hover { text-decoration: underline; text-underline-offset: 4px; }
 .community-description { color: var(--muted-foreground); white-space: pre-wrap; overflow-wrap: anywhere; max-width: 70ch; line-height: 1.8; }
-.community-row .community-description { margin-block: 12px 16px; }
 .community-members { display: inline-flex; align-items: center; gap: 8px; }
 .community-members svg { width: 18px; height: 18px; flex-shrink: 0; }
-.community-saved-star { width: 18px; height: 18px; fill: currentColor; }
 .community-heading h1 { font-size: clamp(1.875rem, 4vw, 2rem); font-weight: 600; line-height: 1.4; letter-spacing: -.025em; overflow-wrap: anywhere; }
 .community-heading .community-description { margin-block: 16px 24px; }
 .community-controls { display: flex; flex-direction: column; gap: 12px; }
@@ -91,8 +115,7 @@
   .forum-navigation { order: 3; width: 100%; flex-wrap: wrap; }
 }
 @media (max-width: 767px) {
-  .community-row h2, .community-notification h2 { font-size: 1.25rem; }
-  .community-row { padding-block: 24px; }
+  .community-notification h2 { font-size: 1.25rem; }
   .community-notification { padding-block: 24px; }
   .community-inbox-tools { justify-content: flex-start; }
 }

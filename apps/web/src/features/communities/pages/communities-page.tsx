@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { ArrowUpRight, LockKeyhole, Plus, Search, Star, UsersRound } from 'lucide-react'
+import { ArrowRight, FileText, LockKeyhole, Plus, Search, Star, UsersRound } from 'lucide-react'
 import type { Community } from '@messages/contracts'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,6 +9,32 @@ import { useAuth } from '@/features/account/hooks/use-auth'
 import { ForumEmpty, ForumError, ForumLoading, ParticipationGate } from '@/features/forum/components/forum-states'
 import { useForumPage } from '@/features/forum/hooks/use-forum'
 import { IdentityImage } from '@/features/media/components/identity-image'
+
+function CommunityEntry({ item }: { item: Community }) {
+  const titleId = `community-title-${item.id}`
+  const isPrivate = item.visibility === 'private'
+  return <li>
+    <Link to={'/comunidades/' + item.id} className="community-entry" aria-labelledby={titleId}>
+      <IdentityImage fallbackKey={'community:' + item.id} mediaId={item.imageId} name={item.name} className="community-directory-photo" />
+      <div className="community-entry-content">
+        <div className="community-entry-title">
+          <h2 id={titleId}>{item.name}</h2>
+          <ArrowRight aria-hidden="true" />
+        </div>
+        <p className="community-description">{item.description}</p>
+        <div className="community-entry-meta forum-meta">
+          <span><UsersRound aria-hidden="true" /><span><strong>{item.memberCount}</strong> {item.memberCount === 1 ? 'miembro' : 'miembros'}</span></span>
+          <span><FileText aria-hidden="true" /><span><strong>{item.postCount}</strong> {item.postCount === 1 ? 'publicación' : 'publicaciones'}</span></span>
+        </div>
+        {(isPrivate || item.isFavorite || item.membership) && <div className="community-entry-status">
+          {isPrivate && <span><LockKeyhole aria-hidden="true" />Privada</span>}
+          {item.isFavorite && <span><Star aria-hidden="true" />Favorita</span>}
+          {item.membership && <span>{item.membership.role === 'owner' ? 'La creaste tú' : 'Formas parte'}</span>}
+        </div>}
+      </div>
+    </Link>
+  </li>
+}
 
 function CommunityList({ path, scope, searched }: { path: string; scope: string; searched: boolean }) {
   const page = useForumPage<Community>(path)
@@ -20,11 +46,7 @@ function CommunityList({ path, scope, searched }: { path: string; scope: string;
   </ForumEmpty>
   return <>
     <ol className="community-list" aria-label="Comunidades">
-      {page.items.map(item => <li key={item.id}><article className="community-row community-row-with-image"><IdentityImage fallbackKey={'community:' + item.id} mediaId={item.imageId} name={item.name} className="community-list-photo" /><div>
-        <div className="community-row-title"><h2><Link to={'/comunidades/' + item.id}>{item.name}<ArrowUpRight aria-hidden="true" /></Link></h2>{item.isFavorite && <Star className="community-saved-star" aria-label="En favoritas" />}{item.membership && <span className="forum-topic-label">{item.membership.role === 'owner' ? 'La creaste tú' : 'Formas parte'}</span>}</div>
-        <p className="community-description">{item.description}</p>
-        <div className="forum-meta">{item.visibility === 'private' && <span className="community-members"><LockKeyhole aria-hidden="true" />Privada</span>}<span className="community-members"><UsersRound aria-hidden="true" />{item.memberCount} {item.memberCount === 1 ? 'miembro' : 'miembros'}</span><span>{item.postCount} {item.postCount === 1 ? 'publicación' : 'publicaciones'}</span></div>
-      </div></article></li>)}
+      {page.items.map(item => <CommunityEntry key={item.id} item={item} />)}
     </ol>
     {page.moreError && <p className="forum-error" role="alert">{page.moreError}</p>}
     {page.hasMore && <Button variant="secondary" className="h-11 px-6 forum-more" disabled={page.loadingMore} onClick={() => void page.loadMore()}>{page.loadingMore ? 'Cargando…' : 'Ver más comunidades'}</Button>}
@@ -41,14 +63,16 @@ function CommunitiesIndex() {
   if (search) filters.set('search', search)
   const path = 'communities?' + filters.toString()
   const list = <CommunityList key={path + (auth.session.user?.id ?? 'guest') + auth.status} path={path} scope={scope} searched={Boolean(search)} />
-  return <main id="forum-content" className="forum-main" tabIndex={-1}>
+  return <main id="forum-content" className="forum-main community-directory" tabIndex={-1}>
     <header className="forum-intro"><div><h1>Encuentra tu gente.</h1><p>Un espacio para las ideas que compartes y las personas con quienes quieres seguir conversando.</p></div><Button asChild className="h-12 px-6"><Link to="/comunidades/crear"><Plus aria-hidden="true" />Crear comunidad</Link></Button></header>
-    <form className="forum-search" role="search" onSubmit={event => { event.preventDefault(); const next = new URLSearchParams(params); if (query.trim()) next.set('q', query.trim()); else next.delete('q'); setParams(next) }}>
-      <label htmlFor="community-search">Busca una comunidad</label><div><Input id="community-search" type="search" maxLength={120} value={query} onChange={event => setQuery(event.target.value)} placeholder="Un interés, un nombre, una idea…" /><Button type="submit" variant="secondary" className="h-12 px-5"><Search aria-hidden="true" />Buscar</Button></div>
-    </form>
-    <nav className="forum-topics" aria-label="Filtrar comunidades">
-      {([['all', 'Explorar', ''], ['mine', 'Mis comunidades', 'mias'], ['favorites', 'Favoritas', 'favoritas']] as const).map(([value, label, param]) => <Button key={value} variant={scope === value ? 'secondary' : 'ghost'} className="h-11 px-5" aria-pressed={scope === value} onClick={() => { const next = new URLSearchParams(params); if (param) next.set('vista', param); else next.delete('vista'); setParams(next) }}>{label}</Button>)}
-    </nav>
+    <div className="community-directory-tools">
+      <form className="forum-search" role="search" onSubmit={event => { event.preventDefault(); const next = new URLSearchParams(params); if (query.trim()) next.set('q', query.trim()); else next.delete('q'); setParams(next) }}>
+        <label htmlFor="community-search">Busca una comunidad</label><div><Input id="community-search" type="search" maxLength={120} value={query} onChange={event => setQuery(event.target.value)} placeholder="Nombre o interés…" /><Button type="submit" variant="secondary" className="h-12 px-5"><Search aria-hidden="true" />Buscar</Button></div>
+      </form>
+      <nav className="forum-topics" aria-label="Filtrar comunidades">
+        {([['all', 'Explorar', ''], ['mine', 'Mis comunidades', 'mias'], ['favorites', 'Favoritas', 'favoritas']] as const).map(([value, label, param]) => <Button key={value} variant={scope === value ? 'secondary' : 'ghost'} className="h-11 px-5" aria-pressed={scope === value} onClick={() => { const next = new URLSearchParams(params); if (param) next.set('vista', param); else next.delete('vista'); setParams(next) }}>{label}</Button>)}
+      </nav>
+    </div>
     {search && <p className="forum-active-filter"><span>Buscando «{search}»</span><Link to={scope === 'all' ? '/comunidades' : '/comunidades?vista=' + (scope === 'mine' ? 'mias' : 'favoritas')}>Quitar búsqueda</Link></p>}
     {scope === 'all' ? list : <ParticipationGate next="/comunidades" description="Entra con tu cuenta para encontrar tus comunidades y guardar tus favoritas.">{list}</ParticipationGate>}
   </main>

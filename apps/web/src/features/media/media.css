@@ -38,7 +38,6 @@
 .identity-image.profile-avatar { --identity-size: 72px; }
 .identity-image.portrait-preview { --identity-size: 88px; font-size: 1.875rem; }
 .identity-image.community-photo { --identity-size: 88px; border-radius: 10px; font-size: 1.875rem; }
-.identity-image.community-list-photo { --identity-size: 64px; border-radius: 10px; font-size: 1.5rem; }
 .portrait-editor { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
 .portrait-editor[data-purpose="community"] .portrait-preview { border-radius: 10px; }
 .portrait-select { position: relative; display: inline-flex; align-items: center; gap: 20px; cursor: pointer; border-radius: 10px; }
