@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { Message, MessageInput, MessagePage } from '@messages/contracts'
+import type { ConversationHistory, ConversationSend, ConversationState, Message, MessageInput } from '@messages/contracts'
 import { AccountApiError, accountError, accountRequest } from '@/features/account/api/account-api'
 import { mergeMessages } from '../lib/messages'
 
@@ -9,6 +9,7 @@ export function useConversation(room: string) {
   const [historyStatus, setHistoryStatus] = useState<'loading' | 'ready' | 'error'>('loading')
   const [historyError, setHistoryError] = useState<string | null>(null)
   const [accessLost, setAccessLost] = useState(false)
+  const [state, setState] = useState<ConversationState | null>(null)
   const [hasOlder, setHasOlder] = useState(false)
   const [olderError, setOlderError] = useState<string | null>(null)
   const [loadingOlder, setLoadingOlder] = useState(false)
@@ -16,6 +17,7 @@ export function useConversation(room: string) {
   const olderRequest = useRef<AbortController | null>(null)
   const lifetime = useRef<AbortController | null>(null)
   const cursor = useRef<string | null>(null)
+  const sends = useRef(0)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -25,13 +27,15 @@ export function useConversation(room: string) {
       let delay = 2500
       try {
         const after = cursor.current
+        const version = sends.current
         const query = after === null ? '' : '?after=' + after
-        const result = await accountRequest<MessagePage>(path + query, 'GET', undefined, controller.signal)
+        const result = await accountRequest<ConversationHistory>(path + query, 'GET', undefined, controller.signal)
         if (controller.signal.aborted) return
         cursor.current = result.messages.at(-1)?.id ?? after ?? '0'
         if (after === null) setHasOlder(result.hasMore)
         else if (result.hasMore) delay = 0
         if (result.messages.length) setMessages(current => mergeMessages(current, result.messages))
+        if (version === sends.current) setState(result.state)
         setHistoryStatus('ready'); setHistoryError(null); setAccessLost(false)
       } catch (error) {
         if (controller.signal.aborted) return
@@ -58,7 +62,7 @@ export function useConversation(room: string) {
     olderRequest.current = controller
     setLoadingOlder(true); setOlderError(null)
     try {
-      const result = await accountRequest<MessagePage>(path + '?before=' + first.id, 'GET', undefined, controller.signal)
+      const result = await accountRequest<ConversationHistory>(path + '?before=' + first.id, 'GET', undefined, controller.signal)
       if (controller.signal.aborted) return false
       setMessages(current => mergeMessages(current, result.messages)); setHasOlder(result.hasMore)
       return result.messages.length > 0
@@ -73,10 +77,21 @@ export function useConversation(room: string) {
 
   async function sendMessage({ body, requestId }: MessageInput) {
     const signal = lifetime.current?.signal
-    const result = await accountRequest<{ message: Message }>(path, 'POST', { body, requestId }, signal)
-    if (!signal?.aborted) setMessages(current => mergeMessages(current, [result.message]))
+    try {
+      const result = await accountRequest<ConversationSend>(path, 'POST', { body, requestId }, signal)
+      if (signal?.aborted) return
+      sends.current++
+      setState(result.state)
+      setMessages(current => mergeMessages(current, [result.message]))
+    } catch (cause) {
+      if (!signal?.aborted && cause instanceof AccountApiError && cause.code === 'DIRECT_INTRO_PENDING') {
+        sends.current++
+        setState({ permission: 'awaiting', canCall: false })
+      }
+      throw cause
+    }
   }
 
-  return { messages, historyStatus, historyError, accessLost, hasOlder, loadingOlder, olderError, loadOlder, sendMessage,
+  return { messages, historyStatus, historyError, accessLost, state, hasOlder, loadingOlder, olderError, loadOlder, sendMessage,
     reconnect: () => setAttempt(current => current + 1) }
 }

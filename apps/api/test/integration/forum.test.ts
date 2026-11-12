@@ -243,7 +243,7 @@ test('editar una publicación de comunidad no duplica avisos ni permite editar d
   const owner = await member(); const author = await member();
   const community = await api.post('/api/communities').set('Origin', origin).set('Cookie', owner.cookie).send({ name: 'Taller abierto', description: 'Compartimos ideas.', requestId: randomUUID() }).expect(201);
   const id = community.body.community.id as string;
-  await api.post('/api/communities/' + id + '/membership').set('Origin', origin).set('Cookie', author.cookie).send({}).expect(200);
+  await api.post('/api/communities/' + id + '/membership').set('Origin', origin).set('Cookie', author.cookie).send({}).expect(201);
   const post = await api.post('/api/posts').set('Origin', origin).set('Cookie', author.cookie).send({ ...postInput(), communityId: id }).expect(201);
   const input = { title: 'Una revisión', revision: 1, requestId: randomUUID(), content: { version: 1, content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Más contexto' }] }] } };
   await api.patch('/api/posts/' + post.body.post.id).set('Origin', origin).set('Cookie', author.cookie).send(input).expect(200);
@@ -353,7 +353,7 @@ test('los hilos privados y sus votos quedan ocultos a invitados, ajenos y exmiem
   const { api, member, database } = await fixture(t); const owner = await member(); const user = await member(); const outsider = await member();
   const community = (await api.post('/api/communities').set('Origin', origin).set('Cookie', owner.cookie).send({ name: 'Lecturas privadas', description: 'Un espacio privado para conversar.', visibility: 'private', requestId: randomUUID() }).expect(201)).body.community.id as string;
   // Preparación de membresía; no se prueba de nuevo el flujo de invitaciones aquí.
-  await database.query("INSERT INTO community_memberships(community_id,user_id,role) VALUES($1,$2,'member')", [community, user.id]);
+  await database.query('INSERT INTO community_memberships(community_id,user_id) VALUES($1,$2)', [community, user.id]);
   await database.query('UPDATE communities SET member_count=member_count+1 WHERE id=$1', [community]);
   const id = (await api.post('/api/posts').set('Origin', origin).set('Cookie', owner.cookie).send({ ...postInput(), communityId: community }).expect(201)).body.post.id as string;
   const base = '/api/posts/' + id;

@@ -15,6 +15,13 @@ export interface CommunityInvitation { id: string; createdAt: string; expiresAt:
 export interface InvitationPreview { community: CommunityRef; expiresAt: string; isMember: boolean }
 export interface CommunityPreferences { favorite?: boolean; notifyPosts?: boolean }
 export interface CommunityNotification {
+  kind: 'community';
   id: string; community: CommunityRef; post: { id: string; title: string };
   authorName: string; createdAt: string; readAt: string | null;
 }
+export interface FollowNotification {
+  kind: 'follow';
+  id: string; follower: { id: string; displayName: string };
+  createdAt: string; readAt: string | null;
+}
+export type InboxNotification = CommunityNotification | FollowNotification;

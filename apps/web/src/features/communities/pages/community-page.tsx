@@ -4,11 +4,14 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Bell, LockKeyhole, MessageCircle, Plus, Star, UsersRound } from 'lucide-react'
 import type { Community, CommunityPreferences } from '@messages/contracts'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { SocialFeedback } from '@/components/ui/social-feedback'
 import { usePageTitle } from '@/hooks/use-page-title'
 import { useAuth } from '@/features/account/hooks/use-auth'
 import { accountError, accountRequest } from '@/features/account/api/account-api'
 import { loginLink } from '@/features/account/lib/return-target'
-import { ForumEmpty, ForumError, ForumLoading } from '@/features/forum/components/forum-states'
+import { ForumEmpty, ForumError } from '@/features/forum/components/forum-states'
+import { ContentSkeleton, PostRowsPlaceholder } from '@/features/forum/components/content-skeletons'
 import { PostList } from '@/features/forum/components/post-list'
 import { useResource } from '@/features/forum/hooks/use-forum'
 import { validCommunityId } from '../lib/notifications'
@@ -20,6 +23,7 @@ function CommunityControls({ community, onChanged }: { community: Community; onC
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+  const [favoritePulse, setFavoritePulse] = useState(0)
   const guard = useRef(false)
   const alive = useRef(true)
   useEffect(() => { alive.current = true; return () => { alive.current = false } }, [])
@@ -36,15 +40,16 @@ function CommunityControls({ community, onChanged }: { community: Community; onC
       const result = await accountRequest<Community>('communities/' + community.id + (action === 'preferences' ? '/preferences' : '/membership'), action === 'preferences' ? 'PATCH' : 'POST', body)
       if (!alive.current) return
       onChanged(result)
+      if (action === 'preferences' && typeof body.favorite === 'boolean') setFavoritePulse(current => current + 1)
       setNotice(action === 'join' ? 'Ya formas parte de la comunidad.' : 'Tus preferencias se guardaron.')
     } catch (cause) { if (alive.current) setError(accountError(cause)) }
     finally { guard.current = false; if (alive.current) setBusy(false) }
   }
   return <section className="community-controls" aria-label="Tu relación con esta comunidad" aria-busy={busy}>
     <div className="forum-actions">
-      {!community.membership && <Button className="h-11 px-6" disabled={busy} onClick={() => void change('join')}>Unirme</Button>}
-      {community.membership && <Button asChild className="h-11 px-5"><Link to={'/chat/community:' + community.id}><MessageCircle aria-hidden="true" />Abrir chat</Link></Button>}
-      <Button variant="secondary" className="h-11 px-5 community-star" data-active={community.isFavorite} aria-pressed={community.isFavorite} disabled={busy} onClick={() => void change('preferences', { favorite: !community.isFavorite })}><Star aria-hidden="true" />{community.isFavorite ? 'En favoritas' : 'Guardar favorita'}</Button>
+      {!community.membership && <Button className="h-11 px-6 social-action" disabled={busy} onClick={() => void change('join')}>Unirme</Button>}
+      {community.membership && <Button asChild className="h-11 px-5 social-action"><Link to={'/chat/community:' + community.id}><MessageCircle aria-hidden="true" />Abrir chat</Link></Button>}
+      <Button variant="secondary" className="h-11 px-5 community-star social-action" data-active={community.isFavorite} aria-pressed={community.isFavorite} disabled={busy} onClick={() => void change('preferences', { favorite: !community.isFavorite })}><SocialFeedback pulse={favoritePulse} celebrate={community.isFavorite}><Star /></SocialFeedback>{community.isFavorite ? 'En favoritas' : 'Guardar favorita'}</Button>
     </div>
     {community.membership && <label className="community-notification-setting"><input type="checkbox" checked={community.membership.notifyPosts} disabled={busy} onChange={event => void change('preferences', { notifyPosts: event.target.checked })} /><span><strong><Bell aria-hidden="true" />Avisos de publicaciones</strong></span></label>}
     {community.membership?.role === 'member' && <Button variant="ghost" className="community-leave h-11" disabled={busy} onClick={() => void change('leave')}>Salir de la comunidad</Button>}
@@ -52,18 +57,49 @@ function CommunityControls({ community, onChanged }: { community: Community; onC
     {notice && <p className="sr-only" role="status">{notice}</p>}
   </section>
 }
+function CommunityActionPlaceholders() {
+  return <div className="forum-actions">
+    <Skeleton className="h-11 w-24 rounded-full" />
+    <Skeleton className="h-11 w-36 rounded-full" />
+  </div>
+}
+
+function CommunityDetailSkeleton() {
+  return <ContentSkeleton label="Abriendo comunidad…">
+    <div className="community-heading">
+      <div className="community-identity">
+        <Skeleton className="community-photo" />
+        <div className="grid gap-3 pt-1">
+          <Skeleton className="h-8 w-3/4 max-w-72" />
+          <Skeleton className="h-4 w-11/12 max-w-md" />
+          <div className="forum-meta mt-2">
+            <Skeleton className="h-3.5 w-20" />
+            <Skeleton className="h-3.5 w-24" />
+          </div>
+        </div>
+      </div>
+      <div className="community-heading-actions"><CommunityActionPlaceholders /></div>
+    </div>
+    <div className="community-forums">
+      <div className="forum-list-heading"><Skeleton className="h-6 w-32" /></div>
+      <PostRowsPlaceholder compact />
+    </div>
+  </ContentSkeleton>
+}
+
 function CommunityContent({ id }: { id: string }) {
   const auth = useAuth()
   const valid = validCommunityId(id)
   const community = useResource<Community>(valid ? 'communities/' + id : null)
   usePageTitle(community.data?.name ?? 'Comunidad')
   if (!valid) return <ForumEmpty title="Esta comunidad no existe"><p>Vuelve a explorar para encontrar otro espacio.</p><Link to="/comunidades">Ver comunidades</Link></ForumEmpty>
-  if (community.loading && !community.data) return <ForumLoading label="Abriendo comunidad…" />
+  const backLink = <Link to="/comunidades" className="community-directory-back"><ArrowLeft aria-hidden="true" />Todas las comunidades</Link>
+  if (community.loading && !community.data) return <>{backLink}<CommunityDetailSkeleton /></>
   if (community.error) return <ForumError message={community.error} retry={community.retry} />
   if (!community.data) return null
   const item = community.data
   return <>
-    <Link to="/comunidades" className="community-directory-back"><ArrowLeft aria-hidden="true" />Todas las comunidades</Link>
+    {backLink}
     <header className="community-heading">
       <div className="community-identity">
         <IdentityImage fallbackKey={'community:' + item.id} mediaId={item.imageId} name={item.name} className="community-photo" />
@@ -80,7 +116,7 @@ function CommunityContent({ id }: { id: string }) {
         </div>
       </div>
       <div className="community-heading-actions">
-        {auth.status === 'loading' ? <ForumLoading label="Comprobando tu cuenta…" />
+        {auth.status === 'loading' ? <ContentSkeleton label="Comprobando tu cuenta…"><CommunityActionPlaceholders /></ContentSkeleton>
           : auth.status === 'error' ? <ForumError message={auth.error ?? 'No pudimos comprobar tu cuenta.'} retry={() => void auth.refresh()} />
           : auth.session.user ? <CommunityControls community={item} onChanged={community.setData} />
           : <div className="forum-actions">

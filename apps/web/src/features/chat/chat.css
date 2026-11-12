@@ -37,9 +37,7 @@
 .identity-image.chat-header-avatar { --identity-size: 44px; }
 .chat-room-audience { display: flex; align-items: center; gap: 6px; margin-top: 4px; color: var(--muted-foreground); font-size: .75rem; }
 .chat-room-audience svg { width: 14px; height: 14px; flex-shrink: 0; }
-.chat-community-back { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; color: var(--muted-foreground); font-size: .875rem; }
-.chat-community-back:hover { text-decoration: underline; text-underline-offset: 4px; }
-.chat-community-back svg { width: 14px; height: 14px; flex-shrink: 0; }
+.chat-room-name:hover, .chat-room-name:focus-visible { text-decoration: underline; text-underline-offset: .16em; }
 
 @media (max-width: 767px) {
   .forum-platform .foris-app.chats-page { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
@@ -138,6 +136,7 @@
 .composer-count { color: var(--muted-foreground); font-size: .75rem; font-variant-numeric: tabular-nums; }
 .send-button { min-width: 106px; font-size: .875rem; }
 .composer-hint { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; margin: 10px 6px 0; color: var(--muted-foreground); font-size: .75rem; line-height: 1.5; }
+.composer-guidance { margin: 0 6px 10px; color: var(--muted-foreground); font-size: .875rem; line-height: 1.5; text-wrap: pretty; }
 .composer-error { margin: 10px 6px 0; color: var(--destructive); font-size: .875rem; line-height: 1.5; }
 
 .community-notes { display: grid; gap: 24px; margin: 32px 0 0; padding: 0; list-style: none; }

@@ -8,7 +8,17 @@
 .discovery-search-field input::-webkit-search-cancel-button { appearance: none; }
 .discovery-search-field input::placeholder { color: var(--muted-foreground); opacity: 1; }
 .discovery-search-field .discovery-search-clear { flex-shrink: 0; width: 44px; height: 44px; }
-.discovery-search-field > .discovery-search-pending { width: 16px; height: 16px; margin-right: 8px; }
+.discovery-search-panel { position: absolute; z-index: 40; top: calc(100% + 8px); inset-inline: 0; padding: 4px; border-radius: var(--radius-xl); background: var(--popover); color: var(--popover-foreground); box-shadow: 0 10px 24px -8px color-mix(in srgb, var(--foreground) 38%, transparent); }
+.discovery-search-results { max-height: min(320px, 46dvh); overflow-y: auto; overscroll-behavior: contain; }
+.discovery-search-result, .discovery-search-all, .discovery-search-status { display: flex; align-items: center; gap: 8px; min-height: 44px; padding-inline: 10px; font-size: .875rem; }
+.discovery-search-result, .discovery-search-all { border-radius: var(--radius); }
+.discovery-search-result:hover, .discovery-search-result[aria-selected=true], .discovery-search-all:hover { background: var(--secondary); }
+.discovery-search-result span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.discovery-search-result small { color: var(--muted-foreground); font-size: .75rem; }
+.discovery-search-panel svg { width: 15px; height: 15px; flex: none; color: var(--muted-foreground); }
+.discovery-search-status { color: var(--muted-foreground); }
+.discovery-search-all { justify-content: space-between; width: 100%; border-top: 1px solid var(--border); text-align: start; }
+.discovery-search-all:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
 .discovery-search-error { position: absolute; top: calc(100% + 8px); left: 0; z-index: 40; width: max-content; max-width: min(360px, 90vw); padding: 12px 16px; border-radius: 14px; background: var(--popover); color: var(--destructive); font-size: .875rem; line-height: 1.7; }
 .forum-main.discovery-layout { display: block; max-width: 824px; padding: 24px 32px 48px; }
 .discovery-sidebar-inner { padding: 8px 4px 24px; }
@@ -137,7 +147,7 @@
 .discovery-follow-empty p { margin-block: 8px 16px; color: var(--muted-foreground); line-height: 1.7; max-width: 50ch; }
 @media (max-width: 639px) {
  .discovery-post-meta .follow-compact { width: 44px; padding-inline: 0; }
- .discovery-post-meta .follow-compact span { display: none; }
+ .discovery-post-meta .follow-compact .follow-label { display: none; }
  .discovery-post-author > span:not(.identity-image) { max-width: 16ch; }
  .discovery-post-actions { gap: 4px 10px; }
  .discovery-read-post { margin-inline-start: 0; }

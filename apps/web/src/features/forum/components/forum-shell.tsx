@@ -59,7 +59,7 @@ function PlatformFrame() {
       <div className="platform-brand">{compact ? <CompactNavigation /> : <MobileDiscoveryFilters {...discovery} navigation={close => <PlatformNavigation icons onNavigate={close} />} footer={showSidebarLegal ? close => <LegalEntry onNavigate={close} /> : undefined} />}<Link to="/" className="forum-wordmark" aria-label="Foris, inicio"><ForisCharacter scene="brand" width={32} height={32} className="platform-brand-mark" /><span>Foris</span></Link></div>
       <div className="platform-top-navigation"><PlatformNavigation /></div>
       {!chat && !legal && <div className="platform-navbar-tools">
-        <DiscoverySearch key={discovery.searchReset} navigationKey={pathname} applied={discovery.query.search} onSearch={discovery.onSearch} />
+        <DiscoverySearch key={pathname + ':' + discovery.searchReset} applied={discovery.query.search} onSearch={discovery.onSearch} resourceScope={discovery.resourceScope} />
         <Button asChild className="platform-create h-11 px-4"><Link to={create} aria-label="Crear publicación"><Plus aria-hidden="true" /><span className="platform-create-label">Crear publicación</span><span className="platform-create-short">Crear</span></Link></Button>
       </div>}
       <div className="forum-account"><NotificationEntry /><AccountEntry /></div>

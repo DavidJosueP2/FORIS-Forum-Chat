@@ -8,6 +8,7 @@ import { useDiscovery } from '../discovery/use-discovery'
 import { ActiveDiscoveryFilters } from '../discovery/discovery-filters'
 import { DiscoveryFeed } from '../discovery/discovery-feed'
 import { HomeContext } from '../components/context-rail'
+import { ContentSkeleton, PostRowsPlaceholder } from '../components/content-skeletons'
 import { FOLLOWING_CHANGED, followingChange } from '../following/following-events'
 
 function ForumIndex() {
@@ -45,7 +46,10 @@ function ForumIndex() {
         <span className="discovery-sort-note">Recientes</span>
       </header>
       <ActiveDiscoveryFilters {...discovery} />
-      {query.issue ? <div className="discovery-invalid" role="alert"><p>{query.issue}</p><Button type="button" variant="secondary" className="h-11" onClick={onClear}>Restablecer filtros</Button></div> : following && !viewer ? <div className="discovery-follow-empty"><h2>Tu espacio para seguir conversaciones</h2><p>Entra para ver las publicaciones de autores que sigues y tus comunidades.</p><Button asChild className="h-11"><Link to={loginLink(followingHref)}>Entrar a Foris</Link></Button></div> : <DiscoveryFeed key={query.path + '.' + revision} path={query.path} following={following} filtered={query.filtered} onClear={onClear} discoverHref={discoverHref} />}
+      {query.issue ? <div className="discovery-invalid" role="alert"><p>{query.issue}</p><Button type="button" variant="secondary" className="h-11" onClick={onClear}>Restablecer filtros</Button></div>
+        : following && auth.status === 'loading' ? <ContentSkeleton label="Cargando publicaciones…"><PostRowsPlaceholder /></ContentSkeleton>
+        : following && !viewer ? <div className="discovery-follow-empty"><h2>Tu espacio para seguir conversaciones</h2><p>Entra para ver las publicaciones de autores que sigues y tus comunidades.</p><Button asChild className="h-11"><Link to={loginLink(followingHref)}>Entrar a Foris</Link></Button></div>
+        : <DiscoveryFeed key={query.path + '.' + revision} path={query.path} following={following} filtered={query.filtered} onClear={onClear} discoverHref={discoverHref} />}
     </section><HomeContext /></div>
   </main>
 }

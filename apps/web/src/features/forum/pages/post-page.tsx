@@ -10,7 +10,8 @@ import { useAuth } from '@/features/account/hooks/use-auth'
 import { loginLink } from '@/features/account/lib/return-target'
 import { IdentityImage } from '@/features/media/components/identity-image'
 import { PostImages } from '@/features/media/components/post-images'
-import { ForumEmpty, ForumError, ForumLoading, ForumTime } from '../components/forum-states'
+import { ForumEmpty, ForumError, ForumTime } from '../components/forum-states'
+import { PublicationSkeleton } from '../components/content-skeletons'
 import { useResource } from '../hooks/use-forum'
 import { DocumentView } from '../editor/document-view'
 import { PostTaxonomy } from '../discovery/post-taxonomy'
@@ -38,7 +39,7 @@ function PostContent({ id }: { id: string }) {
     if (hash === '#responder') (element?.querySelector('textarea') ?? element)?.focus({ preventScroll: true })
   }, [loaded, hash, participationReady])
   if (!valid) return <ForumEmpty title="Esta publicación no existe"><p>Vuelve al foro para encontrar otra conversación.</p><Link to="/">Ver publicaciones</Link></ForumEmpty>
-  if (post.loading && !post.data) return <ForumLoading label="Cargando publicación…" />
+  if (post.loading && !post.data) return <PublicationSkeleton />
   if (post.error) return <ForumError message={post.error} retry={post.retry} />
   if (!post.data) return null
   const item = post.data

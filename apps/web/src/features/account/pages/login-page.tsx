@@ -9,6 +9,7 @@ import { ForisFamily } from '@/components/brand/foris-family'
 import { legalRevision } from '@/features/legal/legal-documents'
 import { useResource } from '@/features/forum/hooks/use-forum'
 import { AccountShell } from '../components/account-shell'
+import { GoogleIcon } from '../components/google-icon'
 import { PasswordField } from '../components/password-field'
 import { OtpForm } from '../components/otp-form'
 import { useAuth } from '../hooks/use-auth'
@@ -155,7 +156,10 @@ export function LoginPage() {
               {signup.loading && <p role="status" className="account-hint">Comprobando la cuenta de Google…</p>}
               {signup.error && <p role="alert" className="account-error">{signup.error}</p>}
               {signup.data && <form className="account-form" onSubmit={event => { event.preventDefault(); void submit() }} aria-busy={busy}>
-                <div className="google-linked-email"><strong>{signup.data.displayName}</strong><span>{signup.data.email}</span></div>
+                <div className="google-linked-email">
+                  <strong className="inline-flex items-center gap-2"><GoogleIcon />{signup.data.displayName}</strong>
+                  <span>{signup.data.email}</span>
+                </div>
                 <TermsAcceptance checked={acceptedTerms} onChange={setAcceptedTerms} disabled={busy} />
                 {error && <p role="alert" className="account-error">{error}</p>}
                 <Button type="submit" className="h-12 w-full" disabled={busy || !acceptedTerms}>Crear mi cuenta</Button>
@@ -212,7 +216,10 @@ export function LoginPage() {
                       setBusy(true)
                       setError(null)
                       void startGoogle('login', undefined, next).catch(cause => { setError(accountError(cause)); setBusy(false); guard.current = false })
-                    }}>Continuar con Google</Button>
+                    }}>
+                    <GoogleIcon />
+                    Continuar con Google
+                  </Button>
                   {!auth.options.google && auth.status === 'ready' && <p className="account-hint">Google no está disponible en este momento.</p>}
                   <p className="auth-alternative">O usa tu correo</p>
                 </>}

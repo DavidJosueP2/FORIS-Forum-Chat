@@ -9,7 +9,7 @@
 .community-entry { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: clamp(12px, 2cqi, 24px); height: 100%; padding: 16px 8px; border-radius: var(--radius); text-decoration: none; scroll-margin-block-start: var(--discovery-header-offset, 16px); }
 .community-entry:hover, .community-entry:focus-visible { background: var(--card); }
 .community-entry:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
-.identity-image.community-directory-photo { --identity-size: clamp(80px, 14cqi, 144px); border-radius: 10px; }
+.identity-image.community-directory-photo, .community-directory-photo[data-slot="skeleton"] { --identity-size: clamp(80px, 14cqi, 144px); border-radius: var(--radius); }
 .identity-image.community-directory-photo[data-fallback="character"] { background: var(--accent); }
 .community-directory-photo img.identity-character { width: 56%; height: 56%; }
 .community-entry-content { display: flex; flex-direction: column; gap: 8px; min-width: 0; min-height: 100%; }
@@ -57,9 +57,10 @@
 .community-directory-back svg { width: 16px; height: 16px; }
 .community-heading { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 20px 24px; padding: 24px; border-radius: var(--radius); background: var(--card); }
 .community-identity { flex: 1 1 360px; min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: 20px; }
-.community-heading .identity-image.community-photo { --identity-size: 112px; }
+.community-heading .community-photo { --identity-size: 112px; }
+.community-directory-photo[data-slot="skeleton"], .community-photo[data-slot="skeleton"] { width: var(--identity-size); aspect-ratio: 1; border-radius: var(--radius); }
 .community-heading-actions { max-width: min(100%, 24rem); }
-.community-heading-actions > .forum-loading, .community-heading-actions > .forum-error { padding-block: 0; }
+.community-heading-actions > .forum-error { padding-block: 0; }
 .community-management { margin-block: 24px 40px; }
 .community-management > summary { cursor: pointer; padding-block: 12px; min-height: 44px; font-weight: 500; }
 .community-management-content { display: flex; flex-direction: column; gap: 32px; padding-top: 20px; }
@@ -85,7 +86,7 @@
 @media (max-width: 639px) {
   .community-heading { padding: 16px; }
   .community-identity { gap: 12px; }
-  .community-heading .identity-image.community-photo { --identity-size: 64px; }
+  .community-heading .community-photo { --identity-size: 64px; }
   .community-heading-actions .forum-actions { gap: 8px; }
   .community-heading-actions .forum-actions [data-slot="button"] { padding-inline: 12px; }
   .community-identity-editor { gap: 16px; }

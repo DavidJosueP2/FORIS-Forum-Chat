@@ -15,6 +15,10 @@ export class ConversationsController {
   async list(@Req() request: AuthRequest) {
     return { rooms: await this.rooms.list(await this.sessions.required(request)) };
   }
+  @Get('direct/:peer') @Header('Cache-Control', 'no-store')
+  async direct(@Req() request: AuthRequest, @Param('peer') peer: string) {
+    return this.rooms.direct(await this.sessions.required(request), requestId(peer));
+  }
 
   @Get(':room/messages') @Header('Cache-Control', 'no-store')
   async history(@Req() request: AuthRequest, @Param('room') room: string, @Query() query: Record<string, unknown>) {
@@ -29,6 +33,6 @@ export class ConversationsController {
   async send(@Req() request: AuthRequest, @Param('room') room: string, @Body() body: unknown) {
     const actor = await this.sessions.required(request);
     const input = inputRecord(body, ['body', 'requestId']);
-    return { message: await this.rooms.send(actor, conversationScope(room), inputText(input.body, 'El mensaje', MAX_MESSAGE_LENGTH, true), requestId(input.requestId)) };
+    return this.rooms.send(actor, conversationScope(room), inputText(input.body, 'El mensaje', MAX_MESSAGE_LENGTH, true), requestId(input.requestId));
   }
 }

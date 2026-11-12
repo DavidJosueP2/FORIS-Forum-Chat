@@ -14,6 +14,9 @@ export function conversationScope(value: unknown): ConversationScope {
 export function conversationNotFound(): never {
   throw new HttpError(404, 'CONVERSATION_NOT_FOUND', 'Esta conversación no está disponible para tu cuenta.');
 }
+export function directRoomKey(user: string, peer: string): string {
+  return 'direct:' + [user, peer].sort().join(':');
+}
 
 export async function authorizeConversation(client: SqlClient, user: string, scope: ConversationScope): Promise<string> {
   if (scope.kind === 'community') {
@@ -26,7 +29,7 @@ export async function authorizeConversation(client: SqlClient, user: string, sco
     JOIN users u ON u.id=f.author_id AND u.email_verified_at IS NOT NULL
     WHERE f.follower_id=$1 AND f.author_id=$2 FOR KEY SHARE OF f,r`, [user, scope.id]);
   if (!mutual.rows.length) conversationNotFound();
-  return 'direct:' + [user, scope.id].sort().join(':');
+  return directRoomKey(user, scope.id);
 }
 
 export async function authorizeStoredConversation(client: SqlClient, user: string, key: string): Promise<void> {

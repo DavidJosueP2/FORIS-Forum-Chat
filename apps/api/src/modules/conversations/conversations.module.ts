@@ -11,7 +11,8 @@ import { ConversationsRepository } from './conversations.repository.js';
 @Module({ imports: [AuthModule], controllers: [ConversationsController], providers: [ConversationsRepository, ForumReadMiddleware] })
 export class ConversationsModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(ForumReadMiddleware).forRoutes({ path: 'conversations', method: RequestMethod.GET }, { path: 'conversations/:room/messages', method: RequestMethod.GET });
+    consumer.apply(ForumReadMiddleware).forRoutes({ path: 'conversations', method: RequestMethod.GET },
+      { path: 'conversations/direct/:peer', method: RequestMethod.GET }, { path: 'conversations/:room/messages', method: RequestMethod.GET });
     consumer.apply(SameOriginMiddleware, MessageRateLimitMiddleware, json({ limit: '16kb', strict: true, inflate: false }))
       .forRoutes({ path: 'conversations/:room/messages', method: RequestMethod.POST });
   }

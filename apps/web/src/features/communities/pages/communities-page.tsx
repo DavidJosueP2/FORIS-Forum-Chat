@@ -4,9 +4,11 @@ import { ArrowRight, FileText, LockKeyhole, Plus, Search, Star, UsersRound } fro
 import type { Community } from '@messages/contracts'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
 import { usePageTitle } from '@/hooks/use-page-title'
 import { useAuth } from '@/features/account/hooks/use-auth'
-import { ForumEmpty, ForumError, ForumLoading, ParticipationGate } from '@/features/forum/components/forum-states'
+import { ForumEmpty, ForumError, ParticipationGate } from '@/features/forum/components/forum-states'
+import { ContentSkeleton } from '@/features/forum/components/content-skeletons'
 import { useForumPage } from '@/features/forum/hooks/use-forum'
 import { IdentityImage } from '@/features/media/components/identity-image'
 
@@ -36,9 +38,30 @@ function CommunityEntry({ item }: { item: Community }) {
   </li>
 }
 
+function CommunityDirectorySkeleton() {
+  return <ContentSkeleton label="Cargando comunidades…">
+    <ol className="community-list">
+      {[0, 1, 2, 3].map(index => <li key={index}>
+        <div className="community-entry">
+          <Skeleton className="community-directory-photo" />
+          <div className="community-entry-content pt-1">
+            <Skeleton className={index % 2 ? 'h-5 w-2/3' : 'h-5 w-4/5'} />
+            <Skeleton className="h-3.5 w-full" />
+            <Skeleton className="h-3.5 w-3/5" />
+            <div className="community-entry-meta forum-meta">
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-3 w-16" />
+            </div>
+          </div>
+        </div>
+      </li>)}
+    </ol>
+  </ContentSkeleton>
+}
+
 function CommunityList({ path, scope, searched }: { path: string; scope: string; searched: boolean }) {
   const page = useForumPage<Community>(path)
-  if (page.loading && !page.ready) return <ForumLoading label="Buscando comunidades…" />
+  if (page.loading && !page.ready) return <CommunityDirectorySkeleton />
   if (page.error) return <ForumError message={page.error} retry={page.retry} />
   if (!page.items.length) return <ForumEmpty scene={searched ? 'communitySearch' : scope === 'all' ? 'communityDiscovery' : 'communityList'} placement="end" title={searched ? 'No encontramos esa comunidad' : scope === 'favorites' ? 'Tus favoritas tendrán lugar aquí' : scope === 'mine' ? 'Encuentra un espacio para ti' : 'La primera comunidad puede ser la tuya'}>
     <p>{searched ? 'Prueba otro nombre o una palabra diferente.' : scope === 'favorites' ? 'Guarda una comunidad con la estrella de su página. Puedes hacerlo sin unirte.' : scope === 'mine' ? 'Explora las comunidades y únete a las que te interesen.' : 'Reúne a otras personas alrededor de una idea que te importe.'}</p>
@@ -77,7 +100,8 @@ function CommunitiesIndex() {
       </nav>
     </div>
     {search && <p className="forum-active-filter"><span>Buscando «{search}»</span><Link to={scope === 'all' ? '/comunidades' : '/comunidades?vista=' + (scope === 'mine' ? 'mias' : 'favoritas')}>Quitar búsqueda</Link></p>}
-    {scope === 'all' ? list : <ParticipationGate next="/comunidades" description="Entra con tu cuenta para encontrar tus comunidades y guardar tus favoritas.">{list}</ParticipationGate>}
+    {scope === 'all' ? list : auth.status === 'loading' ? <CommunityDirectorySkeleton />
+      : <ParticipationGate next="/comunidades" description="Entra con tu cuenta para encontrar tus comunidades y guardar tus favoritas.">{list}</ParticipationGate>}
   </main>
 }
 export function CommunitiesPage() {

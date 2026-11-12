@@ -4,7 +4,8 @@ import { DatabaseService } from '../../database/database.service.js';
 import { HttpError } from '../../common/errors/http-error.js';
 import type { AuthContext, SqlClient } from '../auth/auth.types.js';
 import { ForumAccess } from './forum-access.service.js';
-import { publicPost, readableCommunity, readablePost } from '../communities/community-access.js';
+import { publicPost } from '../communities/community-access.js';
+import { visibleAuthor } from './author-visibility.js';
 
 @Injectable()
 export class ForumFollowRepository {
@@ -17,11 +18,7 @@ export class ForumFollowRepository {
       (SELECT COUNT(*)::int FROM forum_posts p WHERE p.author_id=u.id AND ` + publicPost() + `) AS post_count,
       (SELECT COUNT(*)::int FROM community_memberships pm JOIN communities pc ON pc.id=pm.community_id WHERE pm.user_id=u.id AND pc.visibility='public') AS community_count
       FROM users u LEFT JOIN media a ON a.avatar_user_id=u.id AND a.state='READY'
-      WHERE u.id=$1 AND (u.id=$2::uuid
-        OR EXISTS(SELECT 1 FROM forum_posts p WHERE p.author_id=u.id AND ` + readablePost('$2') + `)
-        OR EXISTS(SELECT 1 FROM forum_replies r JOIN forum_posts p ON p.id=r.post_id WHERE r.author_id=u.id AND r.deleted_at IS NULL AND ` + readablePost('$2') + `)
-        OR EXISTS(SELECT 1 FROM community_memberships pm JOIN communities c ON c.id=pm.community_id WHERE pm.user_id=u.id AND ` + readableCommunity('c', '$2') + `)
-        OR EXISTS(SELECT 1 FROM messages public_message WHERE public_message.user_id=u.id))`, [id, viewer])).rows[0];
+      WHERE u.id=$1 AND ${visibleAuthor('$2')}`, [id, viewer])).rows[0];
     if (!row) throw new HttpError(404, 'AUTHOR_NOT_FOUND', 'Este autor no está disponible.');
     return { id: row.id, displayName: row.display_name, bio: row.bio, ...(row.avatar_id ? { avatarId: row.avatar_id } : {}), isFollowing: row.following,
       createdAt: new Date(row.created_at).toISOString(), publicPostCount: row.post_count, publicCommunityCount: row.community_count };
@@ -34,7 +31,9 @@ export class ForumFollowRepository {
         await this.author(id, actor.user.id, client);
         const target = await client.query('SELECT id FROM users WHERE id=$1 FOR KEY SHARE', [id]);
         if (!target.rows[0]) throw new HttpError(404, 'AUTHOR_NOT_FOUND', 'Este autor no está disponible.');
-        await client.query('INSERT INTO author_follows(follower_id,author_id) VALUES($1,$2) ON CONFLICT DO NOTHING', [actor.user.id, id]);
+        const created = await client.query('INSERT INTO author_follows(follower_id,author_id) VALUES($1,$2) ON CONFLICT DO NOTHING RETURNING author_id', [actor.user.id, id]);
+        if (created.rows[0]) await client.query(`INSERT INTO community_notifications(recipient_id,follower_id)
+          VALUES($2,$1) ON CONFLICT(recipient_id,follower_id) DO NOTHING`, [actor.user.id, id]);
       } else await client.query('DELETE FROM author_follows WHERE follower_id=$1 AND author_id=$2', [actor.user.id, id]);
       return { isFollowing: follow };
     });

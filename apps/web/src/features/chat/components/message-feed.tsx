@@ -25,6 +25,22 @@ interface MessageFeedProps {
   roomName?: string
 }
 
+export function MessageHistorySkeleton({ label = 'Cargando la conversación' }: { label?: string }) {
+  return <div className="history-loading" role="status">
+    <span className="sr-only">{label}</span>
+    {[0, 1, 2].map(index => (
+      <div className="message-skeleton" key={index} aria-hidden="true">
+        <Skeleton className="size-9 shrink-0 rounded-full" />
+        <div className="flex min-w-0 flex-1 flex-col gap-3">
+          <Skeleton className="h-3 w-28 max-w-full" />
+          <Skeleton className={index === 1 ? 'h-4 w-2/3' : 'h-4 w-5/6'} />
+          <Skeleton className="h-4 w-1/2" />
+        </div>
+      </div>
+    ))}
+  </div>
+}
+
 export function MessageFeed({
   messages, senderId, accountId, historyStatus, historyError, hasOlder,
   loadingOlder, olderError, loadOlder, reconnect, onSuggestion, roomName,
@@ -109,21 +125,7 @@ export function MessageFeed({
               <Button variant="secondary" className="h-11" onClick={reconnect}>Volver a conectar</Button>
             </div>
           )}
-          {historyStatus === 'loading' && !hasMessages && (
-            <div className="history-loading" role="status">
-              <span className="sr-only">Cargando la conversación</span>
-              {[0, 1, 2].map(index => (
-                <div className="message-skeleton" key={index} aria-hidden="true">
-                  <Skeleton className="size-9 rounded-full" />
-                  <div className="flex flex-1 flex-col gap-3">
-                    <Skeleton className="h-3 w-28" />
-                    <Skeleton className={index === 1 ? 'h-4 w-2/3' : 'h-4 w-5/6'} />
-                    <Skeleton className="h-4 w-1/2" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          {historyStatus === 'loading' && !hasMessages && <MessageHistorySkeleton />}
           {historyStatus === 'ready' && !hasMessages && (
             <div className="chat-empty">
               <ForisCharacter scene="chat" width={116} height={116} />

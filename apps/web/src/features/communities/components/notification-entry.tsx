@@ -21,7 +21,9 @@ function InboxEntry() {
     window.addEventListener('focus', refresh)
     window.addEventListener(NOTIFICATIONS_CHANGED, refresh)
     document.addEventListener('visibilitychange', refresh)
+    const timer = setInterval(refresh, 20000)
     return () => {
+      clearInterval(timer)
       window.removeEventListener('focus', refresh)
       window.removeEventListener(NOTIFICATIONS_CHANGED, refresh)
       document.removeEventListener('visibilitychange', refresh)
